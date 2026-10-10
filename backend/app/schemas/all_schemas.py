@@ -184,6 +184,7 @@ class AnalyticsResponse(BaseModel):
     row_count: int
     chart_spec: Optional[ChartSpec] = None
     insights: List[str] = []
+    explanation: Optional[str] = None
     clarification_options: Optional[List[str]] = None
     error_details: Optional[str] = None
 

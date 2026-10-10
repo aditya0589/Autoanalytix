@@ -44,23 +44,32 @@ Respond ONLY with a valid JSON object matching this schema:
 }}
 """
 
-INSIGHTS_PROMPT = """You are a senior business intelligence analyst.
-Ground your insights strictly in the actual query results provided below.
+INSIGHTS_PROMPT = """You are a senior business intelligence consultant explaining data to a non-technical business executive.
+Ground your explanation and findings strictly in the actual query results, schema, and statistics provided below.
 Do NOT invent numbers, percentages, or facts that are not present in the data.
 
 USER QUESTION: {question}
+DATASET SCHEMA & CONTEXT:
+{schema_summary}
 EXECUTED SQL: {sql}
 QUERY RESULTS (First 15 rows):
 {results_json}
 
-Provide 2 to 4 concise, high-impact business insights as JSON array of strings.
-Example format:
-[
-  "Observed: Total revenue reached $1,420,500 across 1,200 orders.",
-  "Calculated: Enterprise segment generated the highest revenue share at 48.2%.",
-  "Comparison: Q3 revenue grew by 14.5% compared to Q2."
-]
-Respond ONLY with the JSON array.
+Provide:
+1. "explanation": A warm, lucid, and thorough narrative explanation (2 to 3 paragraphs) written in clear, plain business English.
+   - If the user asked "describe my data", "what is this dataset", or similar, explain what business operations or activity this data tracks (e.g. sales orders, customers, regions, products), total scale/volume, key dimensions, and primary metrics available.
+   - Avoid technical jargon, SQL keywords, or raw database syntax.
+   - Focus on what the numbers mean for business decision-makers.
+2. "insights": 2 to 4 concise bullet points highlighting key numbers, top drivers, or notable comparisons.
+
+Respond ONLY with a valid JSON object matching this schema:
+{{
+  "explanation": "Plain-language business narrative explanation...",
+  "insights": [
+    "Observed: Total revenue reached $1,420,500 across 1,200 orders.",
+    "Calculated: Enterprise segment generated the highest revenue share at 48.2%."
+  ]
+}}
 """
 
 def extract_json(text: str) -> Any:
@@ -250,21 +259,37 @@ class AnalyticsWorkflow:
             "data": rows[:100]  # Cap at 100 points for crisp frontend rendering
         }
 
-        # Generate Grounded Insights
+        # Generate Grounded Explanation and Insights
         insights: List[str] = []
-        if self.llm and rows:
+        explanation: Optional[str] = None
+
+        schema_summary = "\n".join([
+            f"- {c.get('name')}: {c.get('data_type')} ({c.get('duckdb_type', '')})"
+            for c in state.get("dataset_schema", [])
+        ])
+
+        if self.llm and (rows or "describe" in state["user_question"].lower()):
             try:
                 prompt = INSIGHTS_PROMPT.format(
                     question=state["user_question"],
-                    sql=state["generated_sql"],
+                    schema_summary=schema_summary,
+                    sql=state.get("generated_sql") or "N/A",
                     results_json=json.dumps(rows[:15], indent=2)
                 )
                 res = self.llm.invoke([HumanMessage(content=prompt)])
-                parsed_insights = extract_json(res.content)
-                if isinstance(parsed_insights, list):
-                    insights = [str(i) for i in parsed_insights]
+                parsed_res = extract_json(res.content)
+                if isinstance(parsed_res, dict):
+                    explanation = parsed_res.get("explanation")
+                    raw_ins = parsed_res.get("insights", [])
+                    if isinstance(raw_ins, list):
+                        insights = [str(i) for i in raw_ins]
+                elif isinstance(parsed_res, list):
+                    insights = [str(i) for i in parsed_res]
             except Exception:
                 pass
+
+        if not explanation:
+            explanation = self._deterministic_explanation(state, rows, cols)
 
         if not insights:
             insights = self._deterministic_insights(rows, cols, state["user_question"])
@@ -272,6 +297,7 @@ class AnalyticsWorkflow:
         return {
             "chart_specification": chart_spec,
             "insights": insights,
+            "explanation": explanation,
             "status": "complete"
         }
 
@@ -355,6 +381,17 @@ class AnalyticsWorkflow:
                 "clarification_question": None
             }
 
+        # 4. Describe / Overview question
+        if any(w in q for w in ["describe", "overview", "what is this", "tell me about", "explain data", "summary"]):
+            target_metric = num_cols[0] if num_cols else "*"
+            return {
+                "intent": "dataset_overview",
+                "chart_type": "table",
+                "title": "Dataset Overview & Sample Records",
+                "sql": f"SELECT * FROM {table} LIMIT 8",
+                "clarification_question": None
+            }
+
         # Generic fallback
         return {
             "intent": "table_overview",
@@ -363,6 +400,50 @@ class AnalyticsWorkflow:
             "sql": f"SELECT * FROM {table} LIMIT 10",
             "clarification_question": None
         }
+
+    def _deterministic_explanation(self, state: AnalyticsState, rows: List[Dict[str, Any]], cols: List[str]) -> str:
+        q = state["user_question"].lower()
+        schema = state.get("dataset_schema", [])
+        profile = state.get("dataset_profile", {})
+        total_rows = profile.get("row_count") or len(rows)
+
+        cat_cols = [c["name"].replace("_", " ").title() for c in schema if c.get("data_type") == "categorical"]
+        num_cols = [c["name"].replace("_", " ").title() for c in schema if c.get("data_type") == "numeric"]
+        date_cols = [c["name"].replace("_", " ").title() for c in schema if c.get("data_type") == "datetime"]
+
+        if any(w in q for w in ["describe", "overview", "what is this", "explain", "tell me about"]):
+            parts = [
+                f"This dataset contains **{total_rows:,} recorded business transactions/entries** across **{len(schema)} distinct attributes**."
+            ]
+            if num_cols:
+                parts.append(
+                    f"**Key Metrics:** Quantitative tracking is available for **{', '.join(num_cols[:4])}**"
+                    + (f" and {len(num_cols) - 4} other metrics." if len(num_cols) > 4 else ".")
+                )
+            if cat_cols:
+                parts.append(
+                    f"**Key Categories & Dimensions:** You can slice, segment, and compare performance across **{', '.join(cat_cols[:5])}**."
+                )
+            if date_cols:
+                parts.append(
+                    f"**Time Horizon:** Chronological tracking is enabled via the **{', '.join(date_cols)}** timeline."
+                )
+            return "\n\n".join(parts)
+
+        # Standard analytical query explanation
+        if rows:
+            if len(rows) == 1:
+                first_k, first_v = list(rows[0].items())[0] if rows[0] else ("metric", 0)
+                formatted_v = f"${first_v:,.2f}" if isinstance(first_v, (int, float)) and first_v > 100 else f"{first_v}"
+                return (
+                    f"Based on your query regarding **{state['user_question']}**, we aggregated the matching records across the dataset. "
+                    f"The computed **{first_k.replace('_', ' ')}** is **{formatted_v}**."
+                )
+            return (
+                f"Here is the breakdown for **{state['user_question']}**, based on {len(rows)} aggregated data points. "
+                f"The leading segment is **{rows[0].get(cols[0], 'N/A')}**, which represents the highest volume among the analyzed groups."
+            )
+        return f"We analyzed your dataset for **{state['user_question']}**. No matching rows were found with the specified parameters."
 
     def _deterministic_insights(self, rows: List[Dict[str, Any]], cols: List[str], question: str) -> List[str]:
         if not rows:

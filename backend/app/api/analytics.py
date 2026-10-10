@@ -219,11 +219,13 @@ def execute_analytics_query(
 
     # Save user message & assistant message
     db.add(Message(conversation_id=conversation.id, role="user", content=req.question))
+    explanation_text = final_state.get("explanation")
     summary_text = "\n".join(final_state.get("insights", []))
+    content_to_save = explanation_text if explanation_text else (summary_text or f"Generated analysis for: {req.question}")
     db.add(Message(
         conversation_id=conversation.id,
         role="assistant",
-        content=summary_text or f"Generated analysis for: {req.question}",
+        content=content_to_save,
         analysis_id=analysis.id
     ))
     db.commit()
@@ -241,6 +243,7 @@ def execute_analytics_query(
         row_count=analysis.row_count,
         chart_spec=chart_spec,
         insights=analysis.insights or [],
+        explanation=explanation_text,
         clarification_options=None,
         error_details=None
     )
