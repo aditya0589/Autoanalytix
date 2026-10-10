@@ -103,6 +103,10 @@ class ApiClient {
     list: (workspaceId: string, datasetId?: string) =>
       this.request<any[]>(`/conversations?workspace_id=${workspaceId}${datasetId ? `&dataset_id=${datasetId}` : ""}`),
     get: (id: string) => this.request<any>(`/conversations/${id}`),
+    create: (data: { workspace_id: string; dataset_id: string; title?: string }) =>
+      this.request<any>("/conversations", { method: "POST", body: JSON.stringify(data) }),
+    rename: (id: string, title: string) =>
+      this.request<any>(`/conversations/${id}`, { method: "PATCH", body: JSON.stringify({ title }) }),
     delete: (id: string) => this.request<any>(`/conversations/${id}`, { method: "DELETE" }),
   };
 

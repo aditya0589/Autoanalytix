@@ -15,6 +15,7 @@ import { DashboardEditor } from "./pages/DashboardEditor";
 import { AIProvidersSettings } from "./pages/AIProvidersSettings";
 import { DataSourcesSettings } from "./pages/DataSourcesSettings";
 import { PublicDashboardViewer } from "./pages/PublicDashboardViewer";
+import { ChatsPage } from "./pages/ChatsPage";
 
 // Protected Route Guard
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -57,6 +58,14 @@ export const App: React.FC = () => {
           element={
             <ProtectedRoute>
               <DashboardHome />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/chats"
+          element={
+            <ProtectedRoute>
+              <ChatsPage />
             </ProtectedRoute>
           }
         />

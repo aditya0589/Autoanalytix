@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
+  MessageSquare,
   Database,
   BarChart2,
   Sparkles,
@@ -57,6 +58,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   const navItems = [
     { label: "Overview", path: "/dashboard", icon: LayoutDashboard },
+    { label: "Chats", path: "/chats", icon: MessageSquare },
     { label: "Datasets", path: "/datasets", icon: Database },
     { label: "Dashboards", path: "/dashboards", icon: BarChart2 },
     { label: "AI Providers (BYOK)", path: "/settings/ai-providers", icon: KeyRound, badge: defaultAi ? "Active" : "Setup" },
