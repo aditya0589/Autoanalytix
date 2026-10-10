@@ -218,3 +218,11 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Autoanalytix Local Runtime
+autoanalytix.db
+storage/
+venv/
+frontend/node_modules/
+frontend/dist/
+.env

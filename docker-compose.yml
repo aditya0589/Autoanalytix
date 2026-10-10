@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: autoanalytix_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: autoanalytix
+      POSTGRES_USER: autoanalytix
+      POSTGRES_PASSWORD: autoanalytix_secret_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U autoanalytix -d autoanalytix"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: autoanalytix_backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_ENV=production
+      - DATABASE_URL=postgresql://autoanalytix:autoanalytix_secret_password@postgres:5432/autoanalytix
+      - APP_SECRET_KEY=autoanalytix-production-jwt-secret-key-2026
+      - CREDENTIAL_ENCRYPTION_KEY=YXV0b2FuYWx5dGl4LTMyYnl0ZXMtc2VjcmV0a2V5ISE=
+      - CORS_ORIGINS=["http://localhost:5173","http://localhost:3000","http://127.0.0.1:5173"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - backend_storage:/app/storage
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: autoanalytix_frontend
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:8000/api
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  backend_storage:
