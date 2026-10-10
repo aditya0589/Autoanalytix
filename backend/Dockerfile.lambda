@@ -1,0 +1,17 @@
+FROM public.ecr.aws/lambda/python:3.11
+
+WORKDIR ${LAMBDA_TASK_ROOT}
+
+# Upgrade pip, setuptools, and wheel
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel
+
+# Install dependencies with --prefer-binary to ensure binary wheels are used
+COPY requirements.txt .
+RUN pip install --no-cache-dir --prefer-binary -r requirements.txt
+RUN pip install --no-cache-dir --prefer-binary mangum email-validator psycopg2-binary
+
+# Copy backend source
+COPY . ${LAMBDA_TASK_ROOT}
+
+# AWS Lambda invocation target
+CMD ["app.main.handler"]

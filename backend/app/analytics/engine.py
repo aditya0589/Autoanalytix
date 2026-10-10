@@ -10,9 +10,10 @@ class DuckDBAnalyticsEngine:
     def __init__(self, db_path: Optional[str] = None):
         self.db_path = db_path or os.path.join(settings.STORAGE_DIR, "duckdb", "analytics.duckdb")
         try:
+            os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
             self.conn = duckdb.connect(self.db_path)
-        except duckdb.IOException:
-            # File might be locked by another process (e.g. running dev server). Connect in read_only mode or memory
+        except (duckdb.IOException, Exception):
+            # File might be locked by another process or filesystem constraints. Fallback safely
             try:
                 self.conn = duckdb.connect(self.db_path, read_only=True)
             except Exception:
@@ -42,7 +43,14 @@ class DuckDBAnalyticsEngine:
         else:
             raise ValueError(f"Unsupported file type for direct DuckDB registration: {file_type}")
             
-        self.conn.execute(query)
+        try:
+            self.conn.execute(query)
+        except Exception as e:
+            if "read-only" in str(e).lower() or "readonly" in str(e).lower():
+                self.conn = duckdb.connect(":memory:")
+                self.conn.execute(query)
+            else:
+                raise
 
     def execute_query(
         self,

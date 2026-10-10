@@ -1,0 +1,17 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $IMAGE_REPO_URI
+  build:
+    commands:
+      - echo Build started on `date`
+      - echo Building the Docker image for linux/amd64...
+      - docker build -f Dockerfile.lambda -t $IMAGE_REPO_URI:latest .
+  post_build:
+    commands:
+      - echo Build completed on `date`
+      - echo Pushing the Docker image to ECR...
+      - docker push $IMAGE_REPO_URI:latest
