@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from mangum import Mangum
 from app.core.config import settings
 from app.core.database import engine, Base
 from app.api import (
@@ -14,7 +15,10 @@ from app.api import (
 )
 
 # Initialize database schema on startup
-Base.metadata.create_all(bind=engine)
+try:
+    Base.metadata.create_all(bind=engine)
+except Exception:
+    pass
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -28,7 +32,7 @@ app = FastAPI(
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -45,9 +49,10 @@ app.include_router(public_dashboards.router, prefix=settings.API_V1_PREFIX)
 app.include_router(data_sources.router, prefix=settings.API_V1_PREFIX)
 
 @app.get("/health")
+@app.get("/api/health")
 def healthcheck():
     return {
-        "status": "healthy",
+        "status": "ok",
         "service": settings.PROJECT_NAME,
         "environment": settings.APP_ENV
     }
@@ -57,3 +62,6 @@ def root():
     return {
         "message": f"Welcome to {settings.PROJECT_NAME} API. Visit /api/docs for interactive OpenAPI specification."
     }
+
+# Expose handler for AWS Lambda
+handler = Mangum(app, lifespan="off")

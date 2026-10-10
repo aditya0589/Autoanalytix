@@ -1,0 +1,28 @@
+{
+  "name": "autoanalytix-builder",
+  "source": {
+    "type": "S3",
+    "location": "aditya-portfolio-static-287896839251/autoanalytix/backend_source.zip"
+  },
+  "artifacts": {
+    "type": "NO_ARTIFACTS"
+  },
+  "environment": {
+    "type": "LINUX_CONTAINER",
+    "image": "aws/codebuild/amazonlinux2-x86_64-standard:5.0",
+    "computeType": "BUILD_GENERAL1_SMALL",
+    "privilegedMode": true,
+    "environmentVariables": [
+      {
+        "name": "AWS_DEFAULT_REGION",
+        "value": "us-east-1"
+      },
+      {
+        "name": "IMAGE_REPO_URI",
+        "value": "287896839251.dkr.ecr.us-east-1.amazonaws.com/autoanalytix-backend"
+      }
+    ]
+  },
+  "serviceRole": "arn:aws:iam::287896839251:role/autoanalytix-codebuild-role",
+  "timeoutInMinutes": 15
+}
