@@ -20,6 +20,7 @@ class AnalyticsState(TypedDict):
     query_result: Optional[Dict[str, Any]]
     chart_specification: Optional[Dict[str, Any]]
     insights: List[str]
+    explanation: Optional[str]
 
     # Flow Control
     clarification_question: Optional[str]

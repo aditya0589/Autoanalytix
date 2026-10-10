@@ -143,3 +143,23 @@ def test_user_registration_and_workspace():
     # Delete test config
     del_res = client.delete(f"/api/ai/configurations/{cfg_id}", headers={"Authorization": f"Bearer {token}"})
     assert del_res.status_code == 200
+
+def test_groq_and_openrouter_provider_registration():
+    from app.ai.providers.factory import list_supported_providers, get_provider_adapter
+
+    providers = list_supported_providers()
+    provider_ids = [p["id"] for p in providers]
+    assert "groq" in provider_ids
+    assert "openrouter" in provider_ids
+    assert "gemini" in provider_ids
+    assert "openai" in provider_ids
+    assert "anthropic" in provider_ids
+
+    groq_adapter = get_provider_adapter("groq")
+    assert groq_adapter.display_name == "Groq"
+    assert "openai/gpt-oss-120b" in groq_adapter.recommended_models
+
+    openrouter_adapter = get_provider_adapter("openrouter")
+    assert openrouter_adapter.display_name == "OpenRouter"
+    assert "anthropic/claude-3.5-sonnet" in openrouter_adapter.recommended_models
+

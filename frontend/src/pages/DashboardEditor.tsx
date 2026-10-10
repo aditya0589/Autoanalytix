@@ -78,7 +78,6 @@ export const DashboardEditor: React.FC = () => {
   };
 
   const handleUpdateItemSpan = async (itemId: string, newSpan: number) => {
-    // Local update of grid span
     setItems((prev) =>
       prev.map((i) => {
         if (i.id === itemId) {
@@ -122,7 +121,7 @@ export const DashboardEditor: React.FC = () => {
   if (loading || !dashboard) {
     return (
       <Layout>
-        <div className="text-center py-20 text-xs text-slate-400">Loading editor...</div>
+        <div className="text-center py-20 text-xs text-slate-400 dark:text-slate-500">Loading editor...</div>
       </Layout>
     );
   }
@@ -131,9 +130,9 @@ export const DashboardEditor: React.FC = () => {
     <Layout>
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Editor Top Bar */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="bg-white dark:bg-slate-900/90 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 sm:p-8 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4 transition-colors">
           <div className="flex-1 space-y-2">
-            <Link to={`/dashboards/${dashboard.id}`} className="text-xs text-slate-400 hover:text-slate-600 flex items-center space-x-1">
+            <Link to={`/dashboards/${dashboard.id}`} className="text-xs text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 flex items-center space-x-1">
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Back to Dashboard</span>
             </Link>
@@ -143,14 +142,14 @@ export const DashboardEditor: React.FC = () => {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Dashboard Title"
-                className="text-lg font-extrabold text-slate-900 border-b border-transparent hover:border-slate-300 focus:border-blue-600 focus:outline-none px-1 py-0.5"
+                className="text-xl font-black text-slate-900 dark:text-white bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-blue-500 focus:outline-none px-1 py-0.5 tracking-tight"
               />
               <input
                 type="text"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Optional executive description..."
-                className="text-xs text-slate-500 border-b border-transparent hover:border-slate-300 focus:border-blue-600 focus:outline-none px-1 py-0.5"
+                className="text-xs text-slate-500 dark:text-slate-400 bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-blue-500 focus:outline-none px-1 py-0.5"
               />
             </div>
           </div>
@@ -158,7 +157,7 @@ export const DashboardEditor: React.FC = () => {
           <div className="flex items-center space-x-3">
             <button
               onClick={() => setShowAddModal(true)}
-              className="flex items-center space-x-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold px-3 py-2 rounded-lg transition-colors"
+              className="flex items-center space-x-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold px-4 py-2.5 rounded-xl transition-colors"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Add Widget</span>
@@ -167,7 +166,7 @@ export const DashboardEditor: React.FC = () => {
             <button
               onClick={handleSave}
               disabled={saving}
-              className="flex items-center space-x-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-4 py-2 rounded-lg shadow-sm transition-colors disabled:opacity-50"
+              className="flex items-center space-x-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-md transition-colors disabled:opacity-50"
             >
               <Save className="w-3.5 h-3.5" />
               <span>{saving ? "Saving..." : "Save Changes"}</span>
@@ -189,17 +188,17 @@ export const DashboardEditor: React.FC = () => {
             return (
               <div key={item.id} className={`${spanClass} col-span-12 relative group`}>
                 {/* Widget Controls Overlay */}
-                <div className="absolute top-2 right-2 z-10 flex items-center space-x-1 bg-white/95 border border-slate-200 p-1 rounded-lg shadow-xs opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="absolute top-3 right-3 z-10 flex items-center space-x-1 bg-white/95 dark:bg-slate-800/95 border border-slate-200 dark:border-slate-700 p-1.5 rounded-xl shadow-md opacity-0 group-hover:opacity-100 transition-opacity">
                   <button
                     onClick={() => handleUpdateItemSpan(item.id, span === 12 ? 6 : span === 6 ? 4 : 12)}
-                    className="p-1 text-slate-500 hover:text-blue-600 rounded"
+                    className="p-1 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg"
                     title="Change Width (Full / Half / Third)"
                   >
                     <Maximize2 className="w-3.5 h-3.5" />
                   </button>
                   <button
                     onClick={() => handleDeleteItem(item.id)}
-                    className="p-1 text-slate-500 hover:text-rose-600 rounded"
+                    className="p-1 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg"
                     title="Remove Widget"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
@@ -214,13 +213,13 @@ export const DashboardEditor: React.FC = () => {
 
         {/* Add Widget Modal */}
         {showAddModal && (
-          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <h3 className="text-sm font-bold text-slate-900">Add Custom Widget</h3>
+          <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">Add Custom Widget</h3>
                 <button
                   onClick={() => setShowAddModal(false)}
-                  className="text-slate-400 hover:text-slate-600 text-sm font-bold"
+                  className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-sm font-bold p-1 rounded-lg"
                 >
                   ✕
                 </button>
@@ -228,50 +227,50 @@ export const DashboardEditor: React.FC = () => {
 
               <form onSubmit={handleAddWidget} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Widget Title</label>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Widget Title</label>
                   <input
                     type="text"
                     required
                     value={newWidgetTitle}
                     onChange={(e) => setNewWidgetTitle(e.target.value)}
                     placeholder="e.g. Total Active Accounts"
-                    className="w-full text-xs px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full text-xs px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Widget Type</label>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Widget Type</label>
                   <select
                     value={newWidgetType}
                     onChange={(e) => setNewWidgetType(e.target.value)}
-                    className="w-full text-xs px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+                    className="w-full text-xs px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
                   >
-                    <option value="kpi">KPI Metric Card</option>
-                    <option value="bar">Bar Chart</option>
-                    <option value="line">Line Trend Chart</option>
+                    <option value="kpi" className="dark:bg-slate-900">KPI Metric Card</option>
+                    <option value="bar" className="dark:bg-slate-900">Bar Chart</option>
+                    <option value="line" className="dark:bg-slate-900">Line Trend Chart</option>
                   </select>
                 </div>
 
                 {newWidgetType === "kpi" && (
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">KPI Value</label>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">KPI Value</label>
                       <input
                         type="text"
                         value={newWidgetVal}
                         onChange={(e) => setNewWidgetVal(e.target.value)}
                         placeholder="$1,250,000"
-                        className="w-full text-xs px-3 py-2 border border-slate-200 rounded-lg"
+                        className="w-full text-xs px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">Subtext</label>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Subtext</label>
                       <input
                         type="text"
                         value={newWidgetSub}
                         onChange={(e) => setNewWidgetSub(e.target.value)}
                         placeholder="+18% YoY growth"
-                        className="w-full text-xs px-3 py-2 border border-slate-200 rounded-lg"
+                        className="w-full text-xs px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl"
                       />
                     </div>
                   </div>
@@ -281,13 +280,13 @@ export const DashboardEditor: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setShowAddModal(false)}
-                    className="px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg"
+                    className="px-3.5 py-2 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm"
+                    className="px-4 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 rounded-xl shadow-md"
                   >
                     Add to Grid
                   </button>

@@ -4,12 +4,16 @@ from app.ai.providers.base import BaseAIProviderAdapter
 from app.ai.providers.gemini import GeminiProviderAdapter
 from app.ai.providers.openai_provider import OpenAIProviderAdapter
 from app.ai.providers.anthropic_provider import AnthropicProviderAdapter
+from app.ai.providers.groq_provider import GroqProviderAdapter
+from app.ai.providers.openrouter_provider import OpenRouterProviderAdapter
 from app.core.security import decrypt_credential
 
 ADAPTERS: Dict[str, BaseAIProviderAdapter] = {
     "gemini": GeminiProviderAdapter(),
     "openai": OpenAIProviderAdapter(),
-    "anthropic": AnthropicProviderAdapter()
+    "anthropic": AnthropicProviderAdapter(),
+    "groq": GroqProviderAdapter(),
+    "openrouter": OpenRouterProviderAdapter()
 }
 
 def get_provider_adapter(provider: str) -> BaseAIProviderAdapter:

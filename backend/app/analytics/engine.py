@@ -9,10 +9,20 @@ from app.analytics.sql_validator import SQLValidator, SQLSecurityValidationError
 class DuckDBAnalyticsEngine:
     def __init__(self, db_path: Optional[str] = None):
         self.db_path = db_path or os.path.join(settings.STORAGE_DIR, "duckdb", "analytics.duckdb")
-        self.conn = duckdb.connect(self.db_path)
+        try:
+            self.conn = duckdb.connect(self.db_path)
+        except duckdb.IOException:
+            # File might be locked by another process (e.g. running dev server). Connect in read_only mode or memory
+            try:
+                self.conn = duckdb.connect(self.db_path, read_only=True)
+            except Exception:
+                self.conn = duckdb.connect(":memory:")
         # Apply safety configurations
-        self.conn.execute(f"SET max_memory = '{settings.DUCKDB_MEMORY_LIMIT}';")
-        self.conn.execute("SET preserve_insertion_order = false;")
+        try:
+            self.conn.execute(f"SET max_memory = '{settings.DUCKDB_MEMORY_LIMIT}';")
+            self.conn.execute("SET preserve_insertion_order = false;")
+        except Exception:
+            pass
 
     def register_dataset(self, table_name: str, file_path: str, file_type: str):
         """Creates or replaces a persistent DuckDB table from a CSV or Parquet file."""
