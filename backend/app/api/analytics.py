@@ -1,5 +1,6 @@
 import os
 from typing import Optional
+from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -228,6 +229,7 @@ def execute_analytics_query(
         content=content_to_save,
         analysis_id=analysis.id
     ))
+    conversation.updated_at = datetime.now(timezone.utc)
     db.commit()
 
     chart_spec = ChartSpec(**chart_spec_dict) if chart_spec_dict else None

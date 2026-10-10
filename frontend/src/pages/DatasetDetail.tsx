@@ -11,7 +11,8 @@ import {
   ArrowRight,
   TrendingUp,
   FileSpreadsheet,
-  AlertTriangle
+  AlertTriangle,
+  MessageSquare
 } from "lucide-react";
 
 export const DatasetDetail: React.FC = () => {
@@ -21,6 +22,7 @@ export const DatasetDetail: React.FC = () => {
   const [dataset, setDataset] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
   const [preview, setPreview] = useState<any>(null);
+  const [conversations, setConversations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -31,10 +33,14 @@ export const DatasetDetail: React.FC = () => {
       api.datasets.profile(id),
       api.datasets.preview(id, 50),
     ])
-      .then(([ds, prof, prev]) => {
+      .then(async ([ds, prof, prev]) => {
         setDataset(ds);
         setProfile(prof);
         setPreview(prev);
+        if (ds?.workspace_id) {
+          const convs = await api.conversations.list(ds.workspace_id, ds.id).catch(() => []);
+          setConversations(convs);
+        }
       })
       .catch((err) => console.error("Failed to load dataset details:", err))
       .finally(() => setLoading(false));
@@ -152,6 +158,53 @@ export const DatasetDetail: React.FC = () => {
                 ))}
               </div>
             </div>
+
+            {/* Saved Chat Sessions */}
+            {conversations.length > 0 && (
+              <div className="bg-white dark:bg-slate-900/90 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 sm:p-8 shadow-xs space-y-4">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center space-x-2.5">
+                    <div className="w-7 h-7 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                      <MessageSquare className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-slate-900 dark:text-white">Previous Chat Sessions</h3>
+                      <p className="text-[11px] text-slate-400 dark:text-slate-500">Pick up your analysis right where you left off</p>
+                    </div>
+                  </div>
+                  <Link
+                    to={`/analytics/${dataset.id}`}
+                    className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline flex items-center space-x-1"
+                  >
+                    <span>Open Analytics Workspace</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+                  {conversations.slice(0, 4).map((c) => (
+                    <Link
+                      key={c.id}
+                      to={`/analytics/${dataset.id}?c=${c.id}`}
+                      className="flex items-center justify-between p-3.5 rounded-2xl border border-slate-100 dark:border-slate-800/80 hover:border-blue-300 dark:hover:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40 hover:bg-blue-50/30 dark:hover:bg-slate-800/80 transition-all group"
+                    >
+                      <div className="truncate mr-3">
+                        <span className="text-xs font-bold text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 truncate block">
+                          {c.title}
+                        </span>
+                        <span className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 block">
+                          Last active: {new Date(c.updated_at || c.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 shrink-0 flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span>Continue</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Profiling Summary Insights */}
             <div className="bg-white dark:bg-slate-900/90 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 sm:p-8 shadow-xs space-y-3">

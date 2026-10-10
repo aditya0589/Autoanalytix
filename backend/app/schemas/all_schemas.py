@@ -189,6 +189,14 @@ class AnalyticsResponse(BaseModel):
     error_details: Optional[str] = None
 
 # --- Conversation & Message Schemas ---
+class ConversationCreate(BaseModel):
+    workspace_id: str
+    dataset_id: str
+    title: Optional[str] = "New Chat"
+
+class ConversationUpdate(BaseModel):
+    title: str
+
 class MessageResponse(BaseModel):
     id: str
     conversation_id: str
@@ -197,6 +205,18 @@ class MessageResponse(BaseModel):
     analysis: Optional[AnalyticsResponse] = None
     clarification_options: Optional[List[str]] = None
     created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+class ConversationListItem(BaseModel):
+    id: str
+    workspace_id: str
+    dataset_id: str
+    dataset_name: Optional[str] = None
+    title: str
+    created_at: datetime
+    updated_at: datetime
+    message_count: int = 0
 
     model_config = ConfigDict(from_attributes=True)
 
