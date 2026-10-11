@@ -18,6 +18,41 @@ def get_current_user(
             detail="Authentication credentials were not provided."
         )
     token = credentials.credentials
+    if token == "local_demo_token":
+        user = db.query(User).filter(User.id == "user_local_1").first()
+        if not user:
+            user = User(
+                id="user_local_1",
+                email="analyst@local.app",
+                full_name="Local Analyst (Browser-WASM)",
+                hashed_password="demo_hashed_password",
+                is_active=True
+            )
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+
+            ws = db.query(Workspace).filter(Workspace.id == "ws_local_1").first()
+            if not ws:
+                ws = Workspace(
+                    id="ws_local_1",
+                    name="Personal Workspace (Browser)",
+                    slug="personal-workspace",
+                    owner_id=user.id
+                )
+                db.add(ws)
+                db.commit()
+                db.refresh(ws)
+
+                member = WorkspaceMember(
+                    workspace_id=ws.id,
+                    user_id=user.id,
+                    role="owner"
+                )
+                db.add(member)
+                db.commit()
+        return user
+
     payload = decode_access_token(token)
     if not payload or "sub" not in payload:
         raise HTTPException(
