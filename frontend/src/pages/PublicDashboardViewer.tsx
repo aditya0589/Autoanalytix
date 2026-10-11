@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { api } from "../services/api";
 import { ChartRenderer } from "../components/ChartRenderer";
+import { getColSpanClass } from "./DashboardEditor";
 import { Globe, ShieldCheck, BarChart2 } from "lucide-react";
 
 export const PublicDashboardViewer: React.FC = () => {
@@ -15,7 +16,17 @@ export const PublicDashboardViewer: React.FC = () => {
     setLoading(true);
     api.publicDashboards
       .get(shareId)
-      .then((data) => setDashboard(data))
+      .then((data) => {
+        if (data?.layout?.item_order && Array.isArray(data.layout.item_order) && data.items) {
+          const orderMap = new Map(data.layout.item_order.map((itemId: string, idx: number) => [itemId, idx]));
+          data.items = [...data.items].sort((a: any, b: any) => {
+            const orderA = orderMap.has(a.id) ? orderMap.get(a.id)! : 9999;
+            const orderB = orderMap.has(b.id) ? orderMap.get(b.id)! : 9999;
+            return orderA - orderB;
+          });
+        }
+        setDashboard(data);
+      })
       .catch((err) => setError(err.message || "Shared dashboard is not accessible."))
       .finally(() => setLoading(false));
   }, [shareId]);
@@ -88,7 +99,7 @@ export const PublicDashboardViewer: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-5">
             {items.map((item: any, idx: number) => {
               const span = item.grid_pos?.w || 6;
-              const spanClass = `lg:col-span-${Math.min(span, 12)}`;
+              const spanClass = getColSpanClass(span);
               const spec = item.chart_spec || {
                 type: item.widget_type,
                 title: item.title,

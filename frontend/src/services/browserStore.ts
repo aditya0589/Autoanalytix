@@ -11,6 +11,8 @@ export interface StoredDataset {
   size_bytes: number;
   created_at: string;
   file_content?: string;
+  file_type?: string;
+  original_filename?: string;
   columns: any[];
   profile_summary: any;
 }
@@ -31,6 +33,11 @@ export interface StoredDashboard {
   workspace_id: string;
   title: string;
   description?: string;
+  is_public?: boolean;
+  share_token?: string;
+  share_expires_at?: string;
+  layout?: any;
+  filters?: any;
   created_at: string;
   updated_at: string;
   items: any[];
@@ -115,6 +122,8 @@ export class BrowserStorageService {
     fileContent: string | ArrayBuffer;
     format: "csv" | "parquet" | "json";
     workspaceId: string;
+    fileType?: string;
+    originalFilename?: string;
   }): Promise<StoredDataset> {
     const id = "ds_" + Math.random().toString(36).substring(2, 10);
     const tableName = `dataset_${id}`;
@@ -133,9 +142,16 @@ export class BrowserStorageService {
       size_bytes: typeof params.fileContent === "string" ? params.fileContent.length : params.fileContent.byteLength,
       created_at: new Date().toISOString(),
       file_content: typeof params.fileContent === "string" ? params.fileContent : undefined,
+      file_type: params.fileType || params.format,
+      original_filename: params.originalFilename,
       columns: profile.columns,
       profile_summary: {
         summary: `Dataset containing ${profile.row_count} records across ${profile.column_count} columns.`,
+        duplicate_rows_count: profile.duplicate_rows_count,
+        missing_cells_count: profile.missing_cells_count,
+        missing_cells_percentage: profile.missing_cells_percentage,
+        total_cells: profile.total_cells,
+        summary_insights: profile.summary_insights,
         suggested_questions: [
           `Show distribution of ${profile.columns[0]?.name || "records"}`,
           `Top 5 ${profile.columns[1]?.name || "categories"} by total volume`,
@@ -229,7 +245,18 @@ export class BrowserStorageService {
 
   public getDashboard(id: string): StoredDashboard | null {
     const list = this.getDashboards();
-    return list.find((d) => d.id === id) || null;
+    const db = list.find((d) => d.id === id);
+    if (!db) return null;
+    const cloned = JSON.parse(JSON.stringify(db));
+    if (cloned.layout?.item_order && Array.isArray(cloned.layout.item_order) && cloned.items) {
+      const orderMap = new Map(cloned.layout.item_order.map((itemId: string, idx: number) => [itemId, idx]));
+      cloned.items = [...cloned.items].sort((a: any, b: any) => {
+        const orderA = orderMap.has(a.id) ? orderMap.get(a.id)! : 9999;
+        const orderB = orderMap.has(b.id) ? orderMap.get(b.id)! : 9999;
+        return orderA - orderB;
+      });
+    }
+    return cloned;
   }
 
   public saveDashboard(db: StoredDashboard) {

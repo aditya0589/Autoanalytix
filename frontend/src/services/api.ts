@@ -1,6 +1,15 @@
 import { duckdbWasm } from "./duckdbWasm";
 import { browserAi } from "./browserAi";
 import { browserStore } from "./browserStore";
+import * as XLSX from "xlsx";
+
+async function ensureTableRegistered(ds: any) {
+  if (!duckdbWasm.isTableRegistered(ds.duckdb_table_name)) {
+    if (ds.file_content) {
+      await duckdbWasm.registerFile(ds.duckdb_table_name, ds.file_content, "csv");
+    }
+  }
+}
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
 
@@ -231,12 +240,26 @@ class ApiClient {
       } catch {
         const ds = browserStore.getDataset(id);
         if (!ds) throw new Error("Dataset not found.");
+        await ensureTableRegistered(ds);
         const q = await duckdbWasm.query(`SELECT * FROM "${ds.duckdb_table_name}" LIMIT ${limit};`);
+        const columns = ds.columns && ds.columns.length > 0
+          ? ds.columns
+          : q.columns.map((c) => ({
+              name: c,
+              original_name: c,
+              data_type: "text",
+              duckdb_type: "VARCHAR",
+              null_percentage: 0,
+              unique_count: q.rows.length,
+            }));
         return {
           dataset_id: id,
+          name: ds.name,
           table_name: ds.duckdb_table_name,
-          row_count: q.rows.length,
-          columns: q.columns,
+          row_count: ds.row_count || q.rows.length,
+          column_count: columns.length,
+          columns,
+          rows: q.rows,
           data: q.rows,
         };
       }
@@ -247,11 +270,20 @@ class ApiClient {
       } catch {
         const ds = browserStore.getDataset(id);
         if (!ds) throw new Error("Dataset not found.");
+        const prof = ds.profile_summary || {};
         return {
           dataset_id: id,
-          profile_summary: ds.profile_summary,
-          columns: ds.columns,
-          suggested_questions: ds.profile_summary?.suggested_questions || [],
+          name: ds.name,
+          row_count: ds.row_count,
+          column_count: ds.column_count,
+          size_bytes: ds.size_bytes,
+          duplicate_rows_count: prof.duplicate_rows_count ?? 0,
+          missing_cells_count: prof.missing_cells_count ?? 0,
+          missing_cells_percentage: prof.missing_cells_percentage ?? 0,
+          total_cells: prof.total_cells ?? 0,
+          summary_insights: prof.summary_insights ?? [],
+          columns: ds.columns || [],
+          suggested_questions: prof.suggested_questions || [],
         };
       }
     },
@@ -278,14 +310,45 @@ class ApiClient {
         const name = (formData.get("name") as string) || file.name.replace(/\.[^/.]+$/, "");
         const workspaceId = (formData.get("workspace_id") as string) || "ws_local_1";
 
-        const ext = file.name.endsWith(".parquet") ? "parquet" : file.name.endsWith(".json") ? "json" : "csv";
-        const content = ext === "parquet" ? await file.arrayBuffer() : await file.text();
+        const fileNameLower = file.name.toLowerCase();
+        const isExcel = fileNameLower.endsWith(".xlsx") || fileNameLower.endsWith(".xls");
+        const isParquet = fileNameLower.endsWith(".parquet");
+        const isJson = fileNameLower.endsWith(".json");
+
+        let content: string | ArrayBuffer;
+        let format: "csv" | "parquet" | "json" = "csv";
+
+        if (isExcel) {
+          const arrayBuffer = await file.arrayBuffer();
+          const workbook = XLSX.read(arrayBuffer, { type: "array", cellDates: true });
+          const firstSheetName = workbook.SheetNames[0];
+          if (!firstSheetName) {
+            throw new Error("Excel workbook contains no sheets.");
+          }
+          const worksheet = workbook.Sheets[firstSheetName];
+          content = XLSX.utils.sheet_to_csv(worksheet, { blankrows: false });
+          if (!content || !content.trim()) {
+            throw new Error(`Sheet "${firstSheetName}" is empty or has no data.`);
+          }
+          format = "csv";
+        } else if (isParquet) {
+          content = await file.arrayBuffer();
+          format = "parquet";
+        } else if (isJson) {
+          content = await file.text();
+          format = "json";
+        } else {
+          content = await file.text();
+          format = "csv";
+        }
 
         return await browserStore.registerAndSaveDataset({
           name,
           fileContent: content,
-          format: ext,
+          format,
           workspaceId,
+          fileType: isExcel ? (fileNameLower.endsWith(".xlsx") ? "xlsx" : "xls") : format,
+          originalFilename: file.name,
         });
       }
     },
@@ -308,6 +371,7 @@ class ApiClient {
           // If no local dataset, auto-generate demo dataset
           ds = await browserStore.generateDemoDataset(payload.workspace_id);
         }
+        await ensureTableRegistered(ds);
 
         // Get AI key from local configurations
         const aiConfigs = browserStore.getAiConfigs();
@@ -557,6 +621,22 @@ class ApiClient {
           browserStore.saveDashboard(db);
         }
         return { success: true };
+      }
+    },
+    updateItem: async (dashboardId: string, itemId: string, data: any) => {
+      try {
+        return await this.request<any>(`/dashboards/${dashboardId}/items/${itemId}`, { method: "PUT", body: JSON.stringify(data) });
+      } catch {
+        const db = browserStore.getDashboard(dashboardId);
+        if (db && db.items) {
+          const idx = db.items.findIndex((i: any) => i.id === itemId);
+          if (idx >= 0) {
+            db.items[idx] = { ...db.items[idx], ...data };
+            browserStore.saveDashboard(db);
+            return db.items[idx];
+          }
+        }
+        return null;
       }
     },
     share: async (id: string, enable: boolean, expiresInDays?: number) => {

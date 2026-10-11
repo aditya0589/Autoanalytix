@@ -56,6 +56,10 @@ def get_public_dashboard(share_token: str, db: Session = Depends(get_db)):
         for item in items
     ]
 
+    if dashboard.layout and isinstance(dashboard.layout, dict) and "item_order" in dashboard.layout and isinstance(dashboard.layout["item_order"], list):
+        order_map = {item_id: idx for idx, item_id in enumerate(dashboard.layout["item_order"])}
+        item_responses.sort(key=lambda it: order_map.get(it.id, 9999))
+
     return PublicDashboardResponse(
         title=dashboard.title,
         description=dashboard.description,

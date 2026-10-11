@@ -11,8 +11,27 @@ import {
   Sparkles,
   Plus,
   Eye,
-  Sliders
+  Sliders,
+  ChevronLeft,
+  ChevronRight,
+  Move
 } from "lucide-react";
+
+export const getColSpanClass = (span: number = 6): string => {
+  switch (span) {
+    case 12:
+      return "lg:col-span-12";
+    case 8:
+      return "lg:col-span-8";
+    case 4:
+      return "lg:col-span-4";
+    case 3:
+      return "lg:col-span-3";
+    case 6:
+    default:
+      return "lg:col-span-6";
+  }
+};
 
 export const DashboardEditor: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -40,7 +59,17 @@ export const DashboardEditor: React.FC = () => {
       setDashboard(data);
       setTitle(data.title);
       setDescription(data.description || "");
-      setItems(data.items || []);
+
+      let loadedItems = data.items || [];
+      if (data.layout?.item_order && Array.isArray(data.layout.item_order)) {
+        const orderMap = new Map(data.layout.item_order.map((itemId: string, idx: number) => [itemId, idx]));
+        loadedItems = [...loadedItems].sort((a: any, b: any) => {
+          const orderA = orderMap.has(a.id) ? orderMap.get(a.id)! : 9999;
+          const orderB = orderMap.has(b.id) ? orderMap.get(b.id)! : 9999;
+          return orderA - orderB;
+        });
+      }
+      setItems(loadedItems);
     } finally {
       setLoading(false);
     }
@@ -54,11 +83,27 @@ export const DashboardEditor: React.FC = () => {
     if (!id) return;
     setSaving(true);
     try {
+      const updatedLayout = {
+        ...(dashboard?.layout || {}),
+        item_order: items.map((i) => i.id),
+        items: items.map((i) => ({ id: i.id, grid_pos: i.grid_pos })),
+      };
+
       await api.dashboards.update(id, {
         title,
         description,
+        layout: updatedLayout,
+        items: items.map((i) => ({
+          id: i.id,
+          title: i.title,
+          widget_type: i.widget_type,
+          grid_pos: i.grid_pos || { x: 0, y: 0, w: 6, h: 4 },
+          chart_spec: i.chart_spec,
+          cached_data: i.cached_data,
+          config: i.config,
+        })),
       });
-      alert("Dashboard settings saved successfully!");
+      alert("Dashboard layout and settings saved successfully!");
       navigate(`/dashboards/${id}`);
     } catch (err: any) {
       alert("Failed to save: " + err.message);
@@ -77,18 +122,27 @@ export const DashboardEditor: React.FC = () => {
     }
   };
 
-  const handleUpdateItemSpan = async (itemId: string, newSpan: number) => {
+  const handleUpdateItemSpan = (itemId: string, newSpan: number) => {
     setItems((prev) =>
       prev.map((i) => {
         if (i.id === itemId) {
           return {
             ...i,
-            grid_pos: { ...i.grid_pos, w: newSpan },
+            grid_pos: { ...(i.grid_pos || {}), w: newSpan },
           };
         }
         return i;
       })
     );
+  };
+
+  const handleMoveItem = (index: number, direction: -1 | 1) => {
+    const targetIndex = index + direction;
+    if (targetIndex < 0 || targetIndex >= items.length) return;
+    const updated = [...items];
+    const [moved] = updated.splice(index, 1);
+    updated.splice(targetIndex, 0, moved);
+    setItems(updated);
   };
 
   const handleAddWidget = async (e: React.FormEvent) => {
@@ -176,29 +230,57 @@ export const DashboardEditor: React.FC = () => {
 
         {/* Widgets Grid in Editor */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-5">
-          {items.map((item: any) => {
+          {items.map((item: any, index: number) => {
             const span = item.grid_pos?.w || 6;
-            const spanClass = `lg:col-span-${Math.min(span, 12)}`;
+            const spanClass = getColSpanClass(span);
             const spec = item.chart_spec || {
               type: item.widget_type,
               title: item.title,
               data: item.cached_data?.rows || [],
             };
 
+            const spanLabel = span === 12 ? "Full Width (12/12)" : span === 4 ? "1/3 Width (4/12)" : "Half Width (6/12)";
+
             return (
               <div key={item.id} className={`${spanClass} col-span-12 relative group`}>
                 {/* Widget Controls Overlay */}
                 <div className="absolute top-3 right-3 z-10 flex items-center space-x-1 bg-white/95 dark:bg-slate-800/95 border border-slate-200 dark:border-slate-700 p-1.5 rounded-xl shadow-md opacity-0 group-hover:opacity-100 transition-opacity">
+                  {/* Reorder Buttons */}
                   <button
-                    onClick={() => handleUpdateItemSpan(item.id, span === 12 ? 6 : span === 6 ? 4 : 12)}
-                    className="p-1 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg"
-                    title="Change Width (Full / Half / Third)"
+                    onClick={() => handleMoveItem(index, -1)}
+                    disabled={index === 0}
+                    className="p-1 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 disabled:opacity-30 disabled:hover:text-slate-500 rounded-lg"
+                    title="Move Earlier in Layout"
                   >
-                    <Maximize2 className="w-3.5 h-3.5" />
+                    <ChevronLeft className="w-3.5 h-3.5" />
                   </button>
                   <button
+                    onClick={() => handleMoveItem(index, 1)}
+                    disabled={index === items.length - 1}
+                    className="p-1 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 disabled:opacity-30 disabled:hover:text-slate-500 rounded-lg"
+                    title="Move Later in Layout"
+                  >
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+
+                  <div className="h-4 w-px bg-slate-200 dark:bg-slate-700 mx-0.5" />
+
+                  {/* Width cycle button */}
+                  <button
+                    onClick={() => handleUpdateItemSpan(item.id, span === 12 ? 6 : span === 6 ? 4 : 12)}
+                    className="flex items-center space-x-1 px-1.5 py-1 text-[11px] font-semibold text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                    title={`Change Width: currently ${spanLabel} (Click to cycle)`}
+                  >
+                    <Maximize2 className="w-3 h-3" />
+                    <span>{span === 12 ? "Full" : span === 4 ? "1/3" : "Half"}</span>
+                  </button>
+
+                  <div className="h-4 w-px bg-slate-200 dark:bg-slate-700 mx-0.5" />
+
+                  {/* Remove Widget */}
+                  <button
                     onClick={() => handleDeleteItem(item.id)}
-                    className="p-1 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg"
+                    className="p-1 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg transition-colors"
                     title="Remove Widget"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
