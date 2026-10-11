@@ -1,11 +1,11 @@
 import re
+import uuid
+from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
-from app.core.database import get_db
 from app.core.security import verify_password, get_password_hash, create_access_token
-from app.models.all_models import User, Workspace, WorkspaceMember
 from app.schemas.all_schemas import UserCreate, UserLogin, UserResponse, Token
-from app.api.deps import get_current_user
+from app.api.deps import get_current_user, ItemObject
+from app.core.dynamodb import dynamodb_store
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -14,46 +14,55 @@ def slugify(text: str) -> str:
     return re.sub(r"[-\s]+", "-", cleaned)
 
 @router.post("/register", response_model=Token)
-def register(user_in: UserCreate, db: Session = Depends(get_db)):
-    existing = db.query(User).filter(User.email == user_in.email.lower()).first()
+def register(user_in: UserCreate):
+    existing = dynamodb_store.get_user_by_email(user_in.email)
     if existing:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="A user with this email address already exists."
         )
 
-    user = User(
-        email=user_in.email.lower(),
-        hashed_password=get_password_hash(user_in.password),
-        full_name=user_in.full_name or user_in.email.split("@")[0].title()
-    )
-    db.add(user)
-    db.commit()
-    db.refresh(user)
+    user_id = str(uuid.uuid4())
+    now = datetime.now(timezone.utc).isoformat()
+    full_name = user_in.full_name or user_in.email.split("@")[0].title()
+
+    user_data = {
+        "id": user_id,
+        "email": user_in.email.strip().lower(),
+        "hashed_password": get_password_hash(user_in.password),
+        "full_name": full_name,
+        "is_active": True,
+        "created_at": now,
+        "updated_at": now,
+    }
+    user = dynamodb_store.create_user(user_data)
 
     # Automatically create default workspace for the user
-    ws_name = f"{user.full_name}'s Workspace"
+    ws_id = str(uuid.uuid4())
+    ws_name = f"{full_name}'s Workspace"
     base_slug = slugify(ws_name)
-    slug = f"{base_slug}-{user.id[:6]}"
+    slug = f"{base_slug}-{user_id[:6]}"
 
-    workspace = Workspace(
-        name=ws_name,
-        slug=slug,
-        owner_id=user.id
-    )
-    db.add(workspace)
-    db.commit()
-    db.refresh(workspace)
+    ws_data = {
+        "id": ws_id,
+        "name": ws_name,
+        "slug": slug,
+        "owner_id": user_id,
+        "created_at": now,
+        "updated_at": now,
+    }
+    dynamodb_store.create_workspace(ws_data)
 
-    member = WorkspaceMember(
-        workspace_id=workspace.id,
-        user_id=user.id,
-        role="owner"
-    )
-    db.add(member)
-    db.commit()
+    member_data = {
+        "id": str(uuid.uuid4()),
+        "workspace_id": ws_id,
+        "user_id": user_id,
+        "role": "owner",
+        "created_at": now,
+    }
+    dynamodb_store.add_workspace_member(member_data)
 
-    access_token = create_access_token(user.id)
+    access_token = create_access_token(user_id)
     return Token(
         access_token=access_token,
         token_type="bearer",
@@ -61,20 +70,20 @@ def register(user_in: UserCreate, db: Session = Depends(get_db)):
     )
 
 @router.post("/login", response_model=Token)
-def login(login_in: UserLogin, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.email == login_in.email.lower()).first()
-    if not user or not verify_password(login_in.password, user.hashed_password):
+def login(login_in: UserLogin):
+    user = dynamodb_store.get_user_by_email(login_in.email)
+    if not user or not verify_password(login_in.password, user["hashed_password"]):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password."
         )
-    if not user.is_active:
+    if not user.get("is_active"):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Account is inactive."
         )
 
-    access_token = create_access_token(user.id)
+    access_token = create_access_token(user["id"])
     return Token(
         access_token=access_token,
         token_type="bearer",
@@ -82,25 +91,9 @@ def login(login_in: UserLogin, db: Session = Depends(get_db)):
     )
 
 @router.get("/me")
-def get_me(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    # Find user workspaces
-    memberships = (
-        db.query(WorkspaceMember, Workspace)
-        .join(Workspace, WorkspaceMember.workspace_id == Workspace.id)
-        .filter(WorkspaceMember.user_id == current_user.id)
-        .all()
-    )
-    workspaces = [
-        {
-            "id": ws.id,
-            "name": ws.name,
-            "slug": ws.slug,
-            "role": m.role,
-            "owner_id": ws.owner_id
-        }
-        for m, ws in memberships
-    ]
+def get_me(current_user: ItemObject = Depends(get_current_user)):
+    workspaces = dynamodb_store.list_user_workspaces(current_user.id)
     return {
-        "user": UserResponse.model_validate(current_user),
+        "user": UserResponse.model_validate(dict(current_user)),
         "workspaces": workspaces
     }
