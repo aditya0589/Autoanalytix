@@ -5,7 +5,6 @@ try:
 except ImportError:
     Mangum = None
 from app.core.config import settings
-from app.core.database import engine, Base
 from app.api import (
     auth,
     ai_providers,
@@ -17,11 +16,13 @@ from app.api import (
     data_sources
 )
 
-# Initialize database schema on startup
-try:
-    Base.metadata.create_all(bind=engine)
-except Exception:
-    pass
+# Initialize database schema on startup if running local SQLite
+if not settings.USE_DYNAMODB:
+    try:
+        from app.core.database import engine, Base
+        Base.metadata.create_all(bind=engine)
+    except Exception:
+        pass
 
 app = FastAPI(
     title=settings.PROJECT_NAME,

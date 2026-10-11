@@ -29,9 +29,13 @@ class Settings(BaseSettings):
     # Database (Default to local SQLite database with zero external setup, or Postgres in Docker)
     DATABASE_URL: str = Field(default=default_db)
     
-    # Storage
+    # Storage & AWS
     STORAGE_DIR: str = Field(default=default_storage)
     MAX_UPLOAD_SIZE_BYTES: int = 50 * 1024 * 1024  # 50 MB
+    AWS_REGION: str = Field(default=os.environ.get("AWS_REGION", "us-east-1"))
+    DYNAMODB_TABLE_NAME: str = Field(default=os.environ.get("DYNAMODB_TABLE_NAME", "autoanalytix_data"))
+    S3_STORAGE_BUCKET: str = Field(default=os.environ.get("S3_STORAGE_BUCKET", "autoanalytix-storage-prod"))
+    USE_DYNAMODB: bool = Field(default=True)
     
     # DuckDB limits
     DUCKDB_MEMORY_LIMIT: str = "2GB"

@@ -3,14 +3,14 @@ import zipfile
 
 def pack_backend(output_zip: str = "backend_source.zip"):
     backend_dir = os.path.abspath("backend")
-    exclude_patterns = ["__pycache__", ".pytest_cache", ".git", "venv", ".venv", ".db", "storage", ".DS_Store"]
+    exclude_dirs = {"__pycache__", ".pytest_cache", ".git", "venv", ".venv", "storage"}
     
     with zipfile.ZipFile(output_zip, "w", zipfile.ZIP_DEFLATED) as zipf:
         for root, dirs, files in os.walk(backend_dir):
             # filter dirs in place
-            dirs[:] = [d for d in dirs if not any(p in d for p in exclude_patterns)]
+            dirs[:] = [d for d in dirs if d not in exclude_dirs and not d.startswith(".")]
             for file in files:
-                if any(p in file for p in exclude_patterns):
+                if file.endswith(".pyc") or file.endswith(".db") or file == ".DS_Store":
                     continue
                 file_path = os.path.join(root, file)
                 rel_path = os.path.relpath(file_path, backend_dir)
