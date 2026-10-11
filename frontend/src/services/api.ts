@@ -72,8 +72,7 @@ class ApiClient {
       try {
         return await this.request<any>("/auth/login", { method: "POST", body: JSON.stringify(credentials) });
       } catch (err: any) {
-        // Browser-only fallback
-        if (err.message?.includes("Failed to fetch") || !API_BASE_URL) {
+        if (!API_BASE_URL) {
           const fakeUser = {
             id: "user_local_1",
             email: credentials.email,
@@ -90,7 +89,7 @@ class ApiClient {
       try {
         return await this.request<any>("/auth/register", { method: "POST", body: JSON.stringify(userData) });
       } catch (err: any) {
-        if (err.message?.includes("Failed to fetch") || !API_BASE_URL) {
+        if (!API_BASE_URL) {
           const fakeUser = {
             id: "user_local_1",
             email: userData.email,
@@ -105,26 +104,37 @@ class ApiClient {
     },
     getMe: async () => {
       try {
+        const token = this.getToken();
+        if (token === "local_demo_token" && API_BASE_URL) {
+          this.clearToken();
+          throw new Error("Session expired. Please log in to your account.");
+        }
         return await this.request<any>("/auth/me");
       } catch (err: any) {
-        // Browser fallback
-        return {
-          user: {
-            id: "user_local_1",
-            email: "analyst@local.app",
-            full_name: "Local Analyst (Browser-WASM)",
-            is_active: true,
-          },
-          workspaces: [
-            {
-              id: "ws_local_1",
-              name: "Personal Workspace (Browser)",
-              slug: "personal-workspace",
-              role: "owner",
-              owner_id: "user_local_1",
+        if (err.message?.includes("Session expired") || (err as any).code === 401) {
+          this.clearToken();
+          throw err;
+        }
+        if (!API_BASE_URL) {
+          return {
+            user: {
+              id: "user_local_1",
+              email: "analyst@local.app",
+              full_name: "Local Analyst (Browser-WASM)",
+              is_active: true,
             },
-          ],
-        };
+            workspaces: [
+              {
+                id: "ws_local_1",
+                name: "Personal Workspace (Browser)",
+                slug: "personal-workspace",
+                role: "owner",
+                owner_id: "user_local_1",
+              },
+            ],
+          };
+        }
+        throw err;
       }
     },
   };

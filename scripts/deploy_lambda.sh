@@ -63,11 +63,16 @@ else
         --region "$REGION"
 fi
 
-echo "6. Configuring Lambda Function URL with public CORS..."
+echo "6. Configuring Lambda Function URL (CORS managed by FastAPI)..."
 aws lambda create-function-url-config \
     --function-name "$FUNCTION_NAME" \
     --auth-type NONE \
-    --cors '{"AllowOrigins":["*"],"AllowMethods":["*"],"AllowHeaders":["*"]}' \
+    --cors '{}' \
+    --region "$REGION" 2>/dev/null || true
+
+aws lambda update-function-url-config \
+    --function-name "$FUNCTION_NAME" \
+    --cors '{}' \
     --region "$REGION" 2>/dev/null || true
 
 aws lambda add-permission \

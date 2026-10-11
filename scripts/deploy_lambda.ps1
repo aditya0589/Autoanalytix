@@ -64,11 +64,16 @@ if ($LASTEXITCODE -eq 0) {
         --region $Region
 }
 
-Write-Host "6. Configuring Lambda Function URL with public CORS..."
+Write-Host "6. Configuring Lambda Function URL (CORS managed by FastAPI)..."
 aws lambda create-function-url-config `
     --function-name $FunctionName `
     --auth-type NONE `
-    --cors '{"AllowOrigins":["*"],"AllowMethods":["*"],"AllowHeaders":["*"]}' `
+    --cors '{}' `
+    --region $Region 2>$null
+
+aws lambda update-function-url-config `
+    --function-name $FunctionName `
+    --cors '{}' `
     --region $Region 2>$null
 
 aws lambda add-permission `
