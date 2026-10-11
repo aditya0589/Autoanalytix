@@ -37,10 +37,14 @@ def get_chat_model_for_config(ai_config) -> BaseChatModel:
     Decrypts the user's authorized API key inside the backend process only,
     and returns the configured LangChain chat model.
     """
-    adapter = get_provider_adapter(ai_config.provider)
-    decrypted_key = decrypt_credential(ai_config.encrypted_api_key)
+    provider = getattr(ai_config, "provider", None) or (ai_config.get("provider") if isinstance(ai_config, dict) else None)
+    adapter = get_provider_adapter(provider)
+    enc_key = getattr(ai_config, "encrypted_api_key", None) or (ai_config.get("encrypted_api_key") if isinstance(ai_config, dict) else None)
+    decrypted_key = decrypt_credential(enc_key)
+    model_name = getattr(ai_config, "model_name", None) or (ai_config.get("model_name") if isinstance(ai_config, dict) else None)
+    custom_endpoint = getattr(ai_config, "custom_endpoint", None) or (ai_config.get("custom_endpoint") if isinstance(ai_config, dict) else None)
     return adapter.get_chat_model(
         api_key=decrypted_key,
-        model_name=ai_config.model_name,
-        custom_endpoint=ai_config.custom_endpoint
+        model_name=model_name,
+        custom_endpoint=custom_endpoint
     )
