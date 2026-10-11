@@ -65,6 +65,10 @@ class DuckDBWasmService {
     this.registeredTables.add(tableName);
   }
 
+  public isTableRegistered(tableName: string): boolean {
+    return this.registeredTables.has(tableName);
+  }
+
   public async query(sql: string): Promise<{ rows: any[]; columns: string[]; executionTimeMs: number }> {
     const conn = await this.getConnection();
     const startTime = performance.now();
@@ -94,6 +98,7 @@ class DuckDBWasmService {
 
     // 3. Profiles per column
     const columnsProfile = [];
+    let totalNulls = 0;
     for (const c of cols) {
       const colName = c.column_name;
       const colType = c.column_type;
@@ -102,6 +107,8 @@ class DuckDBWasmService {
       );
 
       let stats: any = {};
+      let nullCount = 0;
+      let uniqueCount = 0;
       try {
         if (isNumeric) {
           const statsRes = await conn.query(`
@@ -114,12 +121,14 @@ class DuckDBWasmService {
             FROM "${tableName}";
           `);
           const s = statsRes.toArray()[0]?.toJSON() || {};
+          nullCount = totalRows - Number(s.non_null_cnt || 0);
+          uniqueCount = Number(s.distinct_cnt || 0);
           stats = {
             min: s.min_val,
             max: s.max_val,
             mean: s.avg_val ? Number(s.avg_val.toFixed(2)) : 0,
-            null_count: totalRows - Number(s.non_null_cnt || 0),
-            unique_count: Number(s.distinct_cnt || 0),
+            null_count: nullCount,
+            unique_count: uniqueCount,
           };
         } else {
           const statsRes = await conn.query(`
@@ -129,28 +138,48 @@ class DuckDBWasmService {
             FROM "${tableName}";
           `);
           const s = statsRes.toArray()[0]?.toJSON() || {};
+          nullCount = totalRows - Number(s.non_null_cnt || 0);
+          uniqueCount = Number(s.distinct_cnt || 0);
           stats = {
-            null_count: totalRows - Number(s.non_null_cnt || 0),
-            unique_count: Number(s.distinct_cnt || 0),
+            null_count: nullCount,
+            unique_count: uniqueCount,
           };
         }
       } catch (e) {
         console.warn(`Could not compute stats for ${colName}:`, e);
       }
 
+      totalNulls += nullCount;
+      const nullPercentage = totalRows > 0 ? Number(((nullCount / totalRows) * 100).toFixed(2)) : 0;
+
       columnsProfile.push({
         name: colName,
+        original_name: colName,
         data_type: isNumeric ? "numeric" : "categorical",
         duckdb_type: colType,
+        null_count: nullCount,
+        null_percentage: nullPercentage,
+        unique_count: uniqueCount,
         stats,
       });
     }
+
+    const totalCells = totalRows * columnsProfile.length;
+    const missingCellsPercentage = totalCells > 0 ? Number(((totalNulls / totalCells) * 100).toFixed(2)) : 0;
 
     return {
       table_name: tableName,
       row_count: totalRows,
       column_count: columnsProfile.length,
       columns: columnsProfile,
+      duplicate_rows_count: 0,
+      missing_cells_count: totalNulls,
+      missing_cells_percentage: missingCellsPercentage,
+      total_cells: totalCells,
+      summary_insights: [
+        `Parsed ${totalRows.toLocaleString()} rows and ${columnsProfile.length} columns into DuckDB-Wasm engine.`,
+        `Column missing percentage averages ${missingCellsPercentage}%.`
+      ],
     };
   }
 }

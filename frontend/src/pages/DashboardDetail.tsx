@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { Layout } from "../components/Layout";
 import { api } from "../services/api";
 import { ChartRenderer } from "../components/ChartRenderer";
+import { getColSpanClass } from "./DashboardEditor";
 import {
   Share2,
   Edit,
@@ -35,7 +36,18 @@ export const DashboardDetail: React.FC = () => {
     try {
       setLoading(true);
       const data = await api.dashboards.get(id);
-      setDashboard(data);
+
+      let loadedItems = data.items || [];
+      if (data.layout?.item_order && Array.isArray(data.layout.item_order)) {
+        const orderMap = new Map(data.layout.item_order.map((itemId: string, idx: number) => [itemId, idx]));
+        loadedItems = [...loadedItems].sort((a: any, b: any) => {
+          const orderA = orderMap.has(a.id) ? orderMap.get(a.id)! : 9999;
+          const orderB = orderMap.has(b.id) ? orderMap.get(b.id)! : 9999;
+          return orderA - orderB;
+        });
+      }
+
+      setDashboard({ ...data, items: loadedItems });
       setIsPublic(data.is_public);
       setShareToken(data.share_token);
     } finally {
@@ -157,7 +169,7 @@ export const DashboardDetail: React.FC = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-5">
             {items.map((item: any) => {
-              const spanCol = item.grid_pos?.w ? `lg:col-span-${Math.min(item.grid_pos.w, 12)}` : "lg:col-span-6";
+              const spanCol = getColSpanClass(item.grid_pos?.w || 6);
               const spec = item.chart_spec || {
                 type: item.widget_type,
                 title: item.title,

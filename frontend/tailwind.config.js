@@ -4,6 +4,15 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
+  safelist: [
+    "lg:col-span-12",
+    "lg:col-span-8",
+    "lg:col-span-6",
+    "lg:col-span-4",
+    "lg:col-span-3",
+    "col-span-12",
+    "col-span-6",
+  ],
   darkMode: "class",
   theme: {
     extend: {

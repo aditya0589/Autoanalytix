@@ -255,6 +255,16 @@ class DashboardItemResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+class DashboardItemUpdate(BaseModel):
+    id: Optional[str] = None
+    analysis_id: Optional[str] = None
+    title: Optional[str] = None
+    widget_type: Optional[str] = None
+    grid_pos: Optional[Dict[str, Any]] = None
+    chart_spec: Optional[Dict[str, Any]] = None
+    cached_data: Optional[Dict[str, Any]] = None
+    config: Optional[Dict[str, Any]] = None
+
 class DashboardCreate(BaseModel):
     workspace_id: str
     title: str
@@ -268,7 +278,7 @@ class DashboardUpdate(BaseModel):
     layout: Optional[Dict[str, Any]] = None
     filters: Optional[Dict[str, Any]] = None
     is_public: Optional[bool] = None
-    items: Optional[List[DashboardItemCreate]] = None
+    items: Optional[List[DashboardItemUpdate]] = None
 
 class DashboardResponse(BaseModel):
     id: str
