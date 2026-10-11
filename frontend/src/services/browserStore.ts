@@ -62,7 +62,10 @@ export class BrowserStorageService {
 
   private setLocal(key: string, value: any) {
     try {
-      localStorage.setItem(key, JSON.stringify(value));
+      localStorage.setItem(
+        key,
+        JSON.stringify(value, (_, v) => (typeof v === "bigint" ? Number(v) : v))
+      );
     } catch (e) {
       console.warn("Storage write error:", e);
     }

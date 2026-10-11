@@ -1,16 +1,20 @@
 import math
 from typing import Dict, Any, List
-import polars as pl
 
 class DatasetProfiler:
     @staticmethod
-    def profile_dataframe(df: pl.DataFrame, type_map: Dict[str, str], original_columns: List[str]) -> Dict[str, Any]:
-        row_count = df.height
-        column_count = df.width
+    def profile_dataframe(df: Any, type_map: Dict[str, str], original_columns: List[str]) -> Dict[str, Any]:
+        """
+        Profiles a ParsedDataFrame using native DuckDB aggregations.
+        Generates column stats, missingness, duplicate counts, and AI-suggested analytical questions.
+        """
+        row_count = int(df.height)
+        column_count = int(df.width)
         
         # Calculate duplicates
         try:
-            duplicate_count = row_count - df.unique().height
+            distinct_count = df.conn.execute(f"SELECT COUNT(*) FROM (SELECT DISTINCT * FROM {df.table_name})").fetchone()[0]
+            duplicate_count = max(0, row_count - int(distinct_count))
         except Exception:
             duplicate_count = 0
 
@@ -25,62 +29,79 @@ class DatasetProfiler:
             orig_col = original_columns[i] if i < len(original_columns) else col
             inferred_type = type_map.get(col, "categorical")
             
-            null_count = df[col].null_count()
+            # Null count
+            null_count = int(df.conn.execute(f'SELECT COUNT(*) FROM {df.table_name} WHERE "{col}" IS NULL').fetchone()[0])
             total_missing += null_count
             null_pct = round((null_count / row_count) * 100, 2) if row_count > 0 else 0.0
             
+            # Unique count
             try:
-                unique_count = df[col].n_unique()
+                unique_count = int(df.conn.execute(f'SELECT COUNT(DISTINCT "{col}") FROM {df.table_name}').fetchone()[0])
             except Exception:
                 unique_count = 0
 
             # Sample values
-            sample_vals = [
-                str(v) if v is not None else None 
-                for v in df[col].drop_nulls().head(5).to_list()
-            ]
+            sample_rows = df.conn.execute(f'SELECT "{col}" FROM {df.table_name} WHERE "{col}" IS NOT NULL LIMIT 5').fetchall()
+            sample_vals = [str(r[0]) if r[0] is not None else None for r in sample_rows]
 
             stats: Dict[str, Any] = {}
             if inferred_type == "numeric":
                 numeric_cols.append(col)
-                s = df[col].drop_nulls()
-                if s.len() > 0:
+                if row_count - null_count > 0:
                     try:
-                        stats["min"] = round(float(s.min()), 2)
-                        stats["max"] = round(float(s.max()), 2)
-                        stats["mean"] = round(float(s.mean()), 2)
-                        stats["median"] = round(float(s.median()), 2)
-                        stats["std"] = round(float(s.std()), 2) if s.std() is not None else 0.0
+                        row = df.conn.execute(f'''
+                            SELECT 
+                                MIN("{col}"),
+                                MAX("{col}"),
+                                AVG("{col}"),
+                                MEDIAN("{col}"),
+                                STDDEV_SAMP("{col}")
+                            FROM {df.table_name}
+                            WHERE "{col}" IS NOT NULL
+                        ''').fetchone()
+                        if row and row[0] is not None:
+                            stats["min"] = round(float(row[0]), 2)
+                            stats["max"] = round(float(row[1]), 2)
+                            stats["mean"] = round(float(row[2]), 2) if row[2] is not None else 0.0
+                            stats["median"] = round(float(row[3]), 2) if row[3] is not None else 0.0
+                            stats["std"] = round(float(row[4]), 2) if row[4] is not None else 0.0
                     except Exception:
                         pass
             elif inferred_type == "categorical":
                 categorical_cols.append(col)
                 try:
-                    top_vals = (
-                        df[col]
-                        .drop_nulls()
-                        .value_counts(sort=True)
-                        .head(5)
-                        .to_dicts()
-                    )
-                    stats["top_values"] = top_vals
+                    top_rows = df.conn.execute(f'''
+                        SELECT "{col}" as value, COUNT(*) as count
+                        FROM {df.table_name}
+                        WHERE "{col}" IS NOT NULL
+                        GROUP BY "{col}"
+                        ORDER BY count DESC
+                        LIMIT 5
+                    ''').fetchall()
+                    stats["top_values"] = [{"value": str(r[0]), "count": int(r[1])} for r in top_rows]
                 except Exception:
                     pass
             elif inferred_type == "datetime":
                 datetime_cols.append(col)
-                s = df[col].drop_nulls()
-                if s.len() > 0:
+                if row_count - null_count > 0:
                     try:
-                        stats["min_date"] = str(s.min())
-                        stats["max_date"] = str(s.max())
+                        row = df.conn.execute(f'''
+                            SELECT MIN("{col}"), MAX("{col}")
+                            FROM {df.table_name}
+                            WHERE "{col}" IS NOT NULL
+                        ''').fetchone()
+                        if row and row[0] is not None:
+                            stats["min_date"] = str(row[0])
+                            stats["max_date"] = str(row[1])
                     except Exception:
                         pass
 
+            duckdb_type_str = df.duckdb_types.get(col, "VARCHAR") if hasattr(df, "duckdb_types") else "VARCHAR"
             col_stat = {
                 "name": col,
                 "original_name": orig_col,
                 "data_type": inferred_type,
-                "duckdb_type": str(df[col].dtype),
+                "duckdb_type": duckdb_type_str,
                 "null_count": null_count,
                 "null_percentage": null_pct,
                 "unique_count": unique_count,
@@ -92,7 +113,6 @@ class DatasetProfiler:
         total_cells = row_count * column_count
         missing_pct = round((total_missing / total_cells) * 100, 2) if total_cells > 0 else 0.0
 
-        # Generate summary insights
         summary_insights = [
             f"Dataset contains {row_count:,} rows and {column_count} columns.",
             f"Identified {len(numeric_cols)} numeric metrics, {len(categorical_cols)} dimensions, and {len(datetime_cols)} time columns."
@@ -104,10 +124,7 @@ class DatasetProfiler:
         else:
             summary_insights.append("High data quality: zero missing values detected.")
 
-        # Suggest contextual questions grounded in actual columns
         suggested_questions: List[str] = []
-        
-        # 1. Time-series question if datetime and numeric exist
         if datetime_cols and numeric_cols:
             date_c = datetime_cols[0].replace("_", " ")
             num_c = numeric_cols[0].replace("_", " ")
@@ -116,18 +133,15 @@ class DatasetProfiler:
                 num_c2 = numeric_cols[1].replace("_", " ")
                 suggested_questions.append(f"Compare {num_c} and {num_c2} by month.")
 
-        # 2. Categorical breakdown question
         if categorical_cols and numeric_cols:
             cat_c = categorical_cols[0].replace("_", " ")
             num_c = numeric_cols[0].replace("_", " ")
             suggested_questions.append(f"Which {cat_c} has the highest total {num_c}?")
             suggested_questions.append(f"Show top 5 {cat_c} by {num_c}.")
-            
             if len(categorical_cols) > 1:
                 cat_c2 = categorical_cols[1].replace("_", " ")
                 suggested_questions.append(f"Break down {num_c} by {cat_c} and {cat_c2}.")
 
-        # 3. Aggregation & executive summary
         if numeric_cols:
             num_c = numeric_cols[0].replace("_", " ")
             suggested_questions.append(f"What is the total and average {num_c}?")

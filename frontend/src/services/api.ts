@@ -238,84 +238,102 @@ class ApiClient {
     get: async (id: string) => {
       try {
         return await this.request<any>(`/datasets/${id}`);
-      } catch {
-        const ds = browserStore.getDataset(id);
-        if (!ds) throw new Error("Dataset not found.");
-        return ds;
+      } catch (err) {
+        if (!this.getToken()) {
+          const ds = browserStore.getDataset(id);
+          if (!ds) throw new Error("Dataset not found.");
+          return ds;
+        }
+        throw err;
       }
     },
     preview: async (id: string, limit = 100) => {
       try {
         return await this.request<any>(`/datasets/${id}/preview?limit=${limit}`);
-      } catch {
-        const ds = browserStore.getDataset(id);
-        if (!ds) throw new Error("Dataset not found.");
-        await ensureTableRegistered(ds);
-        const q = await duckdbWasm.query(`SELECT * FROM "${ds.duckdb_table_name}" LIMIT ${limit};`);
-        const columns = ds.columns && ds.columns.length > 0
-          ? ds.columns
-          : q.columns.map((c) => ({
-              name: c,
-              original_name: c,
-              data_type: "text",
-              duckdb_type: "VARCHAR",
-              null_percentage: 0,
-              unique_count: q.rows.length,
-            }));
-        return {
-          dataset_id: id,
-          name: ds.name,
-          table_name: ds.duckdb_table_name,
-          row_count: ds.row_count || q.rows.length,
-          column_count: columns.length,
-          columns,
-          rows: q.rows,
-          data: q.rows,
-        };
+      } catch (err) {
+        if (!this.getToken()) {
+          const ds = browserStore.getDataset(id);
+          if (!ds) throw new Error("Dataset not found.");
+          await ensureTableRegistered(ds);
+          const q = await duckdbWasm.query(`SELECT * FROM "${ds.duckdb_table_name}" LIMIT ${limit};`);
+          const columns = ds.columns && ds.columns.length > 0
+            ? ds.columns
+            : q.columns.map((c) => ({
+                name: c,
+                original_name: c,
+                data_type: "text",
+                duckdb_type: "VARCHAR",
+                null_percentage: 0,
+                unique_count: q.rows.length,
+              }));
+          return {
+            dataset_id: id,
+            name: ds.name,
+            table_name: ds.duckdb_table_name,
+            row_count: ds.row_count || q.rows.length,
+            column_count: columns.length,
+            columns,
+            rows: q.rows,
+            data: q.rows,
+          };
+        }
+        throw err;
       }
     },
     profile: async (id: string) => {
       try {
         return await this.request<any>(`/datasets/${id}/profile`);
-      } catch {
-        const ds = browserStore.getDataset(id);
-        if (!ds) throw new Error("Dataset not found.");
-        const prof = ds.profile_summary || {};
-        return {
-          dataset_id: id,
-          name: ds.name,
-          row_count: ds.row_count,
-          column_count: ds.column_count,
-          size_bytes: ds.size_bytes,
-          duplicate_rows_count: prof.duplicate_rows_count ?? 0,
-          missing_cells_count: prof.missing_cells_count ?? 0,
-          missing_cells_percentage: prof.missing_cells_percentage ?? 0,
-          total_cells: prof.total_cells ?? 0,
-          summary_insights: prof.summary_insights ?? [],
-          columns: ds.columns || [],
-          suggested_questions: prof.suggested_questions || [],
-        };
+      } catch (err) {
+        if (!this.getToken()) {
+          const ds = browserStore.getDataset(id);
+          if (!ds) throw new Error("Dataset not found.");
+          const prof = ds.profile_summary || {};
+          return {
+            dataset_id: id,
+            name: ds.name,
+            row_count: ds.row_count,
+            column_count: ds.column_count,
+            size_bytes: ds.size_bytes,
+            duplicate_rows_count: prof.duplicate_rows_count ?? 0,
+            missing_cells_count: prof.missing_cells_count ?? 0,
+            missing_cells_percentage: prof.missing_cells_percentage ?? 0,
+            total_cells: prof.total_cells ?? 0,
+            summary_insights: prof.summary_insights ?? [],
+            columns: ds.columns || [],
+            suggested_questions: prof.suggested_questions || [],
+          };
+        }
+        throw err;
       }
     },
     delete: async (id: string) => {
       try {
         return await this.request<any>(`/datasets/${id}`, { method: "DELETE" });
-      } catch {
-        browserStore.deleteDataset(id);
-        return { success: true };
+      } catch (err) {
+        if (!this.getToken()) {
+          browserStore.deleteDataset(id);
+          return { success: true };
+        }
+        throw err;
       }
     },
     loadDemo: async (workspaceId: string) => {
       try {
         return await this.request<any>(`/datasets/demo?workspace_id=${workspaceId}`, { method: "POST" });
-      } catch {
-        return await browserStore.generateDemoDataset(workspaceId);
+      } catch (err) {
+        if (!this.getToken()) {
+          return await browserStore.generateDemoDataset(workspaceId);
+        }
+        throw err;
       }
     },
     upload: async (formData: FormData) => {
       try {
         return await this.request<any>("/datasets/upload", { method: "POST", body: formData });
-      } catch {
+      } catch (err) {
+        if (this.getToken()) {
+          throw err;
+        }
         const file = formData.get("file") as File;
         const name = (formData.get("name") as string) || file.name.replace(/\.[^/.]+$/, "");
         const workspaceId = (formData.get("workspace_id") as string) || "ws_local_1";

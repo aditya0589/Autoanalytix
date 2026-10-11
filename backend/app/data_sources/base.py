@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Dict, Any, List, Tuple
-import polars as pl
+from typing import Dict, Any, List
 
 class BaseDataConnector(ABC):
     connector_type: str
@@ -22,6 +21,6 @@ class BaseDataConnector(ABC):
         pass
 
     @abstractmethod
-    def extract_data(self, config: Dict[str, Any], table_name: str, limit: int = 10000) -> pl.DataFrame:
-        """Extracts table data into a Polars DataFrame for DuckDB ingestion."""
+    def extract_data(self, config: Dict[str, Any], table_name: str, limit: int = 10000) -> List[Dict[str, Any]]:
+        """Extracts table data into rows for DuckDB ingestion."""
         pass
