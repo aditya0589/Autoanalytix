@@ -5,12 +5,9 @@ from app.core.security import decode_access_token
 from app.core.dynamodb import dynamodb_store
 
 class ItemObject(dict):
-    """Allows dictionary keys to be accessed as object attributes (e.g. user.id)."""
+    """Allows dictionary keys to be accessed as object attributes (e.g. user.id), returning None for missing optional keys."""
     def __getattr__(self, name):
-        try:
-            return self[name]
-        except KeyError:
-            raise AttributeError(f"No attribute {name}")
+        return self.get(name, None)
     def __setattr__(self, name, value):
         self[name] = value
 

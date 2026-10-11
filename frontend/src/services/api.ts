@@ -370,6 +370,11 @@ class ApiClient {
       try {
         return await this.request<any>("/analytics/query", { method: "POST", body: JSON.stringify(payload) });
       } catch (err: any) {
+        // If API_BASE_URL is configured (cloud mode) and it's not a pure network offline error, rethrow the real backend error
+        if (API_BASE_URL && !err.message?.includes("Failed to fetch")) {
+          throw err;
+        }
+
         // If not a network error and backend explicitly sent an error (like NO_AI_PROVIDER), rethrow
         if (err.code === "NO_AI_PROVIDER" && !err.message?.includes("Failed to fetch")) {
           throw err;
