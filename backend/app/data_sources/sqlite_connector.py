@@ -1,7 +1,6 @@
 import sqlite3
 import os
 from typing import Dict, Any, List
-import polars as pl
 from app.data_sources.base import BaseDataConnector
 
 class SQLiteDataConnector(BaseDataConnector):
@@ -40,7 +39,7 @@ class SQLiteDataConnector(BaseDataConnector):
         conn.close()
         return cols
 
-    def extract_data(self, config: Dict[str, Any], table_name: str, limit: int = 10000) -> pl.DataFrame:
+    def extract_data(self, config: Dict[str, Any], table_name: str, limit: int = 10000) -> List[Dict[str, Any]]:
         db_path = config.get("database_path", "")
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
@@ -49,5 +48,4 @@ class SQLiteDataConnector(BaseDataConnector):
         rows = cursor.fetchall()
         conn.close()
         
-        col_dict = {col: [r[i] for r in rows] for i, col in enumerate(columns)}
-        return pl.DataFrame(col_dict)
+        return [dict(zip(columns, r)) for r in rows]

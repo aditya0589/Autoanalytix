@@ -24,10 +24,12 @@ export const DatasetDetail: React.FC = () => {
   const [preview, setPreview] = useState<any>(null);
   const [conversations, setConversations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!id) return;
     setLoading(true);
+    setError(null);
     Promise.all([
       api.datasets.get(id),
       api.datasets.profile(id),
@@ -42,14 +44,43 @@ export const DatasetDetail: React.FC = () => {
           setConversations(convs);
         }
       })
-      .catch((err) => console.error("Failed to load dataset details:", err))
+      .catch((err) => {
+        console.error("Failed to load dataset details:", err);
+        setError(err.message || "Dataset not found or failed to load");
+      })
       .finally(() => setLoading(false));
   }, [id]);
 
-  if (loading || !dataset) {
+  if (loading) {
     return (
       <Layout>
         <div className="text-center py-20 text-xs text-slate-400 dark:text-slate-500">Loading dataset metadata & profile...</div>
+      </Layout>
+    );
+  }
+
+  if (error || !dataset) {
+    return (
+      <Layout>
+        <div className="max-w-md mx-auto py-20 text-center space-y-4">
+          <div className="w-12 h-12 mx-auto rounded-2xl bg-amber-50 dark:bg-amber-950/60 border border-amber-200/50 dark:border-amber-800/40 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+            <AlertTriangle className="w-6 h-6" />
+          </div>
+          <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+            {error || "Dataset Not Found"}
+          </h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            This dataset may not exist, was deleted, or failed during processing.
+          </p>
+          <div className="pt-2">
+            <Link
+              to="/datasets"
+              className="inline-flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-xl shadow-xs transition-all"
+            >
+              <span>Back to Datasets</span>
+            </Link>
+          </div>
+        </div>
       </Layout>
     );
   }
