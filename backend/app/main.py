@@ -1,6 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from mangum import Mangum
+try:
+    from mangum import Mangum
+except ImportError:
+    Mangum = None
 from app.core.config import settings
 from app.core.database import engine, Base
 from app.api import (
@@ -64,4 +67,4 @@ def root():
     }
 
 # Expose handler for AWS Lambda
-handler = Mangum(app, lifespan="off")
+handler = Mangum(app, lifespan="off") if Mangum else None
