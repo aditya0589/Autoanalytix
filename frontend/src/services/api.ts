@@ -446,6 +446,26 @@ class ApiClient {
         });
 
         const analysisId = "an_" + Date.now();
+        const qCols = qResult.columns || (qResult.rows[0] ? Object.keys(qResult.rows[0]) : []);
+        const matchCol = (target?: string | null, fallback?: string): string | undefined => {
+          if (!target) return fallback;
+          if (qCols.includes(target)) return target;
+          const clean = target.toLowerCase().replace(/[\s_-]+/g, "");
+          const found = qCols.find((c) => {
+            const cleanC = c.toLowerCase().replace(/[\s_-]+/g, "");
+            return cleanC === clean || clean.includes(cleanC) || cleanC.includes(clean);
+          });
+          return found || fallback;
+        };
+
+        const chart_spec = {
+          type: plan.chart_type,
+          title: plan.title,
+          x_axis: matchCol(plan.x_axis, qCols[0]),
+          y_axis: matchCol(plan.y_axis, qCols[1] || qCols[0]),
+          data: qResult.rows,
+        };
+
         const analysisResp = {
           analysis_id: analysisId,
           conversation_id: convId,
@@ -455,13 +475,7 @@ class ApiClient {
           query_status: "success",
           execution_time_ms: qResult.executionTimeMs,
           row_count: qResult.rows.length,
-          chart_spec: {
-            type: plan.chart_type,
-            title: plan.title,
-            x_axis: plan.x_axis,
-            y_axis: plan.y_axis,
-            data: qResult.rows,
-          },
+          chart_spec,
           insights: insightsData.insights,
           explanation: insightsData.explanation,
           clarification_options: plan.clarification_options,

@@ -98,11 +98,26 @@ class DashboardGeneratorWorkflow:
                     kpi_val = list(first_row.values())[0] if first_row else None
                     kpi_sub = "Computed across dataset"
 
+                def match_col(target: Optional[str], default_col: Optional[str]) -> Optional[str]:
+                    if not target:
+                        return default_col
+                    if target in cols:
+                        return target
+                    clean_target = re.sub(r"[\s_-]+", "", target.lower())
+                    for c in cols:
+                        clean_c = re.sub(r"[\s_-]+", "", c.lower())
+                        if clean_c == clean_target or clean_target in clean_c or clean_c in clean_target:
+                            return c
+                    return default_col
+
+                x_axis = match_col(w.get("x_axis"), cols[0] if cols else None)
+                y_axis = match_col(w.get("y_axis"), cols[1] if len(cols) > 1 else (cols[0] if cols else None))
+
                 chart_spec = {
                     "type": chart_type,
                     "title": title,
-                    "x_axis": w.get("x_axis") or (cols[0] if cols else None),
-                    "y_axis": w.get("y_axis") or (cols[1] if len(cols) > 1 else None),
+                    "x_axis": x_axis,
+                    "y_axis": y_axis,
                     "kpi_value": kpi_val,
                     "kpi_subtext": kpi_sub,
                     "data": rows[:50]

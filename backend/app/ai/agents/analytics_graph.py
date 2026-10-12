@@ -233,14 +233,23 @@ class AnalyticsWorkflow:
         chart_type = plan.get("chart_type", "bar")
         title = plan.get("title", f"Analysis: {state['user_question']}")
         
-        x_axis = plan.get("x_axis")
-        y_axis = plan.get("y_axis")
-        
-        # Auto-detect x and y if not specified
-        if not x_axis and len(cols) > 0:
-            x_axis = cols[0]
-        if not y_axis and len(cols) > 1:
-            y_axis = cols[1]
+        x_axis_raw = plan.get("x_axis")
+        y_axis_raw = plan.get("y_axis")
+
+        def match_col(target: Optional[str], default_col: Optional[str]) -> Optional[str]:
+            if not target:
+                return default_col
+            if target in cols:
+                return target
+            clean_target = re.sub(r"[\s_-]+", "", target.lower())
+            for c in cols:
+                clean_c = re.sub(r"[\s_-]+", "", c.lower())
+                if clean_c == clean_target or clean_target in clean_c or clean_c in clean_target:
+                    return c
+            return default_col
+
+        x_axis = match_col(x_axis_raw, cols[0] if cols else None)
+        y_axis = match_col(y_axis_raw, cols[1] if len(cols) > 1 else (cols[0] if cols else None))
 
         kpi_val = None
         kpi_sub = None
