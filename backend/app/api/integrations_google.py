@@ -1,7 +1,7 @@
 import os
 import uuid
 import json
-import polars as pl
+import csv
 from datetime import datetime, timezone
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -12,6 +12,7 @@ from app.core.dynamodb import dynamodb_store
 from app.core.s3_storage import s3_storage
 from app.api.deps import get_current_user, get_current_workspace, ItemObject
 from app.integrations.google_workspace import google_workspace_service
+from app.ingestion.parser import DataParser
 from app.analytics.profiler import DatasetProfiler
 from app.analytics.engine import analytics_engine
 from app.schemas.all_schemas import (
@@ -304,16 +305,30 @@ async def import_google_sheet_as_dataset(
     if not rows:
         raise HTTPException(status_code=400, detail=f"No data rows found in Google Sheet '{tab_name}'.")
 
-    # 3. Build Polars DataFrame
-    df = pl.DataFrame(rows)
+    # 3. Save rows to a temporary CSV and parse via DataParser (backed by pure DuckDB)
     file_id = str(uuid.uuid4())
     dataset_name = req.dataset_name or f"Google Sheet: {tab_name}"
-    clean_table_name = f"tbl_{file_id.replace('-', '_')}"
+    clean_table_name = f"dataset_{file_id.replace('-', '_')[:16]}"
+    os.makedirs(os.path.join(settings.STORAGE_DIR, "uploads"), exist_ok=True)
+    temp_csv_path = os.path.join(settings.STORAGE_DIR, "uploads", f"temp_{file_id}.csv")
 
-    # 4. Save to Parquet
-    parquet_filename = f"{clean_table_name}.parquet"
-    parquet_path = os.path.join(settings.STORAGE_DIR, "uploads", parquet_filename)
-    df.write_parquet(parquet_path)
+    headers = list(rows[0].keys())
+    with open(temp_csv_path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=headers)
+        writer.writeheader()
+        writer.writerows(rows)
+
+    try:
+        df, type_map, orig_cols = DataParser.parse_file(temp_csv_path, "csv")
+        parquet_filename = f"{clean_table_name}.parquet"
+        parquet_path = os.path.join(settings.STORAGE_DIR, "uploads", parquet_filename)
+        df.write_parquet(parquet_path)
+    finally:
+        if os.path.exists(temp_csv_path):
+            try:
+                os.remove(temp_csv_path)
+            except Exception:
+                pass
 
     try:
         s3_storage.upload_file(parquet_path, f"uploads/{parquet_filename}")
@@ -324,8 +339,6 @@ async def import_google_sheet_as_dataset(
     analytics_engine.register_dataset(clean_table_name, parquet_path, "parquet")
 
     # 6. Profile DataFrame
-    type_map = {col: str(df[col].dtype) for col in df.columns}
-    orig_cols = {col: col for col in df.columns}
     profile_data = DatasetProfiler.profile_dataframe(df, type_map, orig_cols)
 
     cols_list = []
