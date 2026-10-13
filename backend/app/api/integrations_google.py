@@ -364,7 +364,7 @@ async def import_google_sheet_as_dataset(
         "workspace_id": req.workspace_id,
         "user_id": current_user.id,
         "name": dataset_name,
-        "original_filename": f"gsheet_{req.spreadsheet_id[:8]}_{tab_name}.xlsx",
+        "original_filename": f"Google Sheet ({tab_name or 'Sheet1'}).xlsx",
         "file_type": "google_sheet",
         "file_path": rel_parquet_path,
         "duckdb_table_name": clean_table_name,

@@ -12,7 +12,8 @@ import {
   ArrowRight,
   Plus,
   MessageSquare,
-  AlertTriangle
+  AlertTriangle,
+  CheckCircle2
 } from "lucide-react";
 
 export const DatasetsPage: React.FC = () => {
@@ -20,6 +21,16 @@ export const DatasetsPage: React.FC = () => {
   const { currentWorkspace } = useAuthStore();
   const [datasets, setDatasets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Ingestion success popup modal state
+  const [ingestSuccess, setIngestSuccess] = useState<{
+    id: string;
+    name: string;
+    rowCount: number;
+    columnCount: number;
+    type: string;
+    message?: string;
+  } | null>(null);
 
   // Upload modal state
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -34,6 +45,13 @@ export const DatasetsPage: React.FC = () => {
   const [sheetDatasetName, setSheetDatasetName] = useState("");
   const [importingSheet, setImportingSheet] = useState(false);
   const [isPublicAcknowledged, setIsPublicAcknowledged] = useState(false);
+
+  const getDisplayFilename = (ds: any) => {
+    if (ds.file_type === "google_sheet" || ds.original_filename?.startsWith("gsheet_")) {
+      return `Google Sheet • ${ds.sheet_name || "Tab"}`;
+    }
+    return ds.original_filename || "Unknown file";
+  };
 
   const handleGoogleSheetSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,11 +75,16 @@ export const DatasetsPage: React.FC = () => {
       setSheetInput("");
       setSheetDatasetName("");
       setIsPublicAcknowledged(false);
-      if (res.dataset_id) {
-        navigate(`/datasets/${res.dataset_id}`);
-      } else {
-        await loadDatasets();
-      }
+      await loadDatasets();
+
+      setIngestSuccess({
+        id: res.dataset_id,
+        name: res.dataset_name || "Google Sheet Dataset",
+        rowCount: res.row_count || 0,
+        columnCount: res.column_count || 0,
+        type: "Google Sheet",
+        message: res.message || "Spreadsheet ingested into DuckDB analytical engine successfully.",
+      });
     } catch (err: any) {
       alert("Failed to import Google Sheet: " + err.message);
     } finally {
@@ -98,7 +121,16 @@ export const DatasetsPage: React.FC = () => {
       setShowUploadModal(false);
       setSelectedFile(null);
       setDatasetName("");
-      navigate(`/datasets/${newDs.id}`);
+      await loadDatasets();
+
+      setIngestSuccess({
+        id: newDs.id,
+        name: newDs.name,
+        rowCount: newDs.row_count || 0,
+        columnCount: newDs.column_count || 0,
+        type: newDs.file_type?.toUpperCase() || "CSV / Excel",
+        message: "Dataset uploaded and indexed into DuckDB analytical engine successfully.",
+      });
     } catch (err: any) {
       alert("Upload failed: " + err.message);
     } finally {
@@ -111,7 +143,16 @@ export const DatasetsPage: React.FC = () => {
     try {
       setLoadingDemo(true);
       const dataset = await api.datasets.loadDemo(currentWorkspace.id);
-      navigate(`/datasets/${dataset.id}`);
+      await loadDatasets();
+
+      setIngestSuccess({
+        id: dataset.id,
+        name: dataset.name,
+        rowCount: dataset.row_count || 0,
+        columnCount: dataset.column_count || 0,
+        type: "Demo Dataset",
+        message: "B2B Sales demo dataset indexed into DuckDB analytical engine.",
+      });
     } catch (err: any) {
       alert("Failed to load demo dataset: " + err.message);
     } finally {
@@ -200,19 +241,25 @@ export const DatasetsPage: React.FC = () => {
               >
                 <div>
                   <div className="flex items-start justify-between">
-                    <div className="flex items-center space-x-2.5">
-                      <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-xs uppercase">
-                        {ds.file_type}
-                      </div>
-                      <div className="truncate max-w-[180px]">
+                    <div className="flex items-center space-x-3 min-w-0 flex-1 mr-2">
+                      {ds.file_type === "google_sheet" ? (
+                        <div className="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 shadow-2xs">
+                          <FileSpreadsheet className="w-5 h-5" />
+                        </div>
+                      ) : (
+                        <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-[11px] uppercase shrink-0">
+                          {ds.file_type?.slice(0, 4)}
+                        </div>
+                      )}
+                      <div className="min-w-0 flex-1">
                         <h4 className="text-xs font-bold text-slate-900 dark:text-white truncate" title={ds.name}>{ds.name}</h4>
-                        <div className="text-[10px] text-slate-400 dark:text-slate-500 truncate">{ds.original_filename}</div>
+                        <div className="text-[10px] text-slate-400 dark:text-slate-500 truncate" title={getDisplayFilename(ds)}>{getDisplayFilename(ds)}</div>
                       </div>
                     </div>
 
                     <button
                       onClick={() => handleDelete(ds.id)}
-                      className="p-1 text-slate-300 dark:text-slate-600 hover:text-rose-600 rounded transition-colors"
+                      className="p-1 text-slate-300 dark:text-slate-600 hover:text-rose-600 rounded transition-colors shrink-0"
                       title="Delete Dataset"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -419,6 +466,73 @@ export const DatasetsPage: React.FC = () => {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* Ingestion Success Modal Popup */}
+        {ingestSuccess && (
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl space-y-5 text-center transition-all">
+              <div className="w-14 h-14 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 mx-auto flex items-center justify-center shadow-xs ring-8 ring-emerald-50/50 dark:ring-emerald-950/20">
+                <CheckCircle2 className="w-7 h-7" />
+              </div>
+
+              <div>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white">Data Ingested Successfully!</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
+                  {ingestSuccess.message}
+                </p>
+              </div>
+
+              <div className="bg-slate-50 dark:bg-slate-800/60 rounded-2xl p-4 border border-slate-100 dark:border-slate-800 text-left space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Dataset</span>
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate max-w-[200px]" title={ingestSuccess.name}>
+                    {ingestSuccess.name}
+                  </span>
+                </div>
+                <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-200/60 dark:border-slate-700/60 text-center">
+                  <div className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                    <div className="text-[9px] uppercase font-bold text-slate-400 dark:text-slate-500">Rows</div>
+                    <div className="text-xs font-black text-slate-800 dark:text-slate-100 mt-0.5">{ingestSuccess.rowCount?.toLocaleString() ?? 0}</div>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                    <div className="text-[9px] uppercase font-bold text-slate-400 dark:text-slate-500">Columns</div>
+                    <div className="text-xs font-black text-slate-800 dark:text-slate-100 mt-0.5">{ingestSuccess.columnCount ?? 0}</div>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                    <div className="text-[9px] uppercase font-bold text-slate-400 dark:text-slate-500">Engine</div>
+                    <div className="text-[11px] font-black text-emerald-600 dark:text-emerald-400 mt-0.5">DuckDB</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-2.5 pt-1">
+                <button
+                  onClick={() => navigate(`/analytics/${ingestSuccess.id}`)}
+                  className="flex-1 flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs py-2.5 px-4 rounded-xl shadow-sm transition-all"
+                >
+                  <MessageSquare className="w-3.5 h-3.5" />
+                  <span>Ask AI Analytics</span>
+                </button>
+                <button
+                  onClick={() => navigate(`/datasets/${ingestSuccess.id}`)}
+                  className="flex-1 flex items-center justify-center space-x-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-semibold text-xs py-2.5 px-4 rounded-xl transition-all"
+                >
+                  <span>Inspect Schema</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              <div>
+                <button
+                  onClick={() => setIngestSuccess(null)}
+                  className="text-xs font-medium text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                >
+                  Close & Stay on Explorer
+                </button>
+              </div>
             </div>
           </div>
         )}
