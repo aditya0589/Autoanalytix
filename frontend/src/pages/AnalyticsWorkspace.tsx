@@ -785,6 +785,9 @@ export const AnalyticsWorkspace: React.FC = () => {
                   <Send className="w-3.5 h-3.5" />
                 </button>
               </form>
+              <div className="flex items-center justify-between px-2 pt-1.5 text-[10.5px] text-slate-400">
+                <span>💡 Tip: Paste any public Google Sheet or Doc link to ask questions or extract insights directly.</span>
+              </div>
             </div>
           </main>
         </div>

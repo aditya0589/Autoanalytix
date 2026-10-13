@@ -19,7 +19,8 @@ import {
   ShieldCheck,
   Sparkles,
   Link2,
-  Unlink
+  Unlink,
+  AlertTriangle
 } from "lucide-react";
 
 export const DataSourcesSettings: React.FC = () => {
@@ -47,6 +48,12 @@ export const DataSourcesSettings: React.FC = () => {
   const [previewContent, setPreviewContent] = useState<any>(null);
   const [importingSheetId, setImportingSheetId] = useState<string | null>(null);
   const [importMessage, setImportMessage] = useState<string | null>(null);
+
+  // --- Direct Link / MCP state ---
+  const [directLinkInput, setDirectLinkInput] = useState("");
+  const [directLinkDatasetName, setDirectLinkDatasetName] = useState("");
+  const [directLinkPublicAck, setDirectLinkPublicAck] = useState(false);
+  const [importingDirectLink, setImportingDirectLink] = useState(false);
 
   const loadSources = async () => {
     if (!currentWorkspace) return;
@@ -143,6 +150,32 @@ export const DataSourcesSettings: React.FC = () => {
       alert("Import failed: " + err.message);
     } finally {
       setImportingSheetId(null);
+    }
+  };
+
+  const handleImportDirectLink = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!directLinkInput.trim() || !currentWorkspace) return;
+    if (!directLinkPublicAck) {
+      alert("Please confirm that the Google Sheet or Drive resource is shared with 'Anyone with the link can view'.");
+      return;
+    }
+    setImportingDirectLink(true);
+    setImportMessage(null);
+    try {
+      const res = await api.googleWorkspace.importSheet({
+        workspace_id: currentWorkspace.id,
+        spreadsheet_id: directLinkInput.trim(),
+        dataset_name: directLinkDatasetName.trim() || undefined,
+      });
+      setImportMessage(res.message || "Google resource ingested into DuckDB!");
+      setDirectLinkInput("");
+      setDirectLinkDatasetName("");
+      setDirectLinkPublicAck(false);
+    } catch (err: any) {
+      alert("Import failed: " + err.message);
+    } finally {
+      setImportingDirectLink(false);
     }
   };
 
@@ -244,100 +277,174 @@ export const DataSourcesSettings: React.FC = () => {
         {/* Tab 1: Google Workspace */}
         {activeTab === "google" && (
           <div className="space-y-6">
-            {/* Connection Banner Card */}
+            {/* MCP & Shared Link Connector (Active & Zero-Auth) */}
             <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 sm:p-8 shadow-sm transition-colors space-y-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-start space-x-4">
                   <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-500 via-emerald-500 to-amber-500 p-0.5 shrink-0 shadow-sm">
                     <div className="w-full h-full bg-white dark:bg-slate-900 rounded-[14px] flex items-center justify-center">
-                      <FileText className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                      <FileSpreadsheet className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
                     </div>
                   </div>
                   <div>
                     <div className="flex items-center space-x-2.5">
-                      <h2 className="text-base font-black text-slate-900 dark:text-white">Google Workspace Suite</h2>
-                      {googleStatus?.connected ? (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60">
-                          <CheckCircle2 className="w-3 h-3 mr-1" />
-                          Connected
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
-                          Not Connected
-                        </span>
-                      )}
+                      <h2 className="text-base font-black text-slate-900 dark:text-white">Google Workspace & MCP Connector</h2>
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60">
+                        <CheckCircle2 className="w-3 h-3 mr-1" />
+                        MCP Ready (No OAuth Needed)
+                      </span>
                     </div>
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                      {googleStatus?.connected
-                        ? `Authorized as ${googleStatus.account_email}. Tokens encrypted with AES-256-GCM vault.`
-                        : "Connect your Google account to export executive reports to Docs, import Sheets, and ground AI with Drive knowledge."}
+                      Connect Google Sheets, Docs, and Drive files directly using shared links. The LangGraph AI agent discovers and reads them via Model Context Protocol (MCP) tools.
                     </p>
                   </div>
                 </div>
+              </div>
 
-                <div className="flex items-center space-x-3 shrink-0">
-                  {googleStatus?.connected ? (
-                    <>
-                      <button
-                        onClick={loadDriveFiles}
-                        disabled={loadingFiles}
-                        className="p-2.5 text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-colors"
-                        title="Refresh Drive Files"
-                      >
-                        <RefreshCw className={`w-4 h-4 ${loadingFiles ? "animate-spin" : ""}`} />
-                      </button>
-                      <button
-                        onClick={handleDisconnectGoogle}
-                        className="flex items-center space-x-1.5 px-4 py-2.5 text-xs font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/60 hover:bg-rose-100 dark:hover:bg-rose-900/60 border border-rose-200 dark:border-rose-800/60 rounded-xl transition-colors"
-                      >
-                        <Unlink className="w-3.5 h-3.5" />
-                        <span>Disconnect</span>
-                      </button>
-                    </>
-                  ) : (
-                    <button
-                      onClick={handleConnectGoogle}
-                      disabled={connectingGoogle}
-                      className="flex items-center space-x-2 px-5 py-2.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 shadow-md rounded-xl transition-all"
-                    >
-                      <Link2 className="w-4 h-4" />
-                      <span>{connectingGoogle ? "Authorizing..." : "Connect Google Workspace"}</span>
-                    </button>
-                  )}
+              {/* Prominent Public Data Warning Banner */}
+              <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-200 text-xs space-y-2">
+                <div className="flex items-center space-x-2 font-bold text-amber-700 dark:text-amber-400">
+                  <AlertTriangle className="w-4 h-4 shrink-0" />
+                  <span>Important: Data Must Be Publicly Shared</span>
+                </div>
+                <p className="text-[11px] leading-relaxed text-slate-600 dark:text-slate-300">
+                  To import spreadsheets and read documents without Google Cloud OAuth credentials, your file must have link sharing set to <strong>"Anyone with the link can view"</strong>.
+                </p>
+                <div className="p-2.5 rounded-xl bg-amber-500/15 border border-amber-500/20 text-[10.5px] text-amber-800 dark:text-amber-300 font-medium">
+                  ⚠️ <strong>Privacy Warning:</strong> Because anyone with the URL can view the data, <em>never</em> import confidential credentials, secret financial statements, or sensitive personal data using this public link method.
                 </div>
               </div>
 
-              {/* Features overview pills */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 pt-2">
-                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 space-y-1.5">
-                  <div className="flex items-center space-x-2 text-blue-600 dark:text-blue-400 font-bold text-xs">
-                    <FileText className="w-4 h-4" />
-                    <span>Google Docs Reporting</span>
-                  </div>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-                    Export AI executive summaries, DuckDB queries, and KPI tables into clean Google Docs with one click.
-                  </p>
+              {/* Direct Link Ingestion Form */}
+              <form onSubmit={handleImportDirectLink} className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-bold text-slate-900 dark:text-white flex items-center space-x-2">
+                    <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+                    <span>Import Shared Google Sheet into DuckDB</span>
+                  </h3>
+                  <span className="text-[10px] text-slate-400 font-mono">Format: https://docs.google.com/spreadsheets/d/...</span>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 space-y-1.5">
-                  <div className="flex items-center space-x-2 text-emerald-600 dark:text-emerald-400 font-bold text-xs">
-                    <FileSpreadsheet className="w-4 h-4" />
-                    <span>Google Sheets Ingestion</span>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                      Google Sheet URL or Document Link
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={directLinkInput}
+                      onChange={(e) => setDirectLinkInput(e.target.value)}
+                      placeholder="https://docs.google.com/spreadsheets/d/.../edit#gid=0"
+                      className="w-full text-xs px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono"
+                    />
                   </div>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-                    Import live cloud spreadsheets straight into DuckDB datasets for instant multi-dimensional querying.
-                  </p>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                      Dataset Name (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      value={directLinkDatasetName}
+                      onChange={(e) => setDirectLinkDatasetName(e.target.value)}
+                      placeholder="e.g. Q4 Sales Forecast"
+                      className="w-full text-xs px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    />
+                  </div>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 space-y-1.5">
-                  <div className="flex items-center space-x-2 text-amber-600 dark:text-amber-400 font-bold text-xs">
-                    <Sparkles className="w-4 h-4" />
-                    <span>Autonomous AI Context</span>
-                  </div>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-                    The LangGraph AI agent searches strategy documents and PRDs to ground metrics in real business logic.
-                  </p>
+                {/* Acknowledgment checkbox */}
+                <label className="flex items-start space-x-2.5 text-[11px] text-slate-600 dark:text-slate-400 cursor-pointer pt-1">
+                  <input
+                    type="checkbox"
+                    checked={directLinkPublicAck}
+                    onChange={(e) => setDirectLinkPublicAck(e.target.checked)}
+                    className="mt-0.5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                  />
+                  <span>
+                    I confirm this link is shared with <strong>"Anyone with the link can view"</strong> and does not expose confidential secrets.
+                  </span>
+                </label>
+
+                <div className="flex justify-end pt-1">
+                  <button
+                    type="submit"
+                    disabled={importingDirectLink || !directLinkInput.trim() || !directLinkPublicAck}
+                    className="px-4 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-500 rounded-xl shadow-md transition-colors disabled:opacity-50 flex items-center space-x-1.5"
+                  >
+                    {importingDirectLink ? (
+                      <span>Extracting & Ingesting...</span>
+                    ) : (
+                      <>
+                        <span>Ingest into DuckDB</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </>
+                    )}
+                  </button>
                 </div>
+              </form>
+
+              {/* MCP AI Agent Tools Card */}
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                <div className="flex items-center space-x-2 text-xs font-bold text-slate-900 dark:text-white mb-3">
+                  <Sparkles className="w-4 h-4 text-amber-500" />
+                  <span>Available MCP Tools for LangGraph AI Agent</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 space-y-1">
+                    <div className="text-emerald-600 dark:text-emerald-400 font-mono text-[11px] font-bold">
+                      read_google_sheet_from_link
+                    </div>
+                    <p className="text-[10.5px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                      Extracts columns and sample records from any shared spreadsheet link pasted into chat.
+                    </p>
+                  </div>
+
+                  <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 space-y-1">
+                    <div className="text-blue-600 dark:text-blue-400 font-mono text-[11px] font-bold">
+                      read_google_doc_from_link
+                    </div>
+                    <p className="text-[10.5px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                      Extracts document strategy, PRDs, and KPI definitions to ground AI reasoning.
+                    </p>
+                  </div>
+
+                  <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 space-y-1">
+                    <div className="text-amber-600 dark:text-amber-400 font-mono text-[11px] font-bold">
+                      read_google_drive_file_from_link
+                    </div>
+                    <p className="text-[10.5px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                      Reads CSV, text, or data files from public Google Drive file sharing links.
+                    </p>
+                  </div>
+                </div>
+                <p className="text-[11px] text-slate-400 mt-2.5">
+                  💡 In the <strong>Analytics Workspace</strong> chat, simply paste any shared Google Sheet or Doc link and ask questions — the agent will invoke these tools dynamically.
+                </p>
+              </div>
+
+              {/* Optional OAuth Section (Secondary) */}
+              <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+                <div className="flex items-center space-x-2">
+                  <Link2 className="w-3.5 h-3.5 text-slate-400" />
+                  <span>Need private organization-wide Drive browsing? Connect with OAuth:</span>
+                </div>
+                {googleStatus?.connected ? (
+                  <button
+                    onClick={handleDisconnectGoogle}
+                    className="text-xs font-bold text-rose-600 hover:underline"
+                  >
+                    Disconnect OAuth
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleConnectGoogle}
+                    disabled={connectingGoogle}
+                    className="text-xs font-bold text-blue-600 hover:underline disabled:opacity-50"
+                  >
+                    {connectingGoogle ? "Authorizing..." : "Connect Google Account (Optional)"}
+                  </button>
+                )}
               </div>
             </div>
 
