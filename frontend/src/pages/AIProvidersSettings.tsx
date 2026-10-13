@@ -155,7 +155,7 @@ export const AIProvidersSettings: React.FC = () => {
       <div className="max-w-5xl mx-auto space-y-8">
         {/* Onboarding Notice Banner */}
         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-900 dark:to-indigo-950/70 border border-blue-200 dark:border-indigo-500/30 rounded-3xl p-6 sm:p-8 shadow-xs">
-          <div className="flex items-start space-x-4">
+          <div className="flex flex-col sm:flex-row items-start gap-4">
             <div className="w-12 h-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-md">
               <ShieldCheck className="w-6 h-6" />
             </div>
@@ -266,7 +266,7 @@ export const AIProvidersSettings: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="flex items-center space-x-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <button
                       onClick={() => handleTestExisting(conf.id)}
                       className="px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-colors flex items-center space-x-1"
@@ -403,12 +403,12 @@ export const AIProvidersSettings: React.FC = () => {
               </div>
             )}
 
-            <div className="flex items-center space-x-3 pt-2">
+            <div className="flex flex-wrap items-center gap-2.5 pt-2">
               <button
                 type="button"
                 onClick={handleTestAdhoc}
                 disabled={testing || !apiKey}
-                className="px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-colors disabled:opacity-50"
+                className="flex-1 sm:flex-none flex items-center justify-center px-4 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-colors disabled:opacity-50"
               >
                 {testing ? "Testing connection..." : "Test Connection"}
               </button>
@@ -416,7 +416,7 @@ export const AIProvidersSettings: React.FC = () => {
               <button
                 type="submit"
                 disabled={saving || !apiKey}
-                className="px-5 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 rounded-xl shadow-md transition-colors disabled:opacity-50"
+                className="flex-1 sm:flex-none flex items-center justify-center px-5 py-2.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 rounded-xl shadow-md transition-colors disabled:opacity-50"
               >
                 {saving ? "Saving..." : "Save Configuration"}
               </button>

@@ -112,10 +112,10 @@ export const DashboardDetail: React.FC = () => {
             )}
           </div>
 
-          <div className="flex items-center space-x-3">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => setShowShareModal(true)}
-              className="flex items-center space-x-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold px-4 py-2.5 rounded-xl transition-colors"
+              className="flex-1 sm:flex-none flex items-center justify-center space-x-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold px-4 py-2.5 rounded-xl transition-colors"
             >
               <Share2 className="w-3.5 h-3.5" />
               <span>{isPublic ? "Share Settings (Public)" : "Share"}</span>
@@ -123,7 +123,7 @@ export const DashboardDetail: React.FC = () => {
 
             <Link
               to={`/dashboards/${dashboard.id}/edit`}
-              className="flex items-center space-x-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-md transition-colors"
+              className="flex-1 sm:flex-none flex items-center justify-center space-x-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-md transition-colors"
             >
               <Edit className="w-3.5 h-3.5" />
               <span>Customize Layout</span>
@@ -132,8 +132,8 @@ export const DashboardDetail: React.FC = () => {
         </div>
 
         {/* Global Filter Bar */}
-        <div className="bg-white dark:bg-slate-900/90 rounded-2xl border border-slate-200 dark:border-slate-800 px-6 py-3.5 shadow-xs flex items-center justify-between text-xs transition-colors">
-          <div className="flex items-center space-x-3">
+        <div className="bg-white dark:bg-slate-900/90 rounded-2xl border border-slate-200 dark:border-slate-800 px-4 sm:px-6 py-3.5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs transition-colors">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <span className="font-bold text-slate-700 dark:text-slate-300">Quick Filter:</span>
             {["All", "Enterprise", "Mid-Market", "SMB"].map((seg) => (
               <button
@@ -188,7 +188,7 @@ export const DashboardDetail: React.FC = () => {
         {/* Share Modal */}
         {showShareModal && (
           <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-5">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full max-h-[90vh] overflow-y-auto p-5 sm:p-6 shadow-2xl space-y-5">
               <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
                 <div className="flex items-center space-x-2">
                   <Globe className="w-4 h-4 text-blue-500" />

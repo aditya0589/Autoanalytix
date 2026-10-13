@@ -173,33 +173,33 @@ export const DatasetsPage: React.FC = () => {
   return (
     <Layout>
       <div className="max-w-6xl mx-auto space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-xl font-extrabold text-slate-900 dark:text-white tracking-tight">Datasets Explorer</h1>
             <p className="text-xs text-slate-500 dark:text-slate-400">Manage and explore uploaded CSV and Excel data files</p>
           </div>
 
-          <div className="flex items-center space-x-3">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={handleLoadDemo}
               disabled={loadingDemo}
-              className="flex items-center space-x-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-semibold px-3 py-2 rounded-lg transition-colors"
+              className="flex-1 sm:flex-none flex items-center justify-center space-x-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-semibold px-3 py-2 rounded-lg transition-colors"
             >
               <Sparkles className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-              <span>{loadingDemo ? "Loading Demo..." : "Load Demo Dataset"}</span>
+              <span>{loadingDemo ? "Loading..." : "Demo Dataset"}</span>
             </button>
 
             <button
               onClick={() => setShowGoogleSheetModal(true)}
-              className="flex items-center space-x-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3.5 py-2 rounded-lg shadow-sm transition-colors"
+              className="flex-1 sm:flex-none flex items-center justify-center space-x-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3.5 py-2 rounded-lg shadow-sm transition-colors"
             >
               <FileSpreadsheet className="w-3.5 h-3.5" />
-              <span>Import Google Sheet</span>
+              <span>Import Sheet</span>
             </button>
 
             <button
               onClick={() => setShowUploadModal(true)}
-              className="flex items-center space-x-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3.5 py-2 rounded-lg shadow-sm transition-colors"
+              className="w-full sm:w-auto flex items-center justify-center space-x-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3.5 py-2 rounded-lg shadow-sm transition-colors"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Upload CSV / Excel</span>

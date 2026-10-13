@@ -91,14 +91,18 @@ export const DatasetDetail: React.FC = () => {
     <Layout>
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header with Title and "Ask AI" button */}
-        <div className="bg-white dark:bg-slate-900/90 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 sm:p-8 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4 transition-colors">
+        <div className="bg-white dark:bg-slate-900/90 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 sm:p-8 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors">
           <div className="flex items-center space-x-4">
             <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200/50 dark:border-blue-800/40 text-blue-600 dark:text-blue-400 flex items-center justify-center font-black text-xs uppercase shrink-0">
-              {dataset.file_type}
+              {dataset.file_type === 'google_sheet' ? (
+                <FileSpreadsheet className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+              ) : (
+                dataset.file_type
+              )}
             </div>
-            <div>
-              <h1 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">{dataset.name}</h1>
-              <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+            <div className="min-w-0">
+              <h1 className="text-xl font-black text-slate-900 dark:text-white tracking-tight truncate">{dataset.name}</h1>
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5 truncate">
                 File: {dataset.original_filename} • Table: <code className="text-slate-600 dark:text-slate-400 font-mono">{dataset.duckdb_table_name}</code>
               </p>
             </div>
@@ -106,7 +110,7 @@ export const DatasetDetail: React.FC = () => {
 
           <Link
             to={`/analytics/${dataset.id}`}
-            className="inline-flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold text-xs py-2.5 px-4 rounded-xl shadow-md transition-all"
+            className="inline-flex items-center justify-center space-x-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold text-xs py-2.5 px-4 rounded-xl shadow-md transition-all shrink-0"
           >
             <Sparkles className="w-4 h-4 text-blue-200" />
             <span>Ask Questions with AI</span>
@@ -115,7 +119,7 @@ export const DatasetDetail: React.FC = () => {
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex border-b border-slate-200 dark:border-slate-800 space-x-8 text-xs font-semibold">
+        <div className="flex border-b border-slate-200 dark:border-slate-800 space-x-6 sm:space-x-8 text-xs font-semibold overflow-x-auto whitespace-nowrap no-scrollbar">
           {[
             { key: "overview", label: "Overview", icon: Database },
             { key: "data", label: "Data Preview", icon: TableIcon },
@@ -291,8 +295,9 @@ export const DatasetDetail: React.FC = () => {
         {/* Tab 3: Columns */}
         {activeTab === "columns" && (
           <div className="bg-white dark:bg-slate-900/90 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
-            <table className="min-w-full text-xs text-left divide-y divide-slate-200 dark:divide-slate-800">
-              <thead className="bg-slate-50 dark:bg-slate-800/80 font-semibold text-slate-700 dark:text-slate-300">
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-xs text-left divide-y divide-slate-200 dark:divide-slate-800">
+                <thead className="bg-slate-50 dark:bg-slate-800/80 font-semibold text-slate-700 dark:text-slate-300">
                 <tr>
                   <th className="py-3 px-4">Column Name</th>
                   <th className="py-3 px-4">Semantic Type</th>
@@ -329,6 +334,7 @@ export const DatasetDetail: React.FC = () => {
                 ))}
               </tbody>
             </table>
+            </div>
           </div>
         )}
 
