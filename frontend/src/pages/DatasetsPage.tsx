@@ -344,8 +344,9 @@ export const DatasetsPage: React.FC = () => {
                     placeholder="https://docs.google.com/spreadsheets/d/... or ID"
                     className="w-full text-xs px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono"
                   />
-                  <p className="text-[10px] text-slate-400 mt-1">
-                    Paste any link from Google Sheets (e.g. your company sales or financial model).
+                  <p className="text-[10.5px] text-slate-500 dark:text-slate-400 mt-1.5 flex items-center gap-1.5 bg-emerald-50/50 dark:bg-emerald-950/30 border border-emerald-200/40 dark:border-emerald-800/30 p-2 rounded-lg text-emerald-800 dark:text-emerald-300">
+                    <span>💡</span>
+                    <span>Set link sharing to <strong>"Anyone with the link can view"</strong>. Ingests directly into DuckDB without requiring Google Cloud OAuth setup.</span>
                   </p>
                 </div>
 

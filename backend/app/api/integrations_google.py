@@ -260,33 +260,49 @@ async def import_google_sheet_as_dataset(
     current_user: ItemObject = Depends(get_current_user)
 ):
     """Extracts rows from a Google Sheet tab and ingests them into DuckDB as an Autoanalytix dataset."""
-    get_current_workspace(req.workspace_id, current_user)
+    # 1. Attempt direct extraction via shared link (Zero OAuth / Google Cloud credentials required)
+    rows = None
+    tab_name = req.tab_name or "Sheet1"
+    direct_error = None
+
     try:
-        token = await google_workspace_service.get_valid_access_token(req.workspace_id)
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Google Workspace is not connected: {str(e)}"
+        url_rows, detected_tab = await google_workspace_service.extract_sheet_rows_from_shared_url(
+            req.spreadsheet_id,
+            limit_rows=req.limit_rows
         )
+        if url_rows:
+            rows = url_rows
+            if not req.tab_name and detected_tab:
+                tab_name = detected_tab
+    except Exception as e:
+        direct_error = str(e)
 
-    # 1. Fetch available tabs if not specified
-    tab_name = req.tab_name
-    if not tab_name:
-        tabs = await google_workspace_service.list_spreadsheet_tabs(token, req.spreadsheet_id)
-        if not tabs:
-            raise HTTPException(status_code=400, detail="Spreadsheet has no readable sheets.")
-        tab_name = tabs[0]
-
-    # 2. Extract rows
-    rows = await google_workspace_service.extract_sheet_rows(
-        access_token=token,
-        spreadsheet_id=req.spreadsheet_id,
-        tab_name=tab_name,
-        limit_rows=req.limit_rows
-    )
+    # 2. If direct extraction didn't work (e.g. private sheet), attempt authenticated OAuth flow
+    if not rows:
+        try:
+            token = await google_workspace_service.get_valid_access_token(req.workspace_id)
+            if not req.tab_name:
+                tabs = await google_workspace_service.list_spreadsheet_tabs(token, req.spreadsheet_id)
+                if tabs:
+                    tab_name = tabs[0]
+            rows = await google_workspace_service.extract_sheet_rows(
+                access_token=token,
+                spreadsheet_id=req.spreadsheet_id,
+                tab_name=tab_name,
+                limit_rows=req.limit_rows
+            )
+        except Exception as oauth_err:
+            error_detail = (
+                f"Could not read Google Sheet. {direct_error or ''} "
+                "Ensure link sharing is set to 'Anyone with the link can view', or verify your Google connection."
+            )
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=error_detail.strip()
+            )
 
     if not rows:
-        raise HTTPException(status_code=400, detail=f"No data rows found in sheet '{tab_name}'.")
+        raise HTTPException(status_code=400, detail=f"No data rows found in Google Sheet '{tab_name}'.")
 
     # 3. Build Polars DataFrame
     df = pl.DataFrame(rows)
