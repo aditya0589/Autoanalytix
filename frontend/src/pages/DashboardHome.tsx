@@ -84,7 +84,7 @@ export const DashboardHome: React.FC = () => {
     <Layout>
       <div className="max-w-6xl mx-auto space-y-8">
         {/* Welcome Command Hero */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 border border-indigo-500/20 p-8 sm:p-10 text-white shadow-xl">
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 border border-indigo-500/20 p-5 sm:p-8 md:p-10 text-white shadow-xl">
           {/* Ambient decorative glow */}
           <div className="absolute top-0 right-0 -mt-10 -mr-10 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute bottom-0 left-1/3 -mb-10 w-64 h-64 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none" />
@@ -158,18 +158,18 @@ export const DashboardHome: React.FC = () => {
               </div>
             </form>
 
-            <div className="flex flex-wrap gap-3 pt-3">
+            <div className="flex flex-wrap gap-2.5 pt-3">
               <button
                 onClick={handleLoadDemo}
                 disabled={loadingDemo}
-                className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs py-2.5 px-4 rounded-xl shadow-lg shadow-blue-600/25 transition-all disabled:opacity-50"
+                className="flex-1 sm:flex-none flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs py-2.5 px-4 rounded-xl shadow-lg shadow-blue-600/25 transition-all disabled:opacity-50"
               >
                 <Sparkles className="w-4 h-4" />
                 <span>{loadingDemo ? "Spinning up Demo..." : "Explore Demo Sales Dataset"}</span>
               </button>
               <Link
                 to="/datasets"
-                className="flex items-center space-x-2 bg-white/10 hover:bg-white/20 border border-white/10 text-white font-semibold text-xs py-2.5 px-4 rounded-xl backdrop-blur-md transition-all"
+                className="flex-1 sm:flex-none flex items-center justify-center space-x-2 bg-white/10 hover:bg-white/20 border border-white/10 text-white font-semibold text-xs py-2.5 px-4 rounded-xl backdrop-blur-md transition-all"
               >
                 <UploadCloud className="w-4 h-4" />
                 <span>Upload New Data</span>

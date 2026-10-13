@@ -65,25 +65,25 @@ export const PublicDashboardViewer: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
       {/* Top Banner */}
-      <header className="h-16 bg-white border-b border-slate-200 px-8 flex items-center justify-between shadow-xs">
+      <header className="h-16 bg-white border-b border-slate-200 px-4 sm:px-8 flex items-center justify-between shadow-xs">
         <div className="flex items-center space-x-2.5">
           <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-sm shadow-xs">
             A
           </div>
           <span className="font-bold text-base text-slate-900 tracking-tight">Autoanalytix</span>
-          <span className="text-[11px] font-semibold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full ml-2">
+          <span className="text-[11px] font-semibold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full ml-1 sm:ml-2">
             Public View
           </span>
         </div>
 
         <div className="flex items-center space-x-2 text-xs text-slate-500">
           <ShieldCheck className="w-4 h-4 text-emerald-600" />
-          <span>Verified Secure View</span>
+          <span className="hidden sm:inline">Verified Secure View</span>
         </div>
       </header>
 
       {/* Main Container */}
-      <main className="flex-1 max-w-6xl w-full mx-auto p-8 space-y-6">
+      <main className="flex-1 max-w-6xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
         <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-1">
           <h1 className="text-xl font-extrabold text-slate-900 tracking-tight">{dashboard.title}</h1>
           {dashboard.description && (

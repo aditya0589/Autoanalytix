@@ -35,9 +35,9 @@ export const Register: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 p-6 transition-colors duration-200 relative">
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 p-4 sm:p-6 pt-16 sm:pt-6 transition-colors duration-200 relative">
       {/* Top back & theme controls */}
-      <div className="absolute top-6 left-6 right-6 flex items-center justify-between max-w-4xl mx-auto">
+      <div className="absolute top-4 sm:top-6 left-4 sm:left-6 right-4 sm:right-6 flex items-center justify-between max-w-4xl mx-auto">
         <Link
           to="/"
           className="inline-flex items-center space-x-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
@@ -54,7 +54,7 @@ export const Register: React.FC = () => {
         </button>
       </div>
 
-      <div className="max-w-md w-full bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl p-8 space-y-6 transition-colors">
+      <div className="max-w-md w-full bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl p-6 sm:p-8 space-y-6 transition-colors">
         <div className="text-center space-y-2">
           <div className="inline-flex w-12 h-12 rounded-xl bg-blue-600 text-white items-center justify-center font-extrabold text-xl shadow-md">
             A
