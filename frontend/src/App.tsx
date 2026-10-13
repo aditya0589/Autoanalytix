@@ -16,6 +16,7 @@ import { AIProvidersSettings } from "./pages/AIProvidersSettings";
 import { DataSourcesSettings } from "./pages/DataSourcesSettings";
 import { PublicDashboardViewer } from "./pages/PublicDashboardViewer";
 import { ChatsPage } from "./pages/ChatsPage";
+import { GoogleOAuthCallback } from "./pages/GoogleOAuthCallback";
 
 // Protected Route Guard
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -51,6 +52,7 @@ export const App: React.FC = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/shared/:shareId" element={<PublicDashboardViewer />} />
+        <Route path="/integrations/google/callback" element={<GoogleOAuthCallback />} />
 
         {/* Protected Application Routes */}
         <Route

@@ -26,6 +26,11 @@ class Settings(BaseSettings):
         default_factory=lambda: base64.urlsafe_b64encode(b"autoanalytix-dev-placeholder-key").decode("utf-8")
     )
     
+    # Google Workspace OAuth
+    GOOGLE_CLIENT_ID: str = Field(default=os.environ.get("GOOGLE_CLIENT_ID", ""))
+    GOOGLE_CLIENT_SECRET: str = Field(default=os.environ.get("GOOGLE_CLIENT_SECRET", ""))
+    GOOGLE_REDIRECT_URI: str = Field(default=os.environ.get("GOOGLE_REDIRECT_URI", "http://localhost:5173/integrations/google/callback"))
+    
     # Database (Default to local SQLite database with zero external setup, or Postgres in Docker)
     DATABASE_URL: str = Field(default=default_db)
     

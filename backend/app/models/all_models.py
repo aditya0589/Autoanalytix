@@ -36,6 +36,7 @@ class Workspace(TimeStampedModel):
     dashboards = relationship("Dashboard", back_populates="workspace", cascade="all, delete-orphan")
     ai_configs = relationship("AIProviderConfig", back_populates="workspace", cascade="all, delete-orphan")
     data_sources = relationship("DataSource", back_populates="workspace", cascade="all, delete-orphan")
+    integrations = relationship("WorkspaceIntegration", back_populates="workspace", cascade="all, delete-orphan")
 
 class WorkspaceMember(Base):
     __tablename__ = "workspace_members"
@@ -217,3 +218,18 @@ class AuditLog(Base):
     resource_id = Column(String(100), nullable=True)
     details = Column(JSON, nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+
+class WorkspaceIntegration(TimeStampedModel):
+    __tablename__ = "workspace_integrations"
+    
+    workspace_id = Column(String(36), ForeignKey("workspaces.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    provider = Column(String(50), nullable=False)  # google_workspace
+    account_email = Column(String(255), nullable=True)
+    encrypted_credentials = Column(Text, nullable=False)
+    status = Column(String(50), default="connected", nullable=False)  # connected, expired, revoked
+    metadata_info = Column(JSON, nullable=True)  # Scopes, user profile, etc.
+    last_synced_at = Column(DateTime, nullable=True)
+    
+    workspace = relationship("Workspace", back_populates="integrations")
+

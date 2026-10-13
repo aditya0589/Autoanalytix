@@ -246,6 +246,33 @@ class DynamoDBService:
         self.table.delete_item(Key={"PK": f"WS#{workspace_id}", "SK": f"AICFG#{config_id}"})
         return True
 
+    # ==================== WORKSPACE INTEGRATIONS ====================
+    def save_workspace_integration(self, integration: Dict[str, Any]) -> Dict[str, Any]:
+        item = {
+            **integration,
+            "PK": f"WS#{integration['workspace_id']}",
+            "SK": f"INTEG#{integration['provider']}",
+            "entity_type": "WORKSPACE_INTEGRATION",
+        }
+        dynamo_item = _to_dynamo({k: v for k, v in item.items() if v is not None})
+        self.table.put_item(Item=dynamo_item)
+        return _from_dynamo(dynamo_item)
+
+    def get_workspace_integration(self, workspace_id: str, provider: str) -> Optional[Dict[str, Any]]:
+        res = self.table.get_item(Key={"PK": f"WS#{workspace_id}", "SK": f"INTEG#{provider}"})
+        item = res.get("Item")
+        return _from_dynamo(item) if item else None
+
+    def list_workspace_integrations(self, workspace_id: str) -> List[Dict[str, Any]]:
+        res = self.table.query(
+            KeyConditionExpression=Key("PK").eq(f"WS#{workspace_id}") & Key("SK").begins_with("INTEG#")
+        )
+        return _from_dynamo(res.get("Items", []))
+
+    def delete_workspace_integration(self, workspace_id: str, provider: str) -> bool:
+        self.table.delete_item(Key={"PK": f"WS#{workspace_id}", "SK": f"INTEG#{provider}"})
+        return True
+
     # ==================== CONVERSATIONS ====================
     def create_conversation(self, conv: Dict[str, Any]) -> Dict[str, Any]:
         item = {

@@ -27,7 +27,8 @@ import {
   Search,
   PanelLeftClose,
   PanelLeftOpen,
-  ArrowRight
+  ArrowRight,
+  FileText
 } from "lucide-react";
 
 interface ChatMessage {
@@ -84,6 +85,29 @@ export const AnalyticsWorkspace: React.FC = () => {
   const [selectedDashboardId, setSelectedDashboardId] = useState("");
   const [newDashboardTitle, setNewDashboardTitle] = useState("");
   const [addingToDashboard, setAddingToDashboard] = useState(false);
+  const [exportingDoc, setExportingDoc] = useState(false);
+  const [exportedDocResult, setExportedDocResult] = useState<{ url: string; title: string } | null>(null);
+
+  const handleExportToGoogleDoc = async (analysis: any) => {
+    if (!currentWorkspace) return;
+    try {
+      setExportingDoc(true);
+      const title = analysis?.chart_spec?.title || (dataset?.name ? `${dataset.name} Analysis Briefing` : "Autoanalytix Executive Report");
+      const res = await api.googleWorkspace.exportDoc({
+        workspace_id: currentWorkspace.id,
+        title,
+        analysis_id: analysis.id,
+        executive_summary: analysis.explanation,
+        include_tables: true,
+        include_sql: true,
+      });
+      setExportedDocResult({ url: res.document_url, title: res.title });
+    } catch (err: any) {
+      alert("Failed to export to Google Docs: " + err.message);
+    } finally {
+      setExportingDoc(false);
+    }
+  };
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -679,6 +703,16 @@ export const AnalyticsWorkspace: React.FC = () => {
                             <span>Add to Dashboard</span>
                           </button>
 
+                          <button
+                            onClick={() => handleExportToGoogleDoc(m.analysis)}
+                            disabled={exportingDoc}
+                            className="inline-flex items-center space-x-1.5 text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 font-semibold bg-emerald-50/80 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 px-3 py-1.5 rounded-xl transition-colors"
+                            title="Export analysis, KPI table, and SQL query to a formatted Google Doc"
+                          >
+                            <FileText className="w-3.5 h-3.5" />
+                            <span>{exportingDoc ? "Exporting..." : "Export to Google Doc"}</span>
+                          </button>
+
                           {m.analysis.generated_sql && (
                             <button
                               onClick={() => setExpandedSqlId(expandedSqlId === m.id ? null : m.id)}
@@ -815,6 +849,46 @@ export const AnalyticsWorkspace: React.FC = () => {
                     {addingToDashboard ? "Adding..." : "Add Widget"}
                   </button>
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Exported Google Doc Modal */}
+        {exportedDocResult && (
+          <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 text-center">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 mx-auto flex items-center justify-center border border-emerald-200/60 dark:border-emerald-800/40">
+                <FileText className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">Google Doc Report Created!</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  Your executive briefing, KPI tables, and validated DuckDB SQL have been formatted into Google Docs.
+                </p>
+              </div>
+
+              <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700/60 text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">
+                {exportedDocResult.title}
+              </div>
+
+              <div className="flex items-center justify-center space-x-3 pt-2">
+                <button
+                  onClick={() => setExportedDocResult(null)}
+                  className="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
+                >
+                  Close
+                </button>
+                <a
+                  href={exportedDocResult.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={() => setExportedDocResult(null)}
+                  className="inline-flex items-center space-x-1.5 px-4 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 rounded-xl shadow-md transition-colors"
+                >
+                  <span>Open in Google Docs</span>
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
               </div>
             </div>
           </div>
