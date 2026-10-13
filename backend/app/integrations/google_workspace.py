@@ -1,6 +1,9 @@
 import json
 import logging
 import urllib.parse
+import io
+import csv
+import re
 from datetime import datetime, timezone, timedelta
 from typing import Dict, Any, List, Optional, Tuple
 import httpx
@@ -487,6 +490,165 @@ This document outlines our company's expansion goals across Enterprise and SMB s
                 rows.append(row_dict)
 
             return rows
+
+    # ==================== DIRECT SHARED LINK / MCP OPERATIONS ====================
+
+    @staticmethod
+    def parse_google_url(url_or_id: str) -> Dict[str, Any]:
+        """Parses a Google Sheets, Docs, or Drive URL or ID into structured components."""
+        clean = url_or_id.strip()
+        result = {
+            "type": "unknown",
+            "id": clean,
+            "gid": "0",
+            "original": clean
+        }
+
+        # 1. Google Sheets
+        sheet_match = re.search(r"/spreadsheets/d/([a-zA-Z0-9-_]+)", clean)
+        if sheet_match:
+            result["type"] = "sheets"
+            result["id"] = sheet_match.group(1)
+            gid_match = re.search(r"[?&#]gid=([0-9]+)", clean)
+            if gid_match:
+                result["gid"] = gid_match.group(1)
+            return result
+
+        # 2. Google Docs
+        doc_match = re.search(r"/document/d/([a-zA-Z0-9-_]+)", clean)
+        if doc_match:
+            result["type"] = "docs"
+            result["id"] = doc_match.group(1)
+            return result
+
+        # 3. Google Drive file
+        drive_match = re.search(r"(?:/file/d/|[?&]id=)([a-zA-Z0-9-_]+)", clean)
+        if drive_match:
+            result["type"] = "drive"
+            result["id"] = drive_match.group(1)
+            return result
+
+        # 4. Fallback for raw IDs
+        if re.match(r"^[a-zA-Z0-9-_]{20,70}$", clean):
+            result["type"] = "sheets"
+            result["id"] = clean
+            return result
+
+        return result
+
+    async def extract_sheet_rows_from_shared_url(
+        self,
+        url_or_id: str,
+        gid: Optional[str] = None,
+        limit_rows: int = 50000
+    ) -> Tuple[List[Dict[str, Any]], str]:
+        """Directly fetches and extracts tabular rows from a shared Google Sheet URL.
+        Requires 'Anyone with the link can view' permission on the spreadsheet.
+        Zero OAuth or API key credentials required.
+        """
+        parsed = self.parse_google_url(url_or_id)
+        spreadsheet_id = parsed["id"]
+        target_gid = gid or parsed.get("gid") or "0"
+
+        export_urls = [
+            f"https://docs.google.com/spreadsheets/d/{spreadsheet_id}/export?format=csv&gid={target_gid}",
+            f"https://docs.google.com/spreadsheets/d/{spreadsheet_id}/gviz/tq?tqx=out:csv&gid={target_gid}"
+        ]
+
+        csv_text = None
+        last_error = ""
+
+        async with httpx.AsyncClient(follow_redirects=True, timeout=30.0) as client:
+            for url in export_urls:
+                try:
+                    resp = await client.get(url, headers={
+                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Autoanalytix/1.0"
+                    })
+                    if resp.status_code == 200:
+                        body = resp.text
+                        # Check if Google returned a login/HTML screen
+                        if "accounts.google.com" in str(resp.url) or ("<html" in body[:300].lower() and "google" in body[:300].lower()):
+                            last_error = "The Google Sheet is private. Please ensure 'Anyone with the link can view' is enabled in Share settings."
+                            continue
+                        csv_text = body
+                        break
+                    elif resp.status_code in (401, 403):
+                        last_error = "Access denied. Ensure the Google Sheet is shared with 'Anyone with the link can view'."
+                    elif resp.status_code == 404:
+                        last_error = "Spreadsheet not found. Please verify the URL or spreadsheet ID."
+                except Exception as e:
+                    last_error = str(e)
+
+        if not csv_text:
+            raise ValueError(last_error or "Could not retrieve CSV from the provided Google Sheet link.")
+
+        reader = csv.reader(io.StringIO(csv_text))
+        rows_raw = list(reader)
+        if not rows_raw:
+            return [], f"Sheet_{target_gid}"
+
+        headers = [str(h).strip() for h in rows_raw[0]]
+        seen: Dict[str, int] = {}
+        cleaned_headers: List[str] = []
+        for idx, h in enumerate(headers):
+            col_name = h if h else f"col_{idx+1}"
+            if col_name in seen:
+                seen[col_name] += 1
+                col_name = f"{col_name}_{seen[col_name]}"
+            else:
+                seen[col_name] = 1
+            cleaned_headers.append(col_name)
+
+        rows: List[Dict[str, Any]] = []
+        for raw_row in rows_raw[1:limit_rows + 1]:
+            if not any(str(c).strip() for c in raw_row):
+                continue
+            row_dict = {}
+            for idx, col in enumerate(cleaned_headers):
+                val = raw_row[idx] if idx < len(raw_row) else None
+                if val is not None and isinstance(val, str):
+                    val_clean = val.strip()
+                    val = None if val_clean == "" else val_clean
+                row_dict[col] = val
+            rows.append(row_dict)
+
+        return rows, f"Sheet_gid_{target_gid}"
+
+    async def read_doc_from_shared_url(self, url_or_id: str) -> str:
+        """Reads plain text from a shared Google Doc without OAuth."""
+        parsed = self.parse_google_url(url_or_id)
+        doc_id = parsed["id"]
+        export_url = f"https://docs.google.com/document/d/{doc_id}/export?format=txt"
+
+        async with httpx.AsyncClient(follow_redirects=True, timeout=25.0) as client:
+            resp = await client.get(export_url, headers={
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Autoanalytix/1.0"
+            })
+            if resp.status_code == 200:
+                if "accounts.google.com" in str(resp.url) or "<html" in resp.text[:300].lower():
+                    raise ValueError("The Google Doc is private. Please set link sharing to 'Anyone with the link can view'.")
+                return resp.text
+            elif resp.status_code in (401, 403):
+                raise ValueError("Access denied. Ensure the Google Doc is shared with 'Anyone with the link can view'.")
+            else:
+                raise ValueError(f"Could not load Google Doc: status {resp.status_code}")
+
+    async def read_drive_file_from_shared_url(self, url_or_id: str) -> Tuple[bytes, str]:
+        """Downloads a shared Google Drive file without OAuth."""
+        parsed = self.parse_google_url(url_or_id)
+        file_id = parsed["id"]
+        download_url = f"https://drive.google.com/uc?export=download&id={file_id}"
+
+        async with httpx.AsyncClient(follow_redirects=True, timeout=45.0) as client:
+            resp = await client.get(download_url, headers={
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Autoanalytix/1.0"
+            })
+            if resp.status_code == 200:
+                if "accounts.google.com" in str(resp.url) or ("<html" in resp.text[:300].lower() and "google" in resp.text[:300].lower()):
+                    raise ValueError("The Google Drive file is private. Please set link sharing to 'Anyone with the link can view'.")
+                return resp.content, f"drive_{file_id}"
+            else:
+                raise ValueError(f"Could not download Google Drive file: status {resp.status_code}")
 
 
 google_workspace_service = GoogleWorkspaceService()
