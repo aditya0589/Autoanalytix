@@ -13,7 +13,8 @@ from app.api import (
     conversations,
     dashboards,
     public_dashboards,
-    data_sources
+    data_sources,
+    integrations_google
 )
 
 # Initialize database schema on startup if running local SQLite
@@ -51,6 +52,7 @@ app.include_router(conversations.router, prefix=settings.API_V1_PREFIX)
 app.include_router(dashboards.router, prefix=settings.API_V1_PREFIX)
 app.include_router(public_dashboards.router, prefix=settings.API_V1_PREFIX)
 app.include_router(data_sources.router, prefix=settings.API_V1_PREFIX)
+app.include_router(integrations_google.router, prefix=settings.API_V1_PREFIX)
 
 @app.get("/health")
 @app.get("/api/health")

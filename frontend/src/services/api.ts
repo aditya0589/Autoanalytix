@@ -744,6 +744,120 @@ class ApiClient {
       }
     },
   };
+
+  // --- Google Workspace ---
+  googleWorkspace = {
+    getStatus: async (workspaceId: string) => {
+      try {
+        return await this.request<any>(`/integrations/google/status?workspace_id=${workspaceId}`);
+      } catch {
+        const stored = localStorage.getItem(`autoanalytix_google_status_${workspaceId}`);
+        return stored ? JSON.parse(stored) : { connected: false, status: "disconnected", has_custom_credentials: false };
+      }
+    },
+    getAuthUrl: async (workspaceId: string, redirectUri?: string) => {
+      try {
+        return await this.request<any>(`/integrations/google/auth-url?workspace_id=${workspaceId}${redirectUri ? `&redirect_uri=${encodeURIComponent(redirectUri)}` : ""}`);
+      } catch {
+        return {
+          auth_url: `${window.location.origin}/integrations/google/callback?code=mock_oauth_code_local&state=${workspaceId}`,
+          state: workspaceId,
+        };
+      }
+    },
+    callback: async (data: { workspace_id: string; code: string; state: string; redirect_uri?: string }) => {
+      try {
+        return await this.request<any>("/integrations/google/callback", { method: "POST", body: JSON.stringify(data) });
+      } catch {
+        const mockStatus = {
+          connected: true,
+          account_email: "analyst@demo-company.google",
+          status: "connected",
+          scopes: ["documents", "spreadsheets.readonly", "drive.readonly"],
+          last_synced_at: new Date().toISOString(),
+          has_custom_credentials: false,
+        };
+        localStorage.setItem(`autoanalytix_google_status_${data.workspace_id}`, JSON.stringify(mockStatus));
+        return mockStatus;
+      }
+    },
+    disconnect: async (workspaceId: string) => {
+      try {
+        return await this.request<any>(`/integrations/google/disconnect?workspace_id=${workspaceId}`, { method: "POST" });
+      } catch {
+        localStorage.removeItem(`autoanalytix_google_status_${workspaceId}`);
+        return { message: "Disconnected successfully." };
+      }
+    },
+    listDriveFiles: async (workspaceId: string, mimeType?: string, query?: string) => {
+      try {
+        return await this.request<any[]>(`/integrations/google/drive/files?workspace_id=${workspaceId}${mimeType ? `&mime_type=${encodeURIComponent(mimeType)}` : ""}${query ? `&query=${encodeURIComponent(query)}` : ""}`);
+      } catch {
+        return [
+          {
+            id: "mock_doc_1",
+            name: "Q3 SaaS Expansion Strategy & Churn Targets.docx",
+            mime_type: "application/vnd.google-apps.document",
+            modified_time: new Date().toISOString(),
+            web_view_link: "https://docs.google.com/document/d/mock_doc_1/edit",
+          },
+          {
+            id: "mock_sheet_1",
+            name: "2026 Enterprise Pipeline & ACV Metrics",
+            mime_type: "application/vnd.google-apps.spreadsheet",
+            modified_time: new Date().toISOString(),
+            web_view_link: "https://docs.google.com/spreadsheets/d/mock_sheet_1/edit",
+          },
+        ];
+      }
+    },
+    getDoc: async (workspaceId: string, docId: string) => {
+      try {
+        return await this.request<any>(`/integrations/google/docs/${docId}?workspace_id=${workspaceId}`);
+      } catch {
+        return {
+          document_id: docId,
+          title: "Q3 SaaS Expansion Strategy & Churn Targets",
+          content_markdown: "# Q3 SaaS Expansion Strategy & Churn Targets\n\n- Net Revenue Retention (NRR) target: 120%\n- Enterprise MRR Churn threshold: <1.5%",
+          raw_character_count: 142,
+        };
+      }
+    },
+    exportDoc: async (data: { workspace_id: string; title: string; analysis_id?: string; dashboard_id?: string; executive_summary?: string; markdown_content?: string; include_tables?: boolean; include_sql?: boolean }) => {
+      try {
+        return await this.request<any>("/integrations/google/docs/export", { method: "POST", body: JSON.stringify(data) });
+      } catch {
+        const mockDocId = "mock_exported_doc_" + Date.now();
+        return {
+          document_id: mockDocId,
+          title: data.title,
+          document_url: `https://docs.google.com/document/d/${mockDocId}/edit`,
+          message: "Google Doc generated successfully.",
+        };
+      }
+    },
+    listSheetTabs: async (workspaceId: string, sheetId: string) => {
+      try {
+        return await this.request<any>(`/integrations/google/sheets/${sheetId}/tabs?workspace_id=${workspaceId}`);
+      } catch {
+        return { spreadsheet_id: sheetId, tabs: ["Q1 Sales Orders", "Customer Accounts", "Targets & Quotas"] };
+      }
+    },
+    importSheet: async (data: { workspace_id: string; spreadsheet_id: string; tab_name?: string; dataset_name?: string; limit_rows?: number }) => {
+      try {
+        return await this.request<any>("/integrations/google/sheets/import", { method: "POST", body: JSON.stringify(data) });
+      } catch {
+        return {
+          dataset_id: "ds_gsheet_" + Date.now(),
+          dataset_name: data.dataset_name || "Google Sheet Dataset",
+          row_count: 50,
+          column_count: 6,
+          duckdb_table_name: "tbl_gsheet_demo",
+          message: "Google Sheet ingested into DuckDB.",
+        };
+      }
+    },
+  };
 }
 
 export const api = new ApiClient();

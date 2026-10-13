@@ -326,3 +326,68 @@ class DataSourceResponse(BaseModel):
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+# --- Google Workspace Integration Schemas ---
+class GoogleAuthUrlResponse(BaseModel):
+    auth_url: str
+    state: str
+
+class GoogleAuthCallbackRequest(BaseModel):
+    workspace_id: str
+    code: str
+    state: str
+    redirect_uri: Optional[str] = None
+
+class GoogleIntegrationStatusResponse(BaseModel):
+    connected: bool
+    account_email: Optional[str] = None
+    status: Optional[str] = None
+    scopes: List[str] = []
+    last_synced_at: Optional[str] = None
+    has_custom_credentials: bool = False
+
+class GoogleDriveFileItem(BaseModel):
+    id: str
+    name: str
+    mime_type: str
+    modified_time: Optional[str] = None
+    web_view_link: Optional[str] = None
+    size: Optional[int] = None
+
+class GoogleDocExportRequest(BaseModel):
+    workspace_id: str
+    title: str
+    analysis_id: Optional[str] = None
+    dashboard_id: Optional[str] = None
+    executive_summary: Optional[str] = None
+    markdown_content: Optional[str] = None
+    include_tables: bool = True
+    include_sql: bool = True
+
+class GoogleDocExportResponse(BaseModel):
+    document_id: str
+    title: str
+    document_url: str
+    message: str
+
+class GoogleDocContentResponse(BaseModel):
+    document_id: str
+    title: str
+    content_markdown: str
+    raw_character_count: int
+
+class GoogleSheetImportRequest(BaseModel):
+    workspace_id: str
+    spreadsheet_id: str
+    tab_name: Optional[str] = None
+    dataset_name: Optional[str] = None
+    limit_rows: int = 50000
+
+class GoogleSheetImportResponse(BaseModel):
+    dataset_id: str
+    dataset_name: str
+    row_count: int
+    column_count: int
+    duckdb_table_name: str
+    message: str
+
