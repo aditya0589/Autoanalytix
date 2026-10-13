@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { Layout } from "../components/Layout";
 import { useAuthStore } from "../stores/useAuthStore";
 import { api } from "../services/api";
@@ -20,14 +20,26 @@ import {
   Sparkles,
   Link2,
   Unlink,
-  AlertTriangle
+  AlertTriangle,
+  MessageSquare
 } from "lucide-react";
 
 export const DataSourcesSettings: React.FC = () => {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { currentWorkspace } = useAuthStore();
   const initialTab = searchParams.get("tab") === "google" ? "google" : "databases";
   const [activeTab, setActiveTab] = useState<"google" | "databases">(initialTab);
+
+  // Ingestion success popup modal state
+  const [ingestSuccess, setIngestSuccess] = useState<{
+    id: string;
+    name: string;
+    rowCount: number;
+    columnCount: number;
+    type: string;
+    message?: string;
+  } | null>(null);
 
   // --- SQL Connectors state ---
   const [sources, setSources] = useState<any[]>([]);
@@ -146,6 +158,14 @@ export const DataSourcesSettings: React.FC = () => {
         dataset_name: file.name.replace(/\.[^/.]+$/, ""),
       });
       setImportMessage(res.message || "Spreadsheet ingested into DuckDB!");
+      setIngestSuccess({
+        id: res.dataset_id,
+        name: res.dataset_name || file.name,
+        rowCount: res.row_count || 0,
+        columnCount: res.column_count || 0,
+        type: "Google Sheet",
+        message: res.message || "Spreadsheet ingested into DuckDB analytical engine successfully.",
+      });
     } catch (err: any) {
       alert("Import failed: " + err.message);
     } finally {
@@ -172,6 +192,14 @@ export const DataSourcesSettings: React.FC = () => {
       setDirectLinkInput("");
       setDirectLinkDatasetName("");
       setDirectLinkPublicAck(false);
+      setIngestSuccess({
+        id: res.dataset_id,
+        name: res.dataset_name || "Google Sheet Dataset",
+        rowCount: res.row_count || 0,
+        columnCount: res.column_count || 0,
+        type: "Google Sheet",
+        message: res.message || "Google resource ingested into DuckDB analytical engine successfully.",
+      });
     } catch (err: any) {
       alert("Import failed: " + err.message);
     } finally {
@@ -705,6 +733,73 @@ export const DataSourcesSettings: React.FC = () => {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* Ingestion Success Modal Popup */}
+        {ingestSuccess && (
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl space-y-5 text-center transition-all">
+              <div className="w-14 h-14 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 mx-auto flex items-center justify-center shadow-xs ring-8 ring-emerald-50/50 dark:ring-emerald-950/20">
+                <CheckCircle2 className="w-7 h-7" />
+              </div>
+
+              <div>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white">Data Ingested Successfully!</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
+                  {ingestSuccess.message}
+                </p>
+              </div>
+
+              <div className="bg-slate-50 dark:bg-slate-800/60 rounded-2xl p-4 border border-slate-100 dark:border-slate-800 text-left space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Dataset</span>
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate max-w-[200px]" title={ingestSuccess.name}>
+                    {ingestSuccess.name}
+                  </span>
+                </div>
+                <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-200/60 dark:border-slate-700/60 text-center">
+                  <div className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                    <div className="text-[9px] uppercase font-bold text-slate-400 dark:text-slate-500">Rows</div>
+                    <div className="text-xs font-black text-slate-800 dark:text-slate-100 mt-0.5">{ingestSuccess.rowCount?.toLocaleString() ?? 0}</div>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                    <div className="text-[9px] uppercase font-bold text-slate-400 dark:text-slate-500">Columns</div>
+                    <div className="text-xs font-black text-slate-800 dark:text-slate-100 mt-0.5">{ingestSuccess.columnCount ?? 0}</div>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                    <div className="text-[9px] uppercase font-bold text-slate-400 dark:text-slate-500">Engine</div>
+                    <div className="text-[11px] font-black text-emerald-600 dark:text-emerald-400 mt-0.5">DuckDB</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-2.5 pt-1">
+                <button
+                  onClick={() => navigate(`/analytics/${ingestSuccess.id}`)}
+                  className="flex-1 flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs py-2.5 px-4 rounded-xl shadow-sm transition-all"
+                >
+                  <MessageSquare className="w-3.5 h-3.5" />
+                  <span>Ask AI Analytics</span>
+                </button>
+                <button
+                  onClick={() => navigate(`/datasets/${ingestSuccess.id}`)}
+                  className="flex-1 flex items-center justify-center space-x-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-semibold text-xs py-2.5 px-4 rounded-xl transition-all"
+                >
+                  <span>Inspect Schema</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              <div>
+                <button
+                  onClick={() => setIngestSuccess(null)}
+                  className="text-xs font-medium text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                >
+                  Close & Stay on Integrations
+                </button>
+              </div>
             </div>
           </div>
         )}
