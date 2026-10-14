@@ -1,202 +1,277 @@
-# Autoanalytix — AI-Powered Business Analytics Platform
+# Autoanalytix
 
-> **Ask your data anything. Turn answers into dashboards and decisions.**
+<p align="center">
+  <img src="frontend/public/favicon.svg" alt="Autoanalytix Logo" width="72" height="72" />
+</p>
 
-Autoanalytix is a production-quality, AI-native business intelligence platform that empowers non-technical business users to upload datasets, ask complex analytical questions in plain English, inspect statistically profiled metrics, and assemble interactive dashboards without writing a single line of SQL, Python, or data engineering scripts.
+<h3 align="center">AI-Native Autonomous Business Intelligence & Analytical Engine</h3>
+
+<p align="center">
+  Transform raw operational datasets into verified SQL, real-time interactive dashboards, and actionable executive insights using conversational intelligence.
+</p>
+
+<p align="center">
+  <a href="#core-capabilities"><img src="https://img.shields.io/badge/Architecture-Hybrid%20Cloud%20%2B%20WASM-6366f1?style=flat-square" alt="Architecture" /></a>
+  <a href="#analytical-engine"><img src="https://img.shields.io/badge/Engine-DuckDB%20Columnar-yellow?style=flat-square" alt="DuckDB" /></a>
+  <a href="#ai-agent-orchestration"><img src="https://img.shields.io/badge/Orchestrator-LangGraph%20Stateful-blue?style=flat-square" alt="LangGraph" /></a>
+  <a href="#security--sandboxing"><img src="https://img.shields.io/badge/Security-AES--256--GCM%20%7C%20sqlglot%20AST-emerald?style=flat-square" alt="Security" /></a>
+  <a href="#technology-stack"><img src="https://img.shields.io/badge/Stack-FastAPI%20%7C%20React%20%7C%20TypeScript-0ea5e9?style=flat-square" alt="Tech Stack" /></a>
+  <img src="https://img.shields.io/badge/License-MIT-gray?style=flat-square" alt="License" />
+</p>
 
 ---
 
-## Key Highlights & Architectural Guarantees
+## Overview
 
-1. **Bring Your Own Key (BYOK) Architecture**:
-   - Zero dependency on developer-owned inference keys.
-   - Users bring their own Google Gemini, OpenAI, or Anthropic Claude API keys.
-   - Keys are encrypted at rest using **authenticated AES-256-GCM** with a dedicated encryption key stored independently from application databases.
-   - Decryption occurs strictly in-memory inside the backend; keys are never logged, never returned to the frontend, and never committed to version control.
-   - Unconfigured users receive friendly onboarding guidance directing them to `/settings/ai-providers`.
+**Autoanalytix** is an open-source, AI-native business intelligence platform engineered to eliminate the bottleneck between raw operational data and business decision-making. 
 
-2. **DuckDB In-Process Analytical Engine**:
-   - High-throughput analytical queries executed directly in DuckDB over columnar Parquet and CSV files.
-   - Memory limits and query timeouts enforced.
-   - Datasets are completely isolated by unique table names.
+Traditional BI tools demand deep SQL expertise, cumbersome ETL pipelines, and ongoing semantic modeling. Autoanalytix introduces a **declarative, conversation-driven analytics workflow**: users upload raw files (CSV, Parquet, Excel) or connect cloud spreadsheets, and ask complex multi-dimensional questions in plain English. 
 
-3. **Strict SQL Parser & AST Security Validation**:
-   - Every AI-generated query passes through `sqlglot` AST validation.
-   - Strictly single-statement read-only `SELECT` queries permitted.
-   - External filesystem functions (`read_csv`, `read_parquet`, `scan_parquet`, `glob`, `system`, etc.) and data mutation statements (`INSERT`, `UPDATE`, `DROP`, `ALTER`, `ATTACH`) are blocked.
-   - Bounded retries (up to 2 iterations) if an AI model produces non-compliant SQL.
+Under the hood, Autoanalytix combines a **sandboxed columnar OLAP engine (DuckDB)**, a **stateful multi-step agent graph (LangGraph)**, **abstract syntax tree (AST) query validation**, and a **hybrid dual-execution model** (AWS Serverless Cloud or 100% Client-Side Browser DuckDB-Wasm).
 
-4. **LangGraph Stateful Analytical Agent**:
-   - Orchestrated using typed `AnalyticsState` in LangGraph.
-   - Workflow: Schema inspection &rarr; Intent understanding &rarr; Structured analysis plan (Pydantic) &rarr; SQL formulation &rarr; AST security check &rarr; DuckDB execution &rarr; Chart specification &rarr; Business insight grounding.
-   - Contextual follow-up support with persisted multi-turn conversations.
+---
 
-5. **AI & Manual Dashboard Builder**:
-   - Natural language generation: *"Create an executive sales dashboard showing revenue, profit, monthly growth, regional performance, and top 10 products."*
-   - Interactive Recharts visualization with on-the-fly chart type switching (Bar, Horizontal Bar, Line, Area, Pie, Table, KPI).
-   - Global dashboard filters (segment, category, dates).
+## System Architecture
 
-6. **Unguessable Cryptographic Sharing**:
-   - Public view links generated with 256-bit cryptographically secure tokens.
-   - Public viewers do not need an account or an AI key.
-   - Private credentials, raw datasets, and internal metadata are completely redacted.
-   - Instant revocation and expiration support.
+Autoanalytix is built on an asynchronous, decoupled micro-architecture designed for sub-second query latency, strict tenant data isolation, and cryptographic zero-trust credential storage.
 
-7. **One-Click Realistic Demo Dataset**:
-   - Built-in B2B SaaS & Tech Sales dataset with 1,200 orders spanning 2025–2026 across Enterprise, Mid-Market, and SMB tiers.
+```mermaid
+flowchart TB
+    subgraph Client ["Client Layer (React 18 + TypeScript)"]
+        UI["Modern Responsive UI / Tailwind CSS"]
+        Store["State Management (Zustand & TanStack Query)"]
+        Recharts["Dynamic Data Visualizations (Recharts)"]
+        WASM["Browser Engine: DuckDB-Wasm + Web Workers"]
+    end
+
+    subgraph Gateway ["API & Edge Gateway"]
+        CORS["FastAPI ASGI Gateway / Mangum Adapter"]
+        AuthMiddleware["JWT Authentication & RBAC Middleware"]
+    end
+
+    subgraph CoreBackend ["Analytical Backend (Python 3.11 / FastAPI)"]
+        Ingest["Data Parser (Polars / DuckDB Ingestion)"]
+        Profiler["Statistical Profiler & Schema Extractor"]
+        Engine["DuckDB In-Memory Columnar OLAP Engine"]
+        Security["AES-256-GCM Vault & sqlglot AST Validator"]
+    end
+
+    subgraph AgentOrchestration ["AI Agent Mesh (LangGraph)"]
+        PlanNode["Intent Classifier & Plan Formulator"]
+        SqlNode["Schema-Grounded SQL Synthesizer"]
+        VerifyNode["AST Syntax & Safety Guardrails"]
+        InsightNode["Executive Insight & Narrative Synthesizer"]
+    end
+
+    subgraph Persistence ["Storage & Data Fabric"]
+        S3["AWS S3 / Columnar Parquet Store"]
+        Dynamo["AWS DynamoDB Single-Table Store"]
+        BYOK["Encrypted BYOK Vault (OpenAI, Anthropic, Gemini, Groq)"]
+        GoogleWS["Google Workspace (Docs, Sheets, Drive MCP)"]
+    end
+
+    UI --> Gateway
+    Gateway --> AuthMiddleware
+    AuthMiddleware --> CoreBackend
+    CoreBackend --> AgentOrchestration
+    AgentOrchestration --> BYOK
+    CoreBackend --> Engine
+    CoreBackend --> Persistence
+    UI -.-> |"Client-Side Offline Mode"| WASM
+```
+
+---
+
+## Core Product Capabilities
+
+### 1. Conversational Natural Language Analytics
+Ask multi-turn analytical questions without writing code. The underlying agent understands business intents, detects dimensional groupings, computes window aggregates, and automatically handles temporal trends, filtering, and cross-column comparisons.
+
+### 2. Automated Deep Statistical Profiling
+Upon ingestion, datasets are parsed into columnar Parquet format and profiled automatically:
+- **Distribution Metrics**: Cardinality, unique count, null ratios, and data types.
+- **Statistical Aggregates**: Quantiles, standard deviation, min/max bounds, and skewness for numerical features.
+- **Smart Query Recommendations**: Generates schema-tailored business hypotheses and suggested starter questions.
+
+### 3. Interactive Multi-Modal Dashboard Builder
+- **Instant Chart Switcher**: Dynamically flip between Bar, Horizontal Bar, Line, Area, Pie, KPI, and Tabular views without re-running underlying analytical queries.
+- **Autonomous AI Generation**: Generate complete executive dashboards covering growth, segmentation, margins, and operational performance from a single prompt.
+- **Global Analytical Filtering**: Apply cross-card slicing by dimension, customer cohort, product line, or date interval.
+
+### 4. Zero-Trust Bring-Your-Own-Key (BYOK) Inference
+- Platform users supply their own API keys for **Google Gemini, OpenAI, Anthropic Claude, Groq, or OpenRouter**.
+- Encrypted using **authenticated AES-256-GCM** with isolated salt and nonce generation.
+- Decryption occurs strictly in-memory during inference execution; keys are never logged, never returned to client bundles, and never exposed to other workspace members.
+
+### 5. Google Workspace Integration (MCP & REST)
+- **Direct Sheet Ingestion**: Ingest live Google Sheets directly into columnar DuckDB without requiring third-party ETL connectors.
+- **Executive Report Generation**: Export grounded analytical briefs, verification queries, data tables, and AI insights directly to formatted Google Docs.
+- **Model Context Protocol (MCP)**: AI agents leverage native tools to search Google Drive documents to ground numerical trends in operational context.
+
+### 6. Cryptographically Unguessable Public Sharing
+- Share interactive dashboards with external stakeholders via 256-bit entropy tokens.
+- Public views operate in read-only sandbox mode: internal database structures, workspace settings, and AI provider configurations remain strictly redacted.
+
+---
+
+## Agentic AI Architecture: LangGraph State Machine
+
+Autoanalytix models analytical question answering not as a single LLM prompt, but as a deterministic, stateful directed acyclic graph (DAG) executed with **LangGraph**:
+
+```mermaid
+stateDiagram-v2
+    [*] --> InspectSchema
+    InspectSchema --> FormulatePlan: Inject Column Types & Statistical Summaries
+    FormulatePlan --> SynthesizeSQL: Structured Analysis Plan (Pydantic)
+    SynthesizeSQL --> ASTValidation: Generate DuckDB SQL Dialect
+    
+    state ASTValidation {
+        [*] --> SyntaxCheck
+        SyntaxCheck --> TableAllowlistCheck
+        TableAllowlistCheck --> MutatingStatementFilter
+        MutatingStatementFilter --> FileSystemFunctionBlock
+    }
+
+    ASTValidation --> ExecuteDuckDB: Query Passes Security Guardrails
+    ASTValidation --> SynthesizeSQL: Query Rejected (Self-Correction Loop, max 2 retries)
+    
+    ExecuteDuckDB --> FormulateChartSpec: Extract Columnar Result Set
+    FormulateChartSpec --> GenerateInsights: Bind Coordinates & Axis Dimensions
+    GenerateInsights --> [*]: Persist to Multi-Turn Conversation
+```
+
+### Self-Correction & Reflection Loop
+If an LLM synthesizes SQL that violates schema boundaries, uses non-existent column identifiers, or fails AST policy checks, the execution error is captured and reflected back to the agent with schema hints. The agent self-corrects without surfacing raw database errors to the end user.
+
+---
+
+## Security & Query Sandboxing
+
+Because Autoanalytix executes dynamically generated SQL against analytical storage engines, defense-in-depth query sandboxing is enforced at multiple architectural layers:
+
+```mermaid
+flowchart LR
+    subgraph Input ["Untrusted User Input"]
+        Raw["Natural Language Prompt"]
+    end
+
+    subgraph LLM ["BYOK Model Provider"]
+        GenSQL["Synthesized SQL Query"]
+    end
+
+    subgraph ASTGate ["sqlglot AST Security Gate"]
+        Parse["Grammar Parser"]
+        Validate{"Single SELECT Only?"}
+        BlockTable{"Unauthorized Table Names?"}
+        BlockSys{"FS Functions Blocked? (read_csv, attach, system)"}
+        BlockMutation{"Mutation Blocked? (DROP, INSERT, ALTER)"}
+    end
+
+    subgraph Execution ["Sandboxed Analytical Runtime"]
+        DuckDB["DuckDB Read-Only Execution Context (Memory & Time Capped)"]
+    end
+
+    Raw --> LLM
+    LLM --> GenSQL
+    GenSQL --> Parse
+    Parse --> Validate
+    Validate -- Yes --> BlockTable
+    Validate -- No --> Reject["HTTP 400: Statement Rejected"]
+    BlockTable -- Clean --> BlockSys
+    BlockTable -- Violation --> Reject
+    BlockSys -- Clean --> BlockMutation
+    BlockSys -- Violation --> Reject
+    BlockMutation -- Pass --> DuckDB
+    BlockMutation -- Fail --> Reject
+```
+
+### Key Security Guardrails:
+1. **Single-Statement Isolation**: Only single-statement queries are evaluated; stacked queries (`;`) are strictly rejected.
+2. **Read-Only Invariant**: The query AST is checked to ensure it contains only `SELECT` expressions. All Data Manipulation (DML) and Data Definition (DDL) operations (`INSERT`, `UPDATE`, `DELETE`, `DROP`, `ALTER`, `CREATE`, `REPLACE`) throw terminal security exceptions.
+3. **Storage Boundary Enforcement**: External DuckDB filesystem routines (such as `read_parquet`, `scan_parquet`, `read_csv`, `glob`, `system`, or `ATTACH`) are barred from user space. Queries can only reference pre-registered, session-isolated virtual table identifiers.
+4. **Hardware Resource Limits**: Every DuckDB query executes with rigid resource bounds (2GB memory ceiling, 30-second query timeout, and a 1,000-row preview limit) to prevent denial-of-service via Cartesian joins.
+
+---
+
+## Hybrid Dual-Execution Architecture
+
+Autoanalytix features a dual-topology execution engine designed for maximum deployment flexibility:
+
+| Mode | Compute Engine | State & Storage | Best For |
+| :--- | :--- | :--- | :--- |
+| **Cloud-Native Serverless** | Python DuckDB in AWS Lambda | AWS DynamoDB (Single-Table Design) + AWS S3 | Teams, multi-user collaboration, unified workspace analytics, and heavy columnar datasets. |
+| **Zero-Backend WASM Mode** | In-Browser DuckDB-Wasm via Web Workers | Browser IndexedDB + LocalStorage | Instant exploration, offline environments, local analytical prototyping, and complete data privacy. |
 
 ---
 
 ## Technology Stack
 
-| Layer | Technologies |
-|---|---|
-| **Frontend** | React 18, TypeScript, Vite, Tailwind CSS, React Router v6, Recharts, TanStack Query, Zustand, Lucide Icons |
-| **Backend** | Python 3.11, FastAPI, Pydantic v2, SQLAlchemy v2, SQLite / PostgreSQL, Cryptography (AES-GCM), PyJWT, bcrypt |
-| **AI Orchestration** | LangGraph, LangChain (`langchain-google-genai`, `langchain-openai`, `langchain-anthropic`) |
-| **Analytics Engine** | DuckDB, Polars, openpyxl, sqlglot (AST parser & security validator) |
-| **Infrastructure** | Docker, Docker Compose |
+### Frontend Application
+- **Core**: React 18, TypeScript, Vite
+- **Styling & UI**: Tailwind CSS, PostCSS, Lucide Icons
+- **State Management & Caching**: Zustand (Global Auth & Preferences), TanStack Query (Server Synchronization)
+- **Data Visualization**: Recharts (High-performance SVG/Canvas charting engine)
+- **Local Analytics**: `@duckdb/duckdb-wasm`, Apache Arrow, SheetJS (`xlsx`)
+
+### Backend & Analytical Services
+- **Framework**: FastAPI (ASGI), Pydantic v2, Python 3.11
+- **Analytical Engine**: DuckDB (Columnar OLAP), Polars
+- **SQL Parsing & Validation**: `sqlglot` (Semantic AST tree verification)
+- **AI Agent Framework**: LangGraph, LangChain Core (`langchain-openai`, `langchain-anthropic`, `langchain-google-genai`, `langchain-groq`)
+- **Security & Crypto**: `cryptography` (AES-256-GCM), PyJWT, bcrypt
+
+### Cloud Infrastructure & Deployment
+- **Compute**: Containerized AWS Lambda with Mangum ASGI Adapter, AWS CodeBuild
+- **Database & Storage**: Amazon DynamoDB, Amazon S3, Amazon ECR
+- **External Connectors**: Google Drive API v3, Google Docs API v1, Google Sheets API v4
 
 ---
 
-## Project Structure
+## Analytical Feature Matrix
+
+| Feature | Autoanalytix | Legacy BI Tools | Generic Chatbots |
+| :--- | :---: | :---: | :---: |
+| **Query Engine** | In-Process Columnar DuckDB | Heavy SQL Warehouse (Snowflake/BigQuery) | None (Hallucinates numbers) |
+| **Query Security** | Strict `sqlglot` AST Validation | Manual Role Grants | None |
+| **Inference Cost** | $0 Base (Zero Markup BYOK) | High Seat Licensing | Monthly Subscription |
+| **Stateful Workflow** | LangGraph Directed Graph | Static Dashboards | Single-Turn Context Loss |
+| **Cloud + Local Modes** | Hybrid (Serverless or WASM) | Cloud-Only / On-Prem | Cloud-Only |
+| **Export Formats** | Formatted Google Docs, CSV, JSON | PDF, CSV | Raw Markdown |
+
+---
+
+## Repository Map
 
 ```text
 Autoanalytix/
-│
-├── frontend/                     # Standalone React + Vite + TypeScript frontend
-│   ├── src/
-│   │   ├── components/           # ChartRenderer, Layout, UI primitives
-│   │   ├── pages/                # Login, Register, Dashboard, Datasets, Analytics, etc.
-│   │   ├── services/             # API client with JWT handling
-│   │   ├── stores/               # Zustand auth & workspace state
-│   │   ├── App.tsx               # Route definitions
-│   │   └── main.tsx              # Frontend entrypoint
-│   ├── package.json
-│   ├── tailwind.config.js
-│   └── vite.config.ts
-│
-├── backend/                      # FastAPI analytical backend
+├── backend/                       # Python FastAPI Backend & Agent Core
 │   ├── app/
-│   │   ├── ai/                   # BYOK adapters (Gemini, OpenAI, Claude), LangGraph agents
-│   │   ├── analytics/            # DuckDB engine, sqlglot AST validator, statistical profiler
-│   │   ├── api/                  # REST endpoints (auth, datasets, analytics, dashboards, etc.)
-│   │   ├── core/                 # Config, database, security (AES-GCM, bcrypt)
-│   │   ├── data_sources/         # Extensible external SQL connector interfaces
-│   │   ├── ingestion/            # File parser (CSV, XLSX) & demo data generator
-│   │   ├── models/               # SQLAlchemy ORM models
-│   │   ├── schemas/              # Pydantic validation schemas
-│   │   └── main.py               # FastAPI entrypoint
-│   ├── tests/                    # Automated pytest suite
-│   ├── Dockerfile
-│   └── requirements.txt
+│   │   ├── ai/                    # LangGraph agents, state definitions, LLM adapters
+│   │   ├── analytics/             # DuckDB query executor, sqlglot AST validator, profiler
+│   │   ├── api/                   # REST routing (auth, datasets, analytics, Google Workspace)
+│   │   ├── core/                  # AES-GCM credential vault, DynamoDB & S3 clients, config
+│   │   ├── ingestion/             # Multi-format tabular data parsers
+│   │   ├── integrations/          # Google Docs/Sheets/Drive REST & MCP integration services
+│   │   └── main.py                # ASGI application root & Lambda handler
+│   ├── Dockerfile                 # Standard production container
+│   ├── Dockerfile.lambda          # AWS Lambda container image specification
+│   └── requirements.txt           # Python dependency tree
 │
-├── docker-compose.yml            # Multi-container orchestration (PostgreSQL, Backend, Frontend)
-├── .env.example                  # Environment configuration template
-└── README.md
+├── frontend/                      # React 18 + TypeScript Client Application
+│   ├── src/
+│   │   ├── components/            # ChartRenderer, Layout, Ingestion Modals
+│   │   ├── pages/                 # AnalyticsWorkspace, DashboardEditor, AIProvidersSettings
+│   │   ├── services/              # API Client, DuckDB-Wasm engine, Browser AI runners
+│   │   └── stores/                # Zustand application stores
+│   ├── package.json               # Node dependency manifest
+│   └── vite.config.ts             # Vite build orchestration
+│
+├── scripts/                       # Cloud deployment automation & data migration utilities
+└── INTEGRATIONS_ARCHITECTURE.md   # Architectural blueprint for MCP & data warehouse connectors
 ```
 
 ---
 
-## Quickstart Guide
+## License
 
-### Option 1: Standalone Local Development (No Docker Required)
-
-#### 1. Backend Setup
-```bash
-# Clone the repository
-git clone https://github.com/aditya0589/Autoanalytix.git
-cd Autoanalytix
-
-# Create and activate Python virtual environment
-python -m venv venv
-# On Windows:
-.\venv\Scripts\activate
-# On Linux/macOS:
-source venv/bin/activate
-
-# Install dependencies
-pip install -r backend/requirements.txt
-pip install email-validator
-
-# Run backend server
-python -m uvicorn app.main:app --app-dir backend --reload --port 8000
-```
-The FastAPI backend will start at `http://localhost:8000`. Interactive OpenAPI documentation is available at `http://localhost:8000/api/docs`.
-
-#### 2. Frontend Setup
-In a new terminal window:
-```bash
-cd frontend
-
-# Install npm dependencies
-npm install
-
-# Start Vite dev server
-npm run dev
-```
-The application will open at `http://localhost:5173`.
-
----
-
-### Option 2: Docker Compose
-
-```bash
-# Build and start all services (PostgreSQL, FastAPI Backend, React Frontend)
-docker-compose up --build
-```
-
-- Frontend: `http://localhost:5173`
-- Backend API: `http://localhost:8000`
-- API Documentation: `http://localhost:8000/api/docs`
-
----
-
-## Running the Automated Test Suite
-
-The test suite validates:
-- User registration, password hashing with direct `bcrypt`, and JWT session tokens.
-- Cryptographic credential encryption (AES-256-GCM) and key masking.
-- Strict SQL AST security enforcement (blocking unauthorized tables, destructive commands, file access, and multi-statements).
-- Dataset ingestion, statistical profiling, and DuckDB analytical query execution.
-- AI provider configuration management and deletion.
-
-```bash
-# Run tests with pytest
-.\venv\Scripts\pytest backend\tests -v
-```
-
-All 5 core test suites pass cleanly with 0 warnings.
-
----
-
-## End-to-End User Journey
-
-1. **Sign Up & Workspace Creation**:
-   - Navigate to `/register`, enter your name, email, and password. Autoanalytix automatically initializes your personal workspace.
-2. **Configure AI Provider (BYOK)**:
-   - Go to `/settings/ai-providers`.
-   - Select **Google Gemini**, **OpenAI**, or **Anthropic Claude**.
-   - Paste your API key and choose a model (e.g., `gemini-2.5-flash` or `gpt-4o-mini`).
-   - Click **Test Connection** to verify provider connectivity and latency, then click **Save Configuration**.
-3. **Explore Data**:
-   - Click **Try Demo Dataset** to load 1,200 orders of SaaS revenue data, or upload your own CSV/Excel file at `/datasets`.
-   - Inspect columns, distributions, null percentages, and statistical summaries.
-4. **Natural Language Analytics**:
-   - Click **Ask Questions with AI** or select one of the suggested query chips:
-     - *"Show monthly revenue trend over time."*
-     - *"Which category generated the highest profit?"*
-     - *"Compare revenue and profit by region."*
-   - LangGraph formulates a structured plan, validates DuckDB SQL, runs the query, renders a chart, and synthesizes grounded business insights.
-5. **Dashboard Assembly & Sharing**:
-   - Click **Add to Dashboard** on any insight card.
-   - Or click **Generate with AI** at `/dashboards` to automatically produce an executive dashboard.
-   - Click **Share** to generate an unguessable public link for colleagues or stakeholders.
-
----
-
-## Security & Privacy Statement
-
-- **No Developer API Key Fallback**: If a user has not configured an AI key, the platform cleanly displays an onboarding banner rather than routing inference through a developer-managed key.
-- **Strict Data Isolation**: Queries cannot traverse between datasets or access underlying host system files.
-- **Zero Raw Secret Exposure**: Encrypted credentials are never rendered to clients. Only masked signatures (e.g. `AIzaSy••••••••7x9F`) are visible in settings.
+This project is licensed under the [MIT License](LICENSE).

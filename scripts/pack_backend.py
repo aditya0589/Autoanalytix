@@ -10,7 +10,12 @@ def pack_backend(output_zip: str = "backend_source.zip"):
             # filter dirs in place
             dirs[:] = [d for d in dirs if d not in exclude_dirs and not d.startswith(".")]
             for file in files:
-                if file.endswith(".pyc") or file.endswith(".db") or file == ".DS_Store":
+                lower = file.lower()
+                if (
+                    lower.endswith((".pyc", ".db", ".sqlite", ".sqlite3", ".parquet", ".zip", ".tar.gz", ".key", ".pem"))
+                    or lower.startswith(".env")
+                    or lower == ".ds_store"
+                ):
                     continue
                 file_path = os.path.join(root, file)
                 rel_path = os.path.relpath(file_path, backend_dir)
