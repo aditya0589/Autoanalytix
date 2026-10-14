@@ -219,10 +219,38 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 
-# Autoanalytix Local Runtime
+# Autoanalytix Local Runtime & Storage
 autoanalytix.db
+*.db
+*.sqlite
+*.sqlite3
+*.duckdb
+*.parquet
 storage/
+backend/storage/
+
+# Deployment & Source Archives
+backend_source.zip
+*.zip
+*.tar.gz
+*.tar
+
+# Environment Files & Secrets
+.env
+.env.*
+.envrc
+!.env.example
+*.pem
+*.key
+*.cert
+credentials.json
+client_secret*.json
+
+# Dependencies & Build Outputs
 venv/
+.venv/
 frontend/node_modules/
 frontend/dist/
-.env
+dist/
+build/
+
