@@ -254,3 +254,7 @@ frontend/dist/
 dist/
 build/
 
+# Agent Customizations & Local Rules
+.agents/
+agents/rules/
+
