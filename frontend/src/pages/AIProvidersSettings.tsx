@@ -123,7 +123,7 @@ export const AIProvidersSettings: React.FC = () => {
 
   const handleTestExisting = async (id: string) => {
     try {
-      const res = await api.ai.testExisting(id);
+      const res = await api.ai.testExisting(id, currentWorkspace?.id);
       alert(`Test ${res.success ? "Passed" : "Failed"}: ${res.message} ${res.latency_ms ? `(${res.latency_ms}ms)` : ""}`);
       await loadData();
     } catch (err: any) {
@@ -133,7 +133,7 @@ export const AIProvidersSettings: React.FC = () => {
 
   const handleSetDefault = async (id: string) => {
     try {
-      await api.ai.setDefaultConfiguration(id);
+      await api.ai.setDefaultConfiguration(id, currentWorkspace?.id);
       await loadData();
     } catch (err: any) {
       alert("Failed to set default: " + err.message);
@@ -143,7 +143,7 @@ export const AIProvidersSettings: React.FC = () => {
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this provider configuration? All associated keys will be permanently purged.")) return;
     try {
-      await api.ai.deleteConfiguration(id);
+      await api.ai.deleteConfiguration(id, currentWorkspace?.id);
       await loadData();
     } catch (err: any) {
       alert("Failed to delete configuration: " + err.message);

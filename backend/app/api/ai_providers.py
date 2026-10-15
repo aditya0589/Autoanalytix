@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime, timezone
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.core.security import encrypt_credential, decrypt_credential, mask_api_key
@@ -17,6 +17,15 @@ from app.core.dynamodb import dynamodb_store
 
 router = APIRouter(prefix="/ai", tags=["AI Providers"])
 
+def resolve_workspace_id(workspace_id: Optional[str], current_user: ItemObject) -> str:
+    if workspace_id:
+        get_current_workspace(workspace_id, current_user)
+        return workspace_id
+    workspaces = dynamodb_store.list_user_workspaces(current_user.id)
+    if not workspaces:
+        raise HTTPException(status_code=400, detail="No workspace found for user.")
+    return workspaces[0]["id"]
+
 @router.get("/providers")
 def get_providers():
     """Returns available AI providers and their model catalogue."""
@@ -24,11 +33,11 @@ def get_providers():
 
 @router.get("/configurations", response_model=List[AIProviderConfigResponse])
 def list_configurations(
-    workspace_id: str,
+    workspace_id: Optional[str] = None,
     current_user: ItemObject = Depends(get_current_user)
 ):
-    get_current_workspace(workspace_id, current_user)
-    configs = dynamodb_store.list_ai_configs(workspace_id)
+    ws_id = resolve_workspace_id(workspace_id, current_user)
+    configs = dynamodb_store.list_ai_configs(ws_id)
     configs.sort(key=lambda c: (c.get("is_default", False), c.get("created_at", "")), reverse=True)
 
     results = []
@@ -58,26 +67,26 @@ def list_configurations(
 
 @router.post("/configurations", response_model=AIProviderConfigResponse)
 def create_configuration(
-    workspace_id: str,
     config_in: AIProviderConfigCreate,
+    workspace_id: Optional[str] = None,
     current_user: ItemObject = Depends(get_current_user)
 ):
-    get_current_workspace(workspace_id, current_user)
+    ws_id = resolve_workspace_id(workspace_id or getattr(config_in, "workspace_id", None), current_user)
 
     encrypted_key = encrypt_credential(config_in.api_key)
-    existing_configs = dynamodb_store.list_ai_configs(workspace_id)
+    existing_configs = dynamodb_store.list_ai_configs(ws_id)
     is_default = config_in.is_default or (len(existing_configs) == 0)
 
     if is_default:
         for ex in existing_configs:
             if ex.get("is_default"):
-                dynamodb_store.update_ai_config(workspace_id, ex["id"], {"is_default": False})
+                dynamodb_store.update_ai_config(ws_id, ex["id"], {"is_default": False})
 
     config_id = str(uuid.uuid4())
     now = datetime.now(timezone.utc).isoformat()
     new_config = {
         "id": config_id,
-        "workspace_id": workspace_id,
+        "workspace_id": ws_id,
         "user_id": current_user.id,
         "provider": config_in.provider.lower(),
         "model_name": config_in.model_name,
@@ -107,13 +116,13 @@ def create_configuration(
 def update_configuration(
     config_id: str,
     config_in: AIProviderConfigUpdate,
-    workspace_id: str,
+    workspace_id: Optional[str] = None,
     current_user: ItemObject = Depends(get_current_user)
 ):
-    c = dynamodb_store.get_ai_config(workspace_id, config_id)
+    ws_id = resolve_workspace_id(workspace_id, current_user)
+    c = dynamodb_store.get_ai_config(ws_id, config_id)
     if not c:
         raise HTTPException(status_code=404, detail="Configuration not found.")
-    get_current_workspace(workspace_id, current_user)
 
     updates = {}
     if config_in.model_name is not None:
@@ -126,13 +135,13 @@ def update_configuration(
         updates["last_tested_at"] = None
 
     if config_in.is_default:
-        existing_configs = dynamodb_store.list_ai_configs(workspace_id)
+        existing_configs = dynamodb_store.list_ai_configs(ws_id)
         for ex in existing_configs:
             if ex.get("is_default") and ex["id"] != config_id:
-                dynamodb_store.update_ai_config(workspace_id, ex["id"], {"is_default": False})
+                dynamodb_store.update_ai_config(ws_id, ex["id"], {"is_default": False})
         updates["is_default"] = True
 
-    updated = dynamodb_store.update_ai_config(workspace_id, config_id, updates)
+    updated = dynamodb_store.update_ai_config(ws_id, config_id, updates)
     plain = decrypt_credential(updated["encrypted_api_key"])
     return AIProviderConfigResponse(
         id=updated["id"],
@@ -150,41 +159,41 @@ def update_configuration(
 @router.delete("/configurations/{config_id}")
 def delete_configuration(
     config_id: str,
-    workspace_id: str,
+    workspace_id: Optional[str] = None,
     current_user: ItemObject = Depends(get_current_user)
 ):
-    get_current_workspace(workspace_id, current_user)
-    dynamodb_store.delete_ai_config(workspace_id, config_id)
+    ws_id = resolve_workspace_id(workspace_id, current_user)
+    dynamodb_store.delete_ai_config(ws_id, config_id)
     return {"message": "Configuration successfully deleted."}
 
 @router.post("/configurations/{config_id}/default")
 def set_default_configuration(
     config_id: str,
-    workspace_id: str,
+    workspace_id: Optional[str] = None,
     current_user: ItemObject = Depends(get_current_user)
 ):
-    c = dynamodb_store.get_ai_config(workspace_id, config_id)
+    ws_id = resolve_workspace_id(workspace_id, current_user)
+    c = dynamodb_store.get_ai_config(ws_id, config_id)
     if not c:
         raise HTTPException(status_code=404, detail="Configuration not found.")
-    get_current_workspace(workspace_id, current_user)
 
-    existing_configs = dynamodb_store.list_ai_configs(workspace_id)
+    existing_configs = dynamodb_store.list_ai_configs(ws_id)
     for ex in existing_configs:
         if ex.get("is_default") and ex["id"] != config_id:
-            dynamodb_store.update_ai_config(workspace_id, ex["id"], {"is_default": False})
-    dynamodb_store.update_ai_config(workspace_id, config_id, {"is_default": True})
+            dynamodb_store.update_ai_config(ws_id, ex["id"], {"is_default": False})
+    dynamodb_store.update_ai_config(ws_id, config_id, {"is_default": True})
     return {"message": f"Default provider set to {c['provider']} ({c['model_name']})."}
 
 @router.post("/configurations/{config_id}/test", response_model=AIProviderTestResponse)
 def test_saved_configuration(
     config_id: str,
-    workspace_id: str,
+    workspace_id: Optional[str] = None,
     current_user: ItemObject = Depends(get_current_user)
 ):
-    c = dynamodb_store.get_ai_config(workspace_id, config_id)
+    ws_id = resolve_workspace_id(workspace_id, current_user)
+    c = dynamodb_store.get_ai_config(ws_id, config_id)
     if not c:
         raise HTTPException(status_code=404, detail="Configuration not found.")
-    get_current_workspace(workspace_id, current_user)
 
     try:
         plain_key = decrypt_credential(c["encrypted_api_key"])
