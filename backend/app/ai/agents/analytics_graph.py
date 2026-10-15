@@ -73,12 +73,54 @@ Respond ONLY with a valid JSON object matching this schema:
 """
 
 def extract_json(text: str) -> Any:
-    """Robustly extracts JSON from LLM markdown code blocks or raw strings."""
+    """Robustly extracts JSON from LLM markdown code blocks or raw strings with multi-layer fault tolerance."""
+    if not text:
+        return {}
+        
     text = text.strip()
     match = re.search(r"```(?:json)?\s*([\s\S]*?)\s*```", text)
     if match:
         text = match.group(1).strip()
-    return json.loads(text)
+    
+    # 1. Direct parse with strict=False (allows unescaped control characters/newlines inside string literals)
+    try:
+        return json.loads(text, strict=False)
+    except Exception:
+        pass
+        
+    # 2. Extract outermost { ... }
+    first_brace = text.find('{')
+    last_brace = text.rfind('}')
+    if first_brace != -1 and last_brace != -1 and last_brace > first_brace:
+        candidate = text[first_brace:last_brace+1]
+        try:
+            return json.loads(candidate, strict=False)
+        except Exception:
+            # Clean trailing commas before closing braces/brackets
+            cleaned = re.sub(r',\s*([\}\]])', r'\1', candidate)
+            try:
+                return json.loads(cleaned, strict=False)
+            except Exception:
+                pass
+
+    # 3. Fallback heuristic regex extraction if model produced badly formed JSON
+    sql_match = re.search(r'["\']?sql["\']?\s*:\s*["\']([^"\']+)["\']', text, re.IGNORECASE)
+    if not sql_match:
+        sql_match = re.search(r'SELECT\s+[\s\S]+?(?=;|\n\n|"|\}|$)', text, re.IGNORECASE)
+    
+    explanation_match = re.search(r'["\']?explanation["\']?\s*:\s*["\']([^"\']+)["\']', text, re.IGNORECASE)
+    rationale_match = re.search(r'["\']?rationale["\']?\s*:\s*["\']([^"\']+)["\']', text, re.IGNORECASE)
+    
+    if sql_match:
+        sql_val = sql_match.group(1) if sql_match.groups() else sql_match.group(0)
+        return {
+            "sql": sql_val.strip(),
+            "rationale": (rationale_match.group(1) if rationale_match else "Analysis computed from dataset."),
+            "explanation": (explanation_match.group(1) if explanation_match else "Analysis computed from dataset."),
+            "chart_type": "bar"
+        }
+    
+    return json.loads(text, strict=False)
 
 class AnalyticsWorkflow:
     def __init__(self, llm: Optional[BaseChatModel] = None):
