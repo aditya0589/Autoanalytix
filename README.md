@@ -1,46 +1,65 @@
-# Autoanalytix
+<div align="center">
 
-<p align="center">
-  <img src="frontend/public/favicon.svg" alt="Autoanalytix Logo" width="72" height="72" />
-</p>
+  <img src="frontend/public/favicon.svg" alt="Autoanalytix Logo" width="80" height="80" />
 
-<h3 align="center">AI-Native Autonomous Business Intelligence & Analytical Engine</h3>
+  # Autoanalytix
 
-<p align="center">
-  Transform raw operational datasets into verified SQL, real-time interactive dashboards, and actionable executive insights using conversational intelligence.
-</p>
+  ### AI-Native Autonomous Business Intelligence & Conversational Analytics Engine
 
-<p align="center">
-  <a href="#core-capabilities"><img src="https://img.shields.io/badge/Architecture-Hybrid%20Cloud%20%2B%20WASM-6366f1?style=flat-square" alt="Architecture" /></a>
-  <a href="#analytical-engine"><img src="https://img.shields.io/badge/Engine-DuckDB%20Columnar-yellow?style=flat-square" alt="DuckDB" /></a>
-  <a href="#ai-agent-orchestration"><img src="https://img.shields.io/badge/Orchestrator-LangGraph%20Stateful-blue?style=flat-square" alt="LangGraph" /></a>
-  <a href="#security--sandboxing"><img src="https://img.shields.io/badge/Security-AES--256--GCM%20%7C%20sqlglot%20AST-emerald?style=flat-square" alt="Security" /></a>
-  <a href="#technology-stack"><img src="https://img.shields.io/badge/Stack-FastAPI%20%7C%20React%20%7C%20TypeScript-0ea5e9?style=flat-square" alt="Tech Stack" /></a>
-  <img src="https://img.shields.io/badge/License-MIT-gray?style=flat-square" alt="License" />
-</p>
+  <p align="center">
+    Transform raw operational datasets into verified SQL, real-time interactive dashboards, and actionable executive insights through autonomous agentic intelligence.
+  </p>
+
+  <p align="center">
+    <a href="#quick-start"><img src="https://img.shields.io/badge/Quick%20Start-Docker%20Compose-0ea5e9?style=for-the-badge&logo=docker&logoColor=white" alt="Docker Quick Start" /></a>
+    <a href="#core-capabilities"><img src="https://img.shields.io/badge/Architecture-Hybrid%20Cloud%20%2B%20WASM-6366f1?style=for-the-badge" alt="Architecture" /></a>
+    <a href="https://github.com/aditya0589/Autoanalytix/stargazers"><img src="https://img.shields.io/github/stars/aditya0589/Autoanalytix?style=for-the-badge&color=f59e0b" alt="GitHub Stars" /></a>
+  </p>
+
+  <p align="center">
+    <img src="https://img.shields.io/badge/DuckDB-0.10+-FFF000?style=flat-square&logo=duckdb&logoColor=black" alt="DuckDB" />
+    <img src="https://img.shields.io/badge/Python-3.11-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python 3.11" />
+    <img src="https://img.shields.io/badge/FastAPI-0.110+-009688?style=flat-square&logo=fastapi&logoColor=white" alt="FastAPI" />
+    <img src="https://img.shields.io/badge/React-18-20232A?style=flat-square&logo=react&logoColor=61DAFB" alt="React 18" />
+    <img src="https://img.shields.io/badge/TypeScript-5.0+-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" />
+    <img src="https://img.shields.io/badge/LangGraph-Stateful%20DAG-1C3C3C?style=flat-square&logo=langchain&logoColor=white" alt="LangGraph" />
+    <img src="https://img.shields.io/badge/AWS-Lambda%20%2B%20DynamoDB-FF9900?style=flat-square&logo=amazon-aws&logoColor=white" alt="AWS" />
+    <img src="https://img.shields.io/badge/Security-AES--256--GCM%20%7C%20sqlglot-10b981?style=flat-square" alt="Security" />
+    <img src="https://img.shields.io/badge/License-MIT-gray?style=flat-square" alt="License" />
+  </p>
+
+  <br />
+
+  <img src="docs/images/autoanalytix_banner.png" alt="Autoanalytix Platform Overview" width="100%" style="border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.25);" />
+
+</div>
+
+<br />
 
 ---
 
-## Overview
+## Highlights at a Glance
 
-**Autoanalytix** is an open-source, AI-native business intelligence platform engineered to eliminate the bottleneck between raw operational data and business decision-making. 
-
-Traditional BI tools demand deep SQL expertise, cumbersome ETL pipelines, and ongoing semantic modeling. Autoanalytix introduces a **declarative, conversation-driven analytics workflow**: users upload raw files (CSV, Parquet, Excel) or connect cloud spreadsheets, and ask complex multi-dimensional questions in plain English. 
-
-Under the hood, Autoanalytix combines a **sandboxed columnar OLAP engine (DuckDB)**, a **stateful multi-step agent graph (LangGraph)**, **abstract syntax tree (AST) query validation**, and a **hybrid dual-execution model** (AWS Serverless Cloud or 100% Client-Side Browser DuckDB-Wasm).
+* **Conversational Natural Language OLAP**: Ask multi-turn business questions in plain English. The agent formulates schema-grounded SQL, executes sub-second analytical queries, and synthesizes executive insights.
+* **Columnar In-Process DuckDB Engine**: Zero-copy vector processing with DuckDB for instant calculations across millions of rows (CSV, Parquet, Excel, Google Sheets).
+* **Stateful LangGraph Reasoning Graph**: Deterministic multi-step reasoning DAG featuring autonomous reflection, self-healing SQL syntax error correction, and automated schema grounding.
+* **Zero-Hallucination AST Security Gate**: Every synthesized query passes through a strict `sqlglot` Abstract Syntax Tree (AST) guardrail — strictly enforcing read-only `SELECT` invariants and blocking DML/DDL or unauthorized system calls.
+* **Zero-Trust BYOK Vault**: Users bring their own keys (Groq, Gemini, Claude, OpenAI) encrypted at rest with authenticated **AES-256-GCM**. Keys are never logged, never returned to browser bundles, and decrypted strictly in volatile memory.
+* **Hybrid Dual-Execution Architecture**: Choose between Serverless Cloud (AWS Lambda + S3 + DynamoDB) or **100% Client-Side In-Browser DuckDB-Wasm** for zero-backend, air-gapped data privacy.
+* **Google Workspace & MCP Integration**: Native bidirectional tools for Google Sheets data ingestion, Google Drive contextual search, and one-click executive report export directly to formatted Google Docs.
 
 ---
 
 ## System Architecture
 
-Autoanalytix is built on an asynchronous, decoupled micro-architecture designed for sub-second query latency, strict tenant data isolation, and cryptographic zero-trust credential storage.
+Autoanalytix uses an asynchronous, decoupled micro-architecture designed for sub-second query latency, strict multi-tenant isolation, and cryptographic zero-trust credential security.
 
 ```mermaid
 flowchart TB
     subgraph Client ["Client Layer (React 18 + TypeScript)"]
         UI["Modern Responsive UI / Tailwind CSS"]
         Store["State Management (Zustand & TanStack Query)"]
-        Recharts["Dynamic Data Visualizations (Recharts)"]
+        Recharts["Dynamic Visualizations (Recharts Engine)"]
         WASM["Browser Engine: DuckDB-Wasm + Web Workers"]
     end
 
@@ -50,7 +69,7 @@ flowchart TB
     end
 
     subgraph CoreBackend ["Analytical Backend (Python 3.11 / FastAPI)"]
-        Ingest["Data Parser (Polars / DuckDB Ingestion)"]
+        Ingest["Data Parser (DuckDB Ingestion)"]
         Profiler["Statistical Profiler & Schema Extractor"]
         Engine["DuckDB In-Memory Columnar OLAP Engine"]
         Security["AES-256-GCM Vault & sqlglot AST Validator"]
@@ -82,7 +101,57 @@ flowchart TB
 
 ---
 
-## Core Product Capabilities
+## Quick Start
+
+### Option 1: Docker Compose (Recommended)
+
+Run the full platform (FastAPI Backend, React Frontend, and in-memory DuckDB) with a single command:
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/aditya0589/Autoanalytix.git
+cd Autoanalytix
+
+# 2. Copy the example environment file
+cp .env.example .env
+
+# 3. Launch via Docker Compose
+docker-compose up --build
+```
+
+Access the application in your browser:
+* **Frontend UI**: [http://localhost:5173](http://localhost:5173)
+* **API Documentation**: [http://localhost:8000/docs](http://localhost:8000/docs)
+* **Health Check**: [http://localhost:8000/health](http://localhost:8000/health)
+
+---
+
+### Option 2: Local Development Setup
+
+#### Backend Setup (Python 3.11)
+```bash
+cd backend
+python -m venv venv
+
+# Windows
+.\venv\Scripts\activate
+# Linux / macOS
+source venv/bin/activate
+
+pip install -r requirements.txt
+uvicorn app.main:app --reload --port 8000
+```
+
+#### Frontend Setup (Node 18+)
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+---
+
+## Core Capabilities
 
 ### 1. Conversational Natural Language Analytics
 Ask multi-turn analytical questions without writing code. The underlying agent understands business intents, detects dimensional groupings, computes window aggregates, and automatically handles temporal trends, filtering, and cross-column comparisons.
@@ -114,9 +183,9 @@ Upon ingestion, datasets are parsed into columnar Parquet format and profiled au
 
 ---
 
-## Agentic AI Architecture: LangGraph State Machine
+## LangGraph State Machine Workflow
 
-Autoanalytix models analytical question answering not as a single LLM prompt, but as a deterministic, stateful directed acyclic graph (DAG) executed with **LangGraph**:
+Autoanalytix models analytical query answering not as a single naive prompt, but as a deterministic, stateful directed acyclic graph (DAG) orchestrated by **LangGraph**:
 
 ```mermaid
 stateDiagram-v2
@@ -141,13 +210,13 @@ stateDiagram-v2
 ```
 
 ### Self-Correction & Reflection Loop
-If an LLM synthesizes SQL that violates schema boundaries, uses non-existent column identifiers, or fails AST policy checks, the execution error is captured and reflected back to the agent with schema hints. The agent self-corrects without surfacing raw database errors to the end user.
+If an LLM synthesizes SQL that violates schema boundaries, uses non-existent column identifiers, or fails AST policy checks, the execution error is captured and reflected back into the agent state. The agent autonomously self-corrects without exposing raw database errors to the user.
 
 ---
 
 ## Security & Query Sandboxing
 
-Because Autoanalytix executes dynamically generated SQL against analytical storage engines, defense-in-depth query sandboxing is enforced at multiple architectural layers:
+Because Autoanalytix executes dynamically synthesized SQL against analytical storage engines, multi-layer defense-in-depth is enforced before any query touches the engine:
 
 ```mermaid
 flowchart LR
@@ -185,62 +254,40 @@ flowchart LR
     BlockMutation -- Fail --> Reject
 ```
 
-### Key Security Guardrails:
+### Key Guardrails:
 1. **Single-Statement Isolation**: Only single-statement queries are evaluated; stacked queries (`;`) are strictly rejected.
-2. **Read-Only Invariant**: The query AST is checked to ensure it contains only `SELECT` expressions. All Data Manipulation (DML) and Data Definition (DDL) operations (`INSERT`, `UPDATE`, `DELETE`, `DROP`, `ALTER`, `CREATE`, `REPLACE`) throw terminal security exceptions.
-3. **Storage Boundary Enforcement**: External DuckDB filesystem routines (such as `read_parquet`, `scan_parquet`, `read_csv`, `glob`, `system`, or `ATTACH`) are barred from user space. Queries can only reference pre-registered, session-isolated virtual table identifiers.
-4. **Hardware Resource Limits**: Every DuckDB query executes with rigid resource bounds (2GB memory ceiling, 30-second query timeout, and a 1,000-row preview limit) to prevent denial-of-service via Cartesian joins.
-
----
-
-## Hybrid Dual-Execution Architecture
-
-Autoanalytix features a dual-topology execution engine designed for maximum deployment flexibility:
-
-| Mode | Compute Engine | State & Storage | Best For |
-| :--- | :--- | :--- | :--- |
-| **Cloud-Native Serverless** | Python DuckDB in AWS Lambda | AWS DynamoDB (Single-Table Design) + AWS S3 | Teams, multi-user collaboration, unified workspace analytics, and heavy columnar datasets. |
-| **Zero-Backend WASM Mode** | In-Browser DuckDB-Wasm via Web Workers | Browser IndexedDB + LocalStorage | Instant exploration, offline environments, local analytical prototyping, and complete data privacy. |
-
----
-
-## Technology Stack
-
-### Frontend Application
-- **Core**: React 18, TypeScript, Vite
-- **Styling & UI**: Tailwind CSS, PostCSS, Lucide Icons
-- **State Management & Caching**: Zustand (Global Auth & Preferences), TanStack Query (Server Synchronization)
-- **Data Visualization**: Recharts (High-performance SVG/Canvas charting engine)
-- **Local Analytics**: `@duckdb/duckdb-wasm`, Apache Arrow, SheetJS (`xlsx`)
-
-### Backend & Analytical Services
-- **Framework**: FastAPI (ASGI), Pydantic v2, Python 3.11
-- **Analytical Engine**: DuckDB (Columnar OLAP), Polars
-- **SQL Parsing & Validation**: `sqlglot` (Semantic AST tree verification)
-- **AI Agent Framework**: LangGraph, LangChain Core (`langchain-openai`, `langchain-anthropic`, `langchain-google-genai`, `langchain-groq`)
-- **Security & Crypto**: `cryptography` (AES-256-GCM), PyJWT, bcrypt
-
-### Cloud Infrastructure & Deployment
-- **Compute**: Containerized AWS Lambda with Mangum ASGI Adapter, AWS CodeBuild
-- **Database & Storage**: Amazon DynamoDB, Amazon S3, Amazon ECR
-- **External Connectors**: Google Drive API v3, Google Docs API v1, Google Sheets API v4
+2. **Read-Only Invariant**: The query AST is verified to contain exclusively `SELECT` expressions. All Data Manipulation (DML) and Data Definition (DDL) operations (`INSERT`, `UPDATE`, `DELETE`, `DROP`, `ALTER`, `CREATE`, `REPLACE`) throw terminal security exceptions.
+3. **Storage Boundary Enforcement**: External filesystem routines (`read_parquet`, `scan_parquet`, `read_csv`, `glob`, `system`, or `ATTACH`) are barred. Queries can only reference pre-registered, session-isolated virtual table identifiers.
+4. **Hardware Resource Limits**: Queries execute within rigid resource bounds (2GB memory ceiling, 30-second query timeout, and a 1,000-row preview limit) to prevent denial-of-service via Cartesian joins.
 
 ---
 
 ## Analytical Feature Matrix
 
-| Feature | Autoanalytix | Legacy BI Tools | Generic Chatbots |
+| Capability | Autoanalytix | Legacy BI (Tableau / PowerBI) | Generic Chatbots (ChatGPT) |
 | :--- | :---: | :---: | :---: |
-| **Query Engine** | In-Process Columnar DuckDB | Heavy SQL Warehouse (Snowflake/BigQuery) | None (Hallucinates numbers) |
-| **Query Security** | Strict `sqlglot` AST Validation | Manual Role Grants | None |
-| **Inference Cost** | $0 Base (Zero Markup BYOK) | High Seat Licensing | Monthly Subscription |
-| **Stateful Workflow** | LangGraph Directed Graph | Static Dashboards | Single-Turn Context Loss |
-| **Cloud + Local Modes** | Hybrid (Serverless or WASM) | Cloud-Only / On-Prem | Cloud-Only |
-| **Export Formats** | Formatted Google Docs, CSV, JSON | PDF, CSV | Raw Markdown |
+| **Query Engine** | In-Process DuckDB Columnar | Heavy Warehouse ETL | None (Hallucinates numbers) |
+| **Query Security** | Strict `sqlglot` AST Defense Gate | Manual Permissions | None (Unsanitized) |
+| **Inference Cost** | $0 Base (Zero Markup BYOK) | High Seat Licensing | Recurring Subscription |
+| **Data Privacy** | Hybrid (Serverless or WASM) | Cloud Lock-in | Transmits Data to Third Parties |
+| **Self-Correction** | LangGraph Self-Healing Agent | Static Queries | Context Drifts |
+| **Export Formats** | Google Docs, CSV, JSON | PDF, CSV | Raw Markdown |
 
 ---
 
-## Repository Map
+## Technology Stack
+
+```
+Frontend:            React 18  •  TypeScript  •  Vite  •  Tailwind CSS  •  Recharts  •  Zustand
+Analytical Engine:   DuckDB Columnar OLAP  •  DuckDB-Wasm  •  Apache Arrow  •  SheetJS
+AI & Orchestration:  LangGraph  •  LangChain Core  •  Groq  •  Google Gemini  •  Anthropic  •  OpenAI
+Security:            sqlglot AST Parser  •  cryptography (AES-256-GCM)  •  PyJWT  •  bcrypt
+Backend & Cloud:     FastAPI (ASGI)  •  Pydantic v2  •  AWS Lambda (Containerized)  •  DynamoDB  •  S3
+```
+
+---
+
+## Repository Structure
 
 ```text
 Autoanalytix/
@@ -266,12 +313,26 @@ Autoanalytix/
 │   ├── package.json               # Node dependency manifest
 │   └── vite.config.ts             # Vite build orchestration
 │
+├── docs/                          # Architectural documentation & media assets
+│   └── images/                    # Platform banner & UI previews
 ├── scripts/                       # Cloud deployment automation & data migration utilities
-└── INTEGRATIONS_ARCHITECTURE.md   # Architectural blueprint for MCP & data warehouse connectors
+└── docker-compose.yml             # Single-command local container orchestration
 ```
+
+---
+
+## Contributing & Community
+
+Contributions are welcomed. Please feel free to submit a Pull Request or open an Issue for bug reports and feature requests.
+
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'feat: add some AmazingFeature'`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
 ---
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
+Distributed under the **MIT License**. See [`LICENSE`](LICENSE) for more information.
