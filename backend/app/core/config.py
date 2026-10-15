@@ -16,14 +16,16 @@ class Settings(BaseSettings):
     API_V1_PREFIX: str = "/api"
     IS_LAMBDA: bool = IS_LAMBDA
     
-    # Security
-    APP_SECRET_KEY: str = Field(default="autoanalytix-super-secret-jwt-key-2026-production-grade")
+    # Security (loaded from environment or generated per session for local dev)
+    APP_SECRET_KEY: str = Field(
+        default_factory=lambda: secrets.token_urlsafe(32)
+    )
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
     ALGORITHM: str = "HS256"
     
     # BYOK Credential Encryption (AES-GCM key - 32 bytes base64 encoded)
     CREDENTIAL_ENCRYPTION_KEY: str = Field(
-        default_factory=lambda: base64.urlsafe_b64encode(b"autoanalytix-32bytes-secretkey!!").decode("utf-8")
+        default_factory=lambda: base64.urlsafe_b64encode(secrets.token_bytes(32)).decode("utf-8")
     )
     
     # Google Workspace OAuth
