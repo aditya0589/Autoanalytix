@@ -25,7 +25,7 @@
     <img src="https://img.shields.io/badge/LangGraph-Stateful%20DAG-1C3C3C?style=flat-square&logo=langchain&logoColor=white" alt="LangGraph" />
     <img src="https://img.shields.io/badge/AWS-Lambda%20%2B%20DynamoDB-FF9900?style=flat-square&logo=amazon-aws&logoColor=white" alt="AWS" />
     <img src="https://img.shields.io/badge/Security-AES--256--GCM%20%7C%20sqlglot-10b981?style=flat-square" alt="Security" />
-    <img src="https://img.shields.io/badge/License-MIT-gray?style=flat-square" alt="License" />
+    <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-blue?style=flat-square" alt="License: Apache 2.0" /></a>
   </p>
 
   <br />
@@ -277,13 +277,13 @@ flowchart LR
 
 ## Technology Stack
 
-```
-Frontend:            React 18  •  TypeScript  •  Vite  •  Tailwind CSS  •  Recharts  •  Zustand
-Analytical Engine:   DuckDB Columnar OLAP  •  DuckDB-Wasm  •  Apache Arrow  •  SheetJS
-AI & Orchestration:  LangGraph  •  LangChain Core  •  Groq  •  Google Gemini  •  Anthropic  •  OpenAI
-Security:            sqlglot AST Parser  •  cryptography (AES-256-GCM)  •  PyJWT  •  bcrypt
-Backend & Cloud:     FastAPI (ASGI)  •  Pydantic v2  •  AWS Lambda (Containerized)  •  DynamoDB  •  S3
-```
+| Layer | Technologies & Ecosystem |
+| :--- | :--- |
+| **Frontend UI & Visualizations** | <img src="https://img.shields.io/badge/React_18-20232A?style=flat-square&logo=react&logoColor=61DAFB" alt="React 18" /> <img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" /> <img src="https://img.shields.io/badge/Vite-646CFF?style=flat-square&logo=vite&logoColor=white" alt="Vite" /> <img src="https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white" alt="Tailwind CSS" /> <img src="https://img.shields.io/badge/Zustand-443E38?style=flat-square&logo=react&logoColor=white" alt="Zustand" /> <img src="https://img.shields.io/badge/Recharts-22B5BF?style=flat-square&logo=chartdotjs&logoColor=white" alt="Recharts" /> |
+| **Analytical & Vector Engine** | <img src="https://img.shields.io/badge/DuckDB-FFF000?style=flat-square&logo=duckdb&logoColor=black" alt="DuckDB" /> <img src="https://img.shields.io/badge/DuckDB_WASM-6366F1?style=flat-square&logo=webassembly&logoColor=white" alt="DuckDB Wasm" /> <img src="https://img.shields.io/badge/Apache_Arrow-E04E39?style=flat-square&logo=apache-arrow&logoColor=white" alt="Apache Arrow" /> <img src="https://img.shields.io/badge/SheetJS-118D57?style=flat-square&logo=microsoft-excel&logoColor=white" alt="SheetJS" /> |
+| **AI Agents & Orchestration** | <img src="https://img.shields.io/badge/LangGraph-1C3C3C?style=flat-square&logo=langchain&logoColor=white" alt="LangGraph" /> <img src="https://img.shields.io/badge/LangChain_Core-1C3C3C?style=flat-square&logo=langchain&logoColor=white" alt="LangChain Core" /> <img src="https://img.shields.io/badge/Groq-F05A28?style=flat-square&logo=speedtest&logoColor=white" alt="Groq" /> <img src="https://img.shields.io/badge/Google_Gemini-8E75C2?style=flat-square&logo=google-gemini&logoColor=white" alt="Google Gemini" /> <img src="https://img.shields.io/badge/Anthropic_Claude-D97757?style=flat-square&logo=anthropic&logoColor=white" alt="Anthropic Claude" /> <img src="https://img.shields.io/badge/OpenAI_GPT--4o-412991?style=flat-square&logo=openai&logoColor=white" alt="OpenAI" /> |
+| **Security & Cryptography** | <img src="https://img.shields.io/badge/sqlglot_AST-10B981?style=flat-square&logo=sqlite&logoColor=white" alt="sqlglot" /> <img src="https://img.shields.io/badge/AES--256--GCM-059669?style=flat-square&logo=1password&logoColor=white" alt="AES-256-GCM" /> <img src="https://img.shields.io/badge/PyJWT-000000?style=flat-square&logo=json-web-tokens&logoColor=white" alt="PyJWT" /> <img src="https://img.shields.io/badge/bcrypt-2563EB?style=flat-square&logo=auth0&logoColor=white" alt="bcrypt" /> |
+| **Backend & Cloud Infrastructure** | <img src="https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white" alt="FastAPI" /> <img src="https://img.shields.io/badge/Python_3.11-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python 3.11" /> <img src="https://img.shields.io/badge/Pydantic_v2-E92063?style=flat-square&logo=pydantic&logoColor=white" alt="Pydantic v2" /> <img src="https://img.shields.io/badge/AWS_Lambda-FF9900?style=flat-square&logo=amazon-aws&logoColor=white" alt="AWS Lambda" /> <img src="https://img.shields.io/badge/Amazon_DynamoDB-4053D6?style=flat-square&logo=amazon-dynamodb&logoColor=white" alt="DynamoDB" /> <img src="https://img.shields.io/badge/Amazon_S3-569A31?style=flat-square&logo=amazon-s3&logoColor=white" alt="Amazon S3" /> <img src="https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white" alt="Docker" /> |
 
 ---
 
@@ -335,4 +335,13 @@ Contributions are welcomed. Please feel free to submit a Pull Request or open an
 
 ## License
 
-Distributed under the **MIT License**. See [`LICENSE`](LICENSE) for more information.
+Distributed under the **Apache License, Version 2.0**.
+
+Under Section 4 of the Apache License 2.0, any redistribution, modification, or derivative work must retain the original copyright notice, disclaimers, and attribution citing the original author:
+
+```text
+Autoanalytix
+Copyright 2026 Aditya (https://github.com/aditya0589/Autoanalytix)
+```
+
+See [`LICENSE`](LICENSE) for the full license text.
