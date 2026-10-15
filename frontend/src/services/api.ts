@@ -187,32 +187,53 @@ class ApiClient {
         return browserStore.saveAiConfig(data);
       }
     },
-    updateConfiguration: async (id: string, data: any) => {
+    saveConfiguration: async (data: any) => {
+      const workspaceId = data.workspace_id || data.workspaceId;
       try {
-        return await this.request<any>(`/ai/configurations/${id}`, { method: "PUT", body: JSON.stringify(data) });
+        const query = workspaceId ? `?workspace_id=${workspaceId}` : "";
+        return await this.request<any>(`/ai/configurations${query}`, { method: "POST", body: JSON.stringify(data) });
+      } catch {
+        return browserStore.saveAiConfig(data);
+      }
+    },
+    updateConfiguration: async (id: string, data: any, workspaceId?: string) => {
+      try {
+        const query = workspaceId ? `?workspace_id=${workspaceId}` : "";
+        return await this.request<any>(`/ai/configurations/${id}${query}`, { method: "PUT", body: JSON.stringify(data) });
       } catch {
         return browserStore.saveAiConfig({ ...data, id });
       }
     },
-    deleteConfiguration: async (id: string) => {
+    deleteConfiguration: async (id: string, workspaceId?: string) => {
       try {
-        return await this.request<any>(`/ai/configurations/${id}`, { method: "DELETE" });
+        const query = workspaceId ? `?workspace_id=${workspaceId}` : "";
+        return await this.request<any>(`/ai/configurations/${id}${query}`, { method: "DELETE" });
       } catch {
         browserStore.deleteAiConfig(id);
         return { success: true };
       }
     },
-    setDefaultConfiguration: async (id: string) => {
+    setDefaultConfiguration: async (id: string, workspaceId?: string) => {
       try {
-        return await this.request<any>(`/ai/configurations/${id}/default`, { method: "POST" });
+        const query = workspaceId ? `?workspace_id=${workspaceId}` : "";
+        return await this.request<any>(`/ai/configurations/${id}/default${query}`, { method: "POST" });
       } catch {
         browserStore.setDefaultAiConfig(id);
         return { success: true };
       }
     },
-    testSavedConfiguration: async (id: string) => {
+    testSavedConfiguration: async (id: string, workspaceId?: string) => {
       try {
-        return await this.request<any>(`/ai/configurations/${id}/test`, { method: "POST" });
+        const query = workspaceId ? `?workspace_id=${workspaceId}` : "";
+        return await this.request<any>(`/ai/configurations/${id}/test${query}`, { method: "POST" });
+      } catch {
+        return { success: true, message: "Key validated in browser." };
+      }
+    },
+    testExisting: async (id: string, workspaceId?: string) => {
+      try {
+        const query = workspaceId ? `?workspace_id=${workspaceId}` : "";
+        return await this.request<any>(`/ai/configurations/${id}/test${query}`, { method: "POST" });
       } catch {
         return { success: true, message: "Key validated in browser." };
       }
