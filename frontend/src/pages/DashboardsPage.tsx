@@ -18,6 +18,7 @@ import {
   Globe,
   Lock,
   Zap,
+  Upload,
 } from "lucide-react";
 
 const DashSkeleton: React.FC = () => (
@@ -71,7 +72,11 @@ export const DashboardsPage: React.FC = () => {
       ]);
       setDashboards(dbList);
       setDatasets(dsList);
-      if (dsList.length > 0) setSelectedDatasetId(dsList[0].id);
+      if (dsList.length > 0) {
+        setSelectedDatasetId(dsList[0].id);
+      } else {
+        setSelectedDatasetId("demo");
+      }
     } finally {
       setLoading(false);
     }
@@ -99,12 +104,25 @@ export const DashboardsPage: React.FC = () => {
 
   const handleGenerateAI = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedDatasetId || !currentWorkspace) return;
+    if (!currentWorkspace) return;
     setGeneratingAI(true);
     try {
+      let targetDatasetId = selectedDatasetId;
+
+      // Automatically load demo dataset if selected or if user has no datasets yet
+      if (!targetDatasetId || targetDatasetId === "demo" || datasets.length === 0) {
+        const demoDs = await api.datasets.loadDemo(currentWorkspace.id);
+        targetDatasetId = demoDs.id;
+        setSelectedDatasetId(demoDs.id);
+        setDatasets((prev) => {
+          const exists = prev.some((d) => d.id === demoDs.id);
+          return exists ? prev : [demoDs, ...prev];
+        });
+      }
+
       const db = await api.dashboards.generateAI({
         workspace_id: currentWorkspace.id,
-        dataset_id: selectedDatasetId,
+        dataset_id: targetDatasetId,
         prompt: aiPrompt,
       });
       setShowAIModal(false);
@@ -152,7 +170,6 @@ export const DashboardsPage: React.FC = () => {
           <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => setShowAIModal(true)}
-              disabled={datasets.length === 0}
               className="btn-primary text-xs gap-1.5"
             >
               <Sparkles className="w-3.5 h-3.5" />
@@ -201,7 +218,6 @@ export const DashboardsPage: React.FC = () => {
             <div className="flex items-center justify-center gap-3 flex-wrap">
               <button
                 onClick={() => setShowAIModal(true)}
-                disabled={datasets.length === 0}
                 className="btn-primary text-sm gap-2"
               >
                 <Sparkles className="w-4 h-4" />
@@ -217,8 +233,8 @@ export const DashboardsPage: React.FC = () => {
             </div>
             {datasets.length === 0 && (
               <p className="text-xs text-slate-400">
-                <Link to="/datasets" className="text-indigo-600 dark:text-indigo-400 underline">Upload a dataset</Link>{" "}
-                first to enable AI generation.
+                Clicking <span className="font-semibold text-slate-600 dark:text-slate-300">Generate with AI</span> will automatically analyze our B2B Sales demo dataset, or you can{" "}
+                <Link to="/datasets" className="text-indigo-600 dark:text-indigo-400 underline">upload your own</Link>.
               </p>
             )}
           </div>
@@ -365,61 +381,85 @@ export const DashboardsPage: React.FC = () => {
                 </button>
               </div>
 
-              <form onSubmit={handleGenerateAI} className="space-y-4">
-                <div>
-                  <label className="block text-[13px] font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Target Dataset</label>
-                  <select
-                    value={selectedDatasetId}
-                    onChange={(e) => setSelectedDatasetId(e.target.value)}
-                    className="input text-sm"
-                  >
-                    {datasets.map((d) => (
-                      <option key={d.id} value={d.id} className="dark:bg-zinc-900">
-                        {d.name} ({d.row_count?.toLocaleString()} rows)
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-[13px] font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Business Objective / Prompt</label>
-                  <textarea
-                    rows={3}
-                    required
-                    value={aiPrompt}
-                    onChange={(e) => setAiPrompt(e.target.value)}
-                    placeholder="e.g. Executive sales dashboard showing revenue, profit, monthly growth, regional performance, and top products."
-                    className="input text-sm resize-none leading-relaxed"
-                  />
-                  <p className="text-[11px] text-slate-400 mt-1.5">
-                    AI will analyze columns, generate 4–6 verified SQL queries, execute them in DuckDB, and assemble the live dashboard.
-                  </p>
-                </div>
-
-                <div className="bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/40 rounded-xl p-3 flex items-start gap-2.5">
-                  <Zap className="w-4 h-4 text-indigo-500 shrink-0 mt-0.5" />
-                  <p className="text-[12px] text-indigo-700 dark:text-indigo-300">
-                    This may take 30–60 seconds. AI will reason over your dataset schema before generating widgets.
-                  </p>
-                </div>
-
-                <div className="flex justify-end gap-2 pt-1">
-                  <button type="button" onClick={() => setShowAIModal(false)} disabled={generatingAI} className="btn-secondary text-sm">Cancel</button>
-                  <button type="submit" disabled={generatingAI} className="btn-primary text-sm gap-2">
-                    {generatingAI ? (
-                      <>
-                        <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        Assembling…
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="w-3.5 h-3.5" />
-                        Generate Dashboard
-                      </>
+                <form onSubmit={handleGenerateAI} className="space-y-4">
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block text-[13px] font-semibold text-slate-700 dark:text-slate-300">Target Dataset</label>
+                      {datasets.length === 0 && (
+                        <span className="text-[11px] font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/50 px-2 py-0.5 rounded-md">
+                          Demo Mode Active
+                        </span>
+                      )}
+                    </div>
+                    <select
+                      value={selectedDatasetId}
+                      onChange={(e) => setSelectedDatasetId(e.target.value)}
+                      className="input text-sm"
+                    >
+                      {datasets.length === 0 ? (
+                        <option value="demo" className="dark:bg-zinc-900 font-medium">
+                          ✨ B2B SaaS Sales & Revenue (Demo Dataset — 1,000 rows)
+                        </option>
+                      ) : (
+                        <>
+                          {datasets.map((d) => (
+                            <option key={d.id} value={d.id} className="dark:bg-zinc-900">
+                              {d.name} ({d.row_count?.toLocaleString()} rows)
+                            </option>
+                          ))}
+                          <option value="demo" className="dark:bg-zinc-900 font-medium text-indigo-600 dark:text-indigo-400">
+                            ✨ B2B SaaS Sales & Revenue (Demo Dataset)
+                          </option>
+                        </>
+                      )}
+                    </select>
+                    {datasets.length === 0 && (
+                      <p className="text-[11px] text-indigo-600 dark:text-indigo-400 mt-1.5 flex items-center gap-1 font-medium">
+                        <Sparkles className="w-3 h-3" />
+                        No datasets uploaded yet. We'll automatically load the demo B2B sales data.
+                      </p>
                     )}
-                  </button>
-                </div>
-              </form>
+                  </div>
+
+                  <div>
+                    <label className="block text-[13px] font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Business Objective / Prompt</label>
+                    <textarea
+                      rows={3}
+                      required
+                      value={aiPrompt}
+                      onChange={(e) => setAiPrompt(e.target.value)}
+                      placeholder="e.g. Executive sales dashboard showing revenue, profit, monthly growth, regional performance, and top products."
+                      className="input text-sm resize-none leading-relaxed"
+                    />
+                    <p className="text-[11px] text-slate-400 mt-1.5">
+                      AI will analyze columns, generate 4–6 verified SQL queries, execute them in DuckDB, and assemble the live dashboard.
+                    </p>
+                  </div>
+
+                  <div className="bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/40 rounded-xl p-3 flex items-start gap-2.5">
+                    <Zap className="w-4 h-4 text-indigo-500 shrink-0 mt-0.5" />
+                    <p className="text-[12px] text-indigo-700 dark:text-indigo-300">
+                      This takes ~20–40 seconds. AI will reason over your dataset metrics and assemble KPI cards and charts.
+                    </p>
+                  </div>
+
+                  <div className="flex justify-end gap-2 pt-1">
+                    <button type="button" onClick={() => setShowAIModal(false)} disabled={generatingAI} className="btn-secondary text-sm">Cancel</button>
+                    <button type="submit" disabled={generatingAI} className="btn-primary text-sm gap-2">
+                      {generatingAI ? (
+                        <>
+                          <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                          Generating with AI…
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-3.5 h-3.5" />
+                          Generate with AI
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </form>
             </div>
           </ModalOverlay>
         )}

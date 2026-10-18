@@ -383,59 +383,56 @@ export const AnalyticsWorkspace: React.FC = () => {
 
   return (
     <Layout>
-      <div className="max-w-7xl mx-auto h-[calc(100vh-6.5rem)] flex flex-col">
+      <div className="max-w-7xl mx-auto h-[calc(100vh-6.5rem)] flex flex-col animate-fade-in">
         {/* Workspace Subheader */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800 shrink-0 gap-2.5">
-          <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-200 dark:border-white/[0.06] shrink-0 gap-2.5">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <button
               onClick={() => setShowSidebar(!showSidebar)}
-              className="p-1.5 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0"
+              className="btn-ghost p-1.5 shrink-0"
               title={showSidebar ? "Hide Chat History" : "Show Chat History"}
             >
               {showSidebar ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeftOpen className="w-4 h-4" />}
             </button>
 
-            <div className="flex items-center space-x-1.5 sm:space-x-2 min-w-0">
-              <Database className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
+            <div className="flex items-center gap-1.5 min-w-0">
+              <Database className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
               <Link
                 to={`/datasets/${dataset?.id}`}
-                className="text-xs font-bold text-slate-900 dark:text-white hover:underline truncate max-w-[130px] sm:max-w-[200px]"
+                className="text-[13px] font-bold text-slate-900 dark:text-white hover:underline truncate max-w-[130px] sm:max-w-[200px]"
               >
                 {dataset?.name || "Dataset"}
               </Link>
-              <span className="text-[11px] text-slate-400 dark:text-slate-500 font-mono hidden md:inline">
-                ({dataset?.duckdb_table_name})
-              </span>
+              <code className="text-[11px] text-slate-400 font-mono hidden md:inline bg-slate-100 dark:bg-white/[0.06] px-1.5 py-0.5 rounded-md">
+                {dataset?.duckdb_table_name}
+              </code>
             </div>
 
             <span className="text-slate-300 dark:text-slate-700 shrink-0">/</span>
 
-            <div className="flex items-center space-x-1.5 min-w-0 max-w-[150px] sm:max-w-[280px] truncate">
-              <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 truncate">
+            <div className="flex items-center gap-1.5 min-w-0 truncate">
+              <span className="text-[13px] font-semibold text-slate-600 dark:text-slate-300 truncate max-w-[150px] sm:max-w-[280px]">
                 {activeTitle}
               </span>
               {conversationId && (
-                <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200/50 dark:border-emerald-800/40 shrink-0">
-                  Saved
-                </span>
+                <span className="badge-green shrink-0">Saved</span>
               )}
             </div>
           </div>
 
-          <div className="flex items-center space-x-2 text-xs self-start sm:self-auto shrink-0">
+          <div className="flex items-center gap-2 shrink-0">
             {activeAi ? (
-              <span className="text-emerald-700 dark:text-emerald-400 font-semibold bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200/50 dark:border-emerald-800/40 px-3 py-1 rounded-full flex items-center space-x-1.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="hidden sm:inline">Model:</span>
-                <span>{activeAi.provider.toUpperCase()} ({activeAi.model_name?.split("/").pop()})</span>
+              <span className="flex items-center gap-1.5 text-[12px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-800/50 px-3 py-1.5 rounded-full">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                {activeAi.provider.toUpperCase()} · {activeAi.model_name?.split("/").pop()}
               </span>
             ) : (
               <Link
                 to="/settings/ai-providers"
-                className="text-amber-800 dark:text-amber-300 font-semibold bg-amber-50 dark:bg-amber-950/60 hover:bg-amber-100 dark:hover:bg-amber-900/60 border border-amber-200/60 dark:border-amber-800/60 px-3 py-1 rounded-full flex items-center space-x-1.5 transition-colors"
+                className="flex items-center gap-1.5 text-[12px] font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-950/60 border border-amber-200 dark:border-amber-800/50 px-3 py-1.5 rounded-full transition-colors"
               >
-                <KeyRound className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-                <span>Configure AI Key</span>
+                <KeyRound className="w-3.5 h-3.5" />
+                Configure AI Key
               </Link>
             )}
           </div>
@@ -451,7 +448,7 @@ export const AnalyticsWorkspace: React.FC = () => {
                 className="fixed inset-0 bg-slate-950/50 backdrop-blur-xs z-30 sm:hidden animate-in fade-in duration-200"
                 onClick={() => setShowSidebar(false)}
               />
-              <aside className="fixed inset-y-0 left-0 z-40 w-72 max-w-[85vw] sm:relative sm:z-auto sm:w-72 md:w-80 shrink-0 bg-white dark:bg-slate-900 sm:rounded-3xl border-r sm:border border-slate-200 dark:border-slate-800 p-4 flex flex-col justify-between shadow-2xl sm:shadow-xs transition-all">
+              <aside className="fixed inset-y-0 left-0 z-40 w-72 max-w-[85vw] sm:relative sm:z-auto sm:w-72 md:w-80 shrink-0 bg-white dark:bg-[#111118] sm:rounded-2xl border-r sm:border border-slate-200 dark:border-white/[0.07] p-4 flex flex-col justify-between shadow-2xl sm:shadow-sm transition-all">
                 <div className="space-y-3 flex-1 flex flex-col min-h-0">
                   <div className="flex items-center justify-between sm:hidden pb-1 border-b border-slate-100 dark:border-slate-800">
                     <span className="text-xs font-bold text-slate-800 dark:text-slate-200">Chat History</span>
@@ -469,21 +466,21 @@ export const AnalyticsWorkspace: React.FC = () => {
                       handleNewChat();
                       if (window.innerWidth < 640) setShowSidebar(false);
                     }}
-                    className="w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold text-xs py-2.5 px-4 rounded-2xl shadow-sm transition-all"
+                    className="btn-primary w-full text-xs py-2"
                   >
-                    <Plus className="w-4 h-4" />
-                    <span>New Chat</span>
+                    <Plus className="w-3.5 h-3.5" />
+                    New Chat
                   </button>
 
                 {/* Search Bar for History */}
                 <div className="relative">
-                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
+                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                   <input
                     type="text"
                     value={historySearch}
                     onChange={(e) => setHistorySearch(e.target.value)}
-                    placeholder="Search saved chats..."
-                    className="w-full text-xs pl-8 pr-3 py-2 bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700/80 rounded-xl text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Search chats..."
+                    className="input text-[12px] pl-8 py-2"
                   />
                 </div>
 
@@ -519,10 +516,10 @@ export const AnalyticsWorkspace: React.FC = () => {
                                 if (window.innerWidth < 640) setShowSidebar(false);
                               }
                             }}
-                            className={`group relative flex items-center justify-between px-3 py-2.5 rounded-2xl cursor-pointer text-xs transition-all ${
+                            className={`group relative flex items-center justify-between px-3 py-2.5 rounded-xl cursor-pointer text-[12px] transition-all ${
                               isActive
-                                ? "bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 font-bold border border-blue-200/60 dark:border-blue-800/60 shadow-2xs"
-                                : "text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60 border border-transparent"
+                                ? "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 font-semibold border border-indigo-200/60 dark:border-indigo-800/50"
+                                : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.04] border border-transparent"
                             }`}
                           >
                           <div className="flex items-center space-x-2.5 truncate mr-2 flex-1">
@@ -589,36 +586,36 @@ export const AnalyticsWorkspace: React.FC = () => {
         )}
 
         {/* Chat Thread Container */}
-        <main className="flex-1 flex flex-col min-w-0 bg-white dark:bg-slate-900/90 rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm p-3.5 sm:p-6 overflow-hidden transition-colors">
+        <main className="flex-1 flex flex-col min-w-0 card p-3.5 sm:p-5 overflow-hidden">
             {/* Scrollable Messages Thread */}
             <div className="flex-1 overflow-y-auto space-y-6 pr-2">
               {messages.length === 0 ? (
-                <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-4">
-                  <div className="w-14 h-14 rounded-2xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200/50 dark:border-blue-800/40 text-blue-600 dark:text-blue-400 flex items-center justify-center shadow-xs">
+                <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-5">
+                  <div className="w-16 h-16 rounded-3xl bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-100 dark:border-indigo-900/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
                     <Sparkles className="w-7 h-7" />
                   </div>
-                  <div className="space-y-1.5 max-w-md">
-                    <h3 className="text-base font-bold text-slate-900 dark:text-white">Ask Your Data Anything</h3>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                      Type questions in plain English. Your configured AI agent translates them into validated DuckDB SQL and generates live charts and narrative summaries. Chats are automatically saved and resumeable.
+                  <div className="space-y-2 max-w-md">
+                    <h3 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">Ask Your Data Anything</h3>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+                      Type questions in plain English. AI translates them into validated DuckDB SQL, runs it instantly, and generates charts + narrative summaries. Chats auto-save.
                     </p>
                   </div>
 
-                  {/* Suggested Questions Pills */}
+                  {/* Suggested Questions */}
                   {profile?.suggested_questions?.length > 0 && (
-                    <div className="pt-2 max-w-lg w-full space-y-2">
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">
-                        Suggested analytical queries
+                    <div className="max-w-lg w-full space-y-2">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">
+                        Suggested queries
                       </span>
                       <div className="flex flex-col gap-2">
                         {profile.suggested_questions.map((q: string, idx: number) => (
                           <button
                             key={idx}
                             onClick={() => handleAsk(q)}
-                            className="text-xs font-medium text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/60 hover:bg-blue-50 dark:hover:bg-slate-800 hover:text-blue-700 dark:hover:text-blue-400 border border-slate-200 dark:border-slate-700 px-3.5 py-2.5 rounded-xl text-left transition-colors flex items-center justify-between group"
+                            className="text-[13px] font-medium text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-white/[0.03] hover:bg-indigo-50 dark:hover:bg-indigo-950/30 hover:text-indigo-700 dark:hover:text-indigo-300 border border-slate-200 dark:border-white/[0.07] px-4 py-3 rounded-xl text-left transition-colors flex items-center justify-between group"
                           >
                             <span>{q}</span>
-                            <Sparkles className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-500 shrink-0" />
+                            <Sparkles className="w-3.5 h-3.5 text-slate-300 dark:text-slate-600 group-hover:text-indigo-500 shrink-0 transition-colors" />
                           </button>
                         ))}
                       </div>
@@ -630,7 +627,7 @@ export const AnalyticsWorkspace: React.FC = () => {
                   if (m.role === "user") {
                     return (
                       <div key={m.id} className="flex justify-end">
-                        <div className="bg-blue-600 text-white rounded-2xl rounded-tr-xs px-4 py-3 text-xs font-medium shadow-sm max-w-xl">
+                        <div className="bg-gradient-to-br from-indigo-600 to-indigo-700 text-white rounded-2xl rounded-tr-md px-4 py-3 text-sm font-medium shadow-sm shadow-indigo-600/20 max-w-xl">
                           {m.content}
                         </div>
                       </div>
@@ -640,20 +637,20 @@ export const AnalyticsWorkspace: React.FC = () => {
                   // Special handling for missing AI provider error
                   if (m.content === "NO_AI_PROVIDER") {
                     return (
-                      <div key={m.id} className="bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800/60 rounded-2xl p-5 space-y-3 max-w-xl">
-                        <div className="flex items-center space-x-2 text-amber-800 dark:text-amber-300 font-bold text-xs">
-                          <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                          <span>Configure Your AI Provider (BYOK)</span>
+                      <div key={m.id} className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 rounded-2xl p-5 space-y-3 max-w-xl">
+                        <div className="flex items-center gap-2 text-amber-800 dark:text-amber-300 font-bold text-[13px]">
+                          <AlertCircle className="w-4 h-4 shrink-0" />
+                          Configure Your AI Provider (BYOK)
                         </div>
-                        <p className="text-xs text-amber-900 dark:text-amber-200 leading-relaxed">
-                          Connect your own AI provider and API key to use natural-language analytics. Your AI usage is billed directly by your selected provider.
+                        <p className="text-[13px] text-amber-900 dark:text-amber-200 leading-relaxed">
+                          Connect your own AI provider API key to use natural-language analytics. Your usage is billed directly by the provider.
                         </p>
                         <Link
                           to="/settings/ai-providers"
-                          className="inline-flex items-center space-x-1.5 bg-amber-600 hover:bg-amber-500 text-white font-semibold text-xs py-2 px-3.5 rounded-xl shadow-xs transition-colors"
+                          className="inline-flex items-center gap-1.5 bg-amber-600 hover:bg-amber-500 text-white font-semibold text-sm py-2 px-4 rounded-xl shadow-sm transition-colors"
                         >
                           <KeyRound className="w-3.5 h-3.5" />
-                          <span>Open AI Settings</span>
+                          Open AI Settings
                         </Link>
                       </div>
                     );
@@ -680,89 +677,88 @@ export const AnalyticsWorkspace: React.FC = () => {
                         </div>
                       )}
 
-                      {/* Plain-Language Textual Explanation */}
+                      {/* Plain-Language Explanation */}
                       {m.content && m.content !== "NO_AI_PROVIDER" && (
-                        <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-4 shadow-2xs space-y-2 transition-colors">
-                          <div className="flex items-center space-x-2 text-blue-600 dark:text-blue-400 font-semibold text-xs">
-                            <Sparkles className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                            <span>Executive Summary & Explanation</span>
+                        <div className="card p-4 space-y-2">
+                          <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-semibold text-[12px]">
+                            <Sparkles className="w-3.5 h-3.5" />
+                            AI Analysis
                           </div>
-                          <div className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-line font-normal">
+                          <div className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-line">
                             {m.content}
                           </div>
                         </div>
                       )}
 
-                      {/* Render Visual Chart if available (omit when overview/describe query) */}
+                      {/* Chart */}
                       {m.analysis?.chart_spec && m.analysis.chart_spec.type !== "table" && (
-                        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs">
+                        <div className="rounded-2xl border border-slate-200 dark:border-white/[0.07] overflow-hidden shadow-sm">
                           <ChartRenderer spec={m.analysis.chart_spec} height={300} />
                         </div>
                       )}
 
-                      {/* Grounded Insights Box */}
+                      {/* Insights */}
                       {m.analysis?.insights && m.analysis.insights.length > 0 && (
-                        <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 space-y-2">
-                          <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                            Calculated Business Insights
+                        <div className="bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.07] rounded-2xl p-4 space-y-2">
+                          <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                            Business Insights
                           </div>
-                          <ul className="space-y-1.5 text-xs text-slate-700 dark:text-slate-300">
+                          <ul className="space-y-1.5">
                             {m.analysis.insights.map((ins: string, iIdx: number) => (
-                              <li key={iIdx} className="flex items-start space-x-2">
-                                <span className="text-blue-600 dark:text-blue-400 font-bold">•</span>
-                                <span>{ins}</span>
+                              <li key={iIdx} className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-300">
+                                <span className="text-indigo-500 font-bold mt-0.5">·</span>
+                                {ins}
                               </li>
                             ))}
                           </ul>
                         </div>
                       )}
 
-                      {/* Actions Bar: Add to Dashboard & SQL Inspector */}
+                      {/* Actions Bar */}
                       {m.analysis && (
-                        <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400 pt-1">
+                        <div className="flex flex-wrap items-center gap-2 pt-1">
                           <button
                             onClick={() => handleOpenAddToDashboard(m.analysis)}
-                            className="inline-flex items-center space-x-1.5 text-blue-600 dark:text-blue-400 hover:text-blue-700 font-semibold bg-blue-50/80 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900/60 px-3 py-1.5 rounded-xl transition-colors"
+                            className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100 dark:hover:bg-indigo-950/70 border border-indigo-100 dark:border-indigo-900/40 px-3 py-1.5 rounded-xl transition-colors"
                           >
                             <PlusSquare className="w-3.5 h-3.5" />
-                            <span>Add to Dashboard</span>
+                            Add to Dashboard
                           </button>
 
                           <button
                             onClick={() => handleExportToGoogleDoc(m.analysis)}
                             disabled={exportingDoc}
-                            className="inline-flex items-center space-x-1.5 text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 font-semibold bg-emerald-50/80 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 px-3 py-1.5 rounded-xl transition-colors"
-                            title="Export analysis, KPI table, and SQL query to a formatted Google Doc"
+                            className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-950/70 border border-emerald-100 dark:border-emerald-900/40 px-3 py-1.5 rounded-xl transition-colors disabled:opacity-50"
                           >
                             <FileText className="w-3.5 h-3.5" />
-                            <span>{exportingDoc ? "Exporting..." : "Export to Google Doc"}</span>
+                            {exportingDoc ? "Exporting…" : "Export to Google Doc"}
                           </button>
 
                           {m.analysis.generated_sql && (
                             <button
                               onClick={() => setExpandedSqlId(expandedSqlId === m.id ? null : m.id)}
-                              className="inline-flex items-center space-x-1 hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
+                              className="btn-ghost text-[12px] py-1.5 gap-1"
                             >
                               <Code2 className="w-3.5 h-3.5" />
-                              <span>View SQL</span>
+                              View SQL
                               {expandedSqlId === m.id ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
                             </button>
                           )}
 
                           {m.analysis.execution_time_ms !== undefined && (
-                            <span className="inline-flex items-center space-x-1 text-slate-400 dark:text-slate-500">
+                            <span className="flex items-center gap-1 text-[11px] text-slate-400">
                               <Clock className="w-3 h-3" />
-                              <span>{m.analysis.execution_time_ms} ms</span>
+                              {m.analysis.execution_time_ms} ms
                             </span>
                           )}
                         </div>
                       )}
 
-                      {/* Collapsible SQL Query Inspector */}
+                      {/* SQL Inspector */}
                       {expandedSqlId === m.id && m.analysis?.generated_sql && (
-                        <div className="bg-slate-900 dark:bg-slate-950 border border-slate-800 text-slate-200 rounded-2xl p-4 text-xs font-mono overflow-x-auto shadow-inner">
-                          <div className="text-[10px] text-slate-400 uppercase tracking-widest mb-1.5">Executed DuckDB SQL</div>
-                          <code>{m.analysis.generated_sql}</code>
+                        <div className="bg-[#0d0d14] border border-white/[0.06] text-slate-300 rounded-2xl p-4 text-[12px] font-mono overflow-x-auto">
+                          <div className="text-[10px] text-slate-500 uppercase tracking-widest mb-2">DuckDB SQL</div>
+                          <code className="whitespace-pre-wrap">{m.analysis.generated_sql}</code>
                         </div>
                       )}
                     </div>
@@ -771,9 +767,13 @@ export const AnalyticsWorkspace: React.FC = () => {
               )}
 
               {loading && (
-                <div className="flex items-center space-x-2 text-xs text-slate-400 dark:text-slate-500 py-3">
-                  <div className="w-2 h-2 rounded-full bg-blue-600 animate-ping" />
-                  <span>Analyzing intent, executing query in DuckDB, and synthesizing insights...</span>
+                <div className="flex items-center gap-3 py-4">
+                  <div className="flex gap-1">
+                    <div className="w-2 h-2 rounded-full bg-indigo-600 animate-bounce" style={{ animationDelay: "0ms" }} />
+                    <div className="w-2 h-2 rounded-full bg-indigo-600 animate-bounce" style={{ animationDelay: "150ms" }} />
+                    <div className="w-2 h-2 rounded-full bg-indigo-600 animate-bounce" style={{ animationDelay: "300ms" }} />
+                  </div>
+                  <span className="text-sm text-slate-400">Analyzing · Generating SQL · Running in DuckDB…</span>
                 </div>
               )}
 
@@ -781,13 +781,13 @@ export const AnalyticsWorkspace: React.FC = () => {
             </div>
 
             {/* Input Bar */}
-            <div className="pt-3 shrink-0 border-t border-slate-100 dark:border-slate-800">
+            <div className="pt-3 shrink-0 border-t border-slate-100 dark:border-white/[0.05]">
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
                   handleAsk(inputQuestion);
                 }}
-                className="flex items-center space-x-2"
+                className="flex items-center gap-2"
               >
                 <input
                   ref={inputRef}
@@ -796,85 +796,71 @@ export const AnalyticsWorkspace: React.FC = () => {
                   onChange={(e) => setInputQuestion(e.target.value)}
                   placeholder={
                     conversationId
-                      ? `Continue this analysis in plain English (e.g. 'Now breakdown by region', 'Filter for 2026')...`
-                      : `Ask anything about ${dataset?.name || "your data"}...`
+                      ? `Continue this analysis (e.g. 'breakdown by region', 'filter for 2026')…`
+                      : `Ask anything about ${dataset?.name || "your data"} in plain English…`
                   }
-                  className="flex-1 bg-slate-50 dark:bg-slate-800/80 text-slate-900 dark:text-white text-xs px-4 py-3.5 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xs focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium placeholder-slate-400"
+                  className="flex-1 input text-sm py-3.5 rounded-2xl"
                 />
                 <button
                   type="submit"
                   disabled={loading || !inputQuestion.trim()}
-                  className="bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs px-5 py-3.5 rounded-2xl shadow-md transition-all flex items-center space-x-1.5 disabled:opacity-40"
+                  className="btn-primary text-sm px-5 py-3.5 rounded-2xl gap-1.5 shrink-0"
                 >
-                  <span>Ask</span>
+                  Ask
                   <Send className="w-3.5 h-3.5" />
                 </button>
               </form>
-              <div className="flex items-center justify-between px-2 pt-1.5 text-[10.5px] text-slate-400">
-                <span>💡 Tip: Paste any public Google Sheet or Doc link to ask questions or extract insights directly.</span>
-              </div>
+              <p className="px-1 pt-1.5 text-[11px] text-slate-400">
+                💡 Tip: Paste any public Google Sheet URL to ask questions directly.
+              </p>
             </div>
           </main>
         </div>
 
         {/* Add to Dashboard Modal */}
         {showAddToDashboardModal && (
-          <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-                <h3 className="text-sm font-bold text-slate-900 dark:text-white">Add Visualization to Dashboard</h3>
-                <button
-                  onClick={() => setShowAddToDashboardModal(false)}
-                  className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-sm font-bold p-1 rounded-lg"
-                >
-                  ✕
-                </button>
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in" onClick={() => setShowAddToDashboardModal(false)}>
+            <div className="bg-white dark:bg-[#111118] border border-slate-200 dark:border-white/[0.08] rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-5 animate-scale-in" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-[15px] font-bold text-slate-900 dark:text-white">Add to Dashboard</h3>
+                  <p className="text-[12px] text-slate-400 mt-0.5">Pin this visualization to a dashboard</p>
+                </div>
+                <button onClick={() => setShowAddToDashboardModal(false)} className="btn-ghost p-1.5"><X className="w-4 h-4" /></button>
               </div>
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Select Existing Dashboard</label>
+                  <label className="block text-[13px] font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Select Dashboard</label>
                   <select
                     value={selectedDashboardId}
                     onChange={(e) => setSelectedDashboardId(e.target.value)}
-                    className="w-full text-xs px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+                    className="input text-sm"
                   >
-                    <option value="" className="dark:bg-slate-900">-- Create a new dashboard instead --</option>
+                    <option value="" className="dark:bg-zinc-900">-- Create new dashboard --</option>
                     {dashboardsList.map((db) => (
-                      <option key={db.id} value={db.id} className="dark:bg-slate-900">
-                        {db.title}
-                      </option>
+                      <option key={db.id} value={db.id} className="dark:bg-zinc-900">{db.title}</option>
                     ))}
                   </select>
                 </div>
 
                 {!selectedDashboardId && (
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">New Dashboard Title</label>
+                    <label className="block text-[13px] font-semibold text-slate-700 dark:text-slate-300 mb-1.5">New Dashboard Title</label>
                     <input
                       type="text"
                       value={newDashboardTitle}
                       onChange={(e) => setNewDashboardTitle(e.target.value)}
                       placeholder="e.g. Executive Sales Overview"
-                      className="w-full text-xs px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="input text-sm"
                     />
                   </div>
                 )}
 
-                <div className="pt-2 flex justify-end space-x-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowAddToDashboardModal(false)}
-                    className="px-3.5 py-2 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleConfirmAddToDashboard}
-                    disabled={addingToDashboard}
-                    className="px-4 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 rounded-xl shadow-md disabled:opacity-50"
-                  >
-                    {addingToDashboard ? "Adding..." : "Add Widget"}
+                <div className="flex justify-end gap-2 pt-1">
+                  <button onClick={() => setShowAddToDashboardModal(false)} className="btn-secondary text-sm">Cancel</button>
+                  <button onClick={handleConfirmAddToDashboard} disabled={addingToDashboard} className="btn-primary text-sm">
+                    {addingToDashboard ? "Adding…" : "Add Widget"}
                   </button>
                 </div>
               </div>
