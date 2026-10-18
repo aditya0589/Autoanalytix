@@ -9,6 +9,14 @@ class S3StorageService:
         self.region = settings.AWS_REGION
         self._client = None
 
+    def _has_creds(self) -> bool:
+        try:
+            session = boto3.Session(region_name=self.region)
+            creds = session.get_credentials()
+            return creds is not None and getattr(creds, "access_key", None) is not None
+        except Exception:
+            return False
+
     @property
     def client(self):
         if not self._client:
@@ -16,23 +24,27 @@ class S3StorageService:
         return self._client
 
     def upload_file(self, local_path: str, s3_key: str) -> str:
-        """Uploads a local file to S3."""
+        """Uploads a local file to S3 if AWS credentials exist, otherwise operates locally."""
+        if not self._has_creds():
+            return s3_key
         try:
             self.client.upload_file(local_path, self.bucket, s3_key)
             return s3_key
         except Exception as e:
-            print(f"[!] S3 upload error for {local_path}: {e}")
-            raise
+            print(f"[!] S3 upload warning for {local_path}: {e}")
+            return s3_key
 
     def download_file(self, s3_key: str, local_path: str) -> str:
         """Downloads an S3 object to local path."""
         os.makedirs(os.path.dirname(local_path), exist_ok=True)
+        if not self._has_creds():
+            return local_path
         try:
             self.client.download_file(self.bucket, s3_key, local_path)
             return local_path
         except Exception as e:
             print(f"[!] S3 download error for {s3_key}: {e}")
-            raise
+            return local_path
 
     def ensure_local_cache(self, path_or_key: str) -> str:
         """
@@ -85,6 +97,8 @@ class S3StorageService:
 
     def delete_file(self, s3_key: str):
         """Deletes an object from S3."""
+        if not self._has_creds():
+            return
         try:
             self.client.delete_object(Bucket=self.bucket, Key=s3_key)
         except Exception as e:

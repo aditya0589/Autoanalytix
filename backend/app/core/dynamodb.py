@@ -1,7 +1,10 @@
+import os
 import json
-import boto3
+import sqlite3
+import threading
 from decimal import Decimal
 from typing import Dict, Any, List, Optional
+import boto3
 from boto3.dynamodb.conditions import Key, Attr
 from app.core.config import settings
 
@@ -22,18 +25,195 @@ def _from_dynamo(item: Any) -> Any:
             return float(item)
     return item
 
+class LocalDynamoTable:
+    """
+    Zero-config local SQLite single-table storage that mirrors AWS DynamoDB's single-table API.
+    Used automatically whenever AWS credentials are not configured (local dev, standard Docker).
+    Persists data cleanly to storage/autoanalytix_store.db.
+    """
+    def __init__(self, db_path: Optional[str] = None):
+        if db_path is None:
+            storage_dir = getattr(settings, "STORAGE_DIR", "./storage")
+            db_path = os.path.join(storage_dir, "autoanalytix_store.db")
+        self.db_path = os.path.abspath(db_path)
+        os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
+        self._lock = threading.Lock()
+        self._init_db()
+
+    def _get_conn(self) -> sqlite3.Connection:
+        conn = sqlite3.connect(self.db_path, check_same_thread=False, timeout=30.0)
+        conn.row_factory = sqlite3.Row
+        return conn
+
+    def _init_db(self):
+        with self._lock:
+            with self._get_conn() as conn:
+                conn.execute("""
+                    CREATE TABLE IF NOT EXISTS dynamodb_items (
+                        pk TEXT NOT NULL,
+                        sk TEXT NOT NULL,
+                        gsi1_pk TEXT,
+                        gsi1_sk TEXT,
+                        entity_type TEXT,
+                        item_id TEXT,
+                        data TEXT NOT NULL,
+                        PRIMARY KEY (pk, sk)
+                    );
+                """)
+                conn.execute("CREATE INDEX IF NOT EXISTS idx_gsi1 ON dynamodb_items(gsi1_pk, gsi1_sk);")
+                conn.execute("CREATE INDEX IF NOT EXISTS idx_entity ON dynamodb_items(entity_type);")
+                conn.execute("CREATE INDEX IF NOT EXISTS idx_item_id ON dynamodb_items(item_id);")
+                conn.commit()
+
+    def get_item(self, Key: Dict[str, Any]) -> Dict[str, Any]:
+        pk = str(Key.get("PK", ""))
+        sk = str(Key.get("SK", ""))
+        with self._lock:
+            with self._get_conn() as conn:
+                cur = conn.execute("SELECT data FROM dynamodb_items WHERE pk = ? AND sk = ?", (pk, sk))
+                row = cur.fetchone()
+                if row:
+                    try:
+                        return {"Item": json.loads(row["data"])}
+                    except Exception:
+                        pass
+        return {}
+
+    def put_item(self, Item: Dict[str, Any]) -> Dict[str, Any]:
+        pk = str(Item.get("PK", ""))
+        sk = str(Item.get("SK", ""))
+        gsi1_pk = str(Item.get("GSI1_PK")) if Item.get("GSI1_PK") is not None else None
+        gsi1_sk = str(Item.get("GSI1_SK")) if Item.get("GSI1_SK") is not None else None
+        entity_type = Item.get("entity_type")
+        item_id = str(Item.get("id")) if Item.get("id") is not None else None
+        data_clean = _from_dynamo(Item)
+        data_json = json.dumps(data_clean)
+        with self._lock:
+            with self._get_conn() as conn:
+                conn.execute("""
+                    INSERT OR REPLACE INTO dynamodb_items (pk, sk, gsi1_pk, gsi1_sk, entity_type, item_id, data)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                """, (pk, sk, gsi1_pk, gsi1_sk, entity_type, item_id, data_json))
+                conn.commit()
+        return {"ResponseMetadata": {"HTTPStatusCode": 200}}
+
+    def delete_item(self, Key: Dict[str, Any]) -> Dict[str, Any]:
+        pk = str(Key.get("PK", ""))
+        sk = str(Key.get("SK", ""))
+        with self._lock:
+            with self._get_conn() as conn:
+                conn.execute("DELETE FROM dynamodb_items WHERE pk = ? AND sk = ?", (pk, sk))
+                conn.commit()
+        return {"ResponseMetadata": {"HTTPStatusCode": 200}}
+
+    def _eval_cond(self, cond: Any, item: Dict[str, Any]) -> bool:
+        if cond is None:
+            return True
+        op = None
+        values = ()
+        if hasattr(cond, "get_expression"):
+            try:
+                expr_data = cond.get_expression()
+                op = expr_data.get("operator")
+                values = expr_data.get("values", ())
+            except Exception:
+                pass
+        if not op:
+            op = getattr(cond, "expression_operator", None)
+            values = getattr(cond, "_values", ())
+
+        if op == "AND":
+            return all(self._eval_cond(sub, item) for sub in values)
+        elif op == "OR":
+            return any(self._eval_cond(sub, item) for sub in values)
+        elif op == "=":
+            if len(values) >= 2:
+                attr = getattr(values[0], "name", str(values[0]))
+                expected = values[1]
+                actual = item.get(attr)
+                if actual is None:
+                    return False
+                if isinstance(actual, str) and isinstance(expected, str):
+                    if "email" in attr.lower():
+                        return actual.strip().lower() == expected.strip().lower()
+                    return actual == expected
+                return actual == expected
+            return True
+        elif op == "begins_with":
+            if len(values) >= 2:
+                attr = getattr(values[0], "name", str(values[0]))
+                prefix = str(values[1])
+                actual = str(item.get(attr, ""))
+                return actual.startswith(prefix)
+            return True
+        return True
+
+    def query(self, IndexName: Optional[str] = None, KeyConditionExpression: Any = None, **kwargs) -> Dict[str, Any]:
+        with self._lock:
+            with self._get_conn() as conn:
+                cur = conn.execute("SELECT data FROM dynamodb_items")
+                rows = cur.fetchall()
+        items = []
+        for r in rows:
+            try:
+                items.append(json.loads(r["data"]))
+            except Exception:
+                pass
+        matching = [item for item in items if self._eval_cond(KeyConditionExpression, item)]
+        return {"Items": matching, "Count": len(matching)}
+
+    def scan(self, FilterExpression: Any = None, **kwargs) -> Dict[str, Any]:
+        with self._lock:
+            with self._get_conn() as conn:
+                cur = conn.execute("SELECT data FROM dynamodb_items")
+                rows = cur.fetchall()
+        items = []
+        for r in rows:
+            try:
+                items.append(json.loads(r["data"]))
+            except Exception:
+                pass
+        matching = [item for item in items if self._eval_cond(FilterExpression, item)]
+        return {"Items": matching, "Count": len(matching)}
+
 class DynamoDBService:
     def __init__(self):
         self.table_name = settings.DYNAMODB_TABLE_NAME
         self.region = settings.AWS_REGION
         self._resource = None
         self._table = None
+        self._local_table = None
 
     @property
     def table(self):
-        if not self._table:
-            self._resource = boto3.resource("dynamodb", region_name=self.region)
-            self._table = self._resource.Table(self.table_name)
+        if self._table is not None:
+            return self._table
+
+        # Check if real AWS credentials are available
+        has_aws = False
+        try:
+            session = boto3.Session(region_name=self.region)
+            creds = session.get_credentials()
+            if creds is not None and getattr(creds, "access_key", None):
+                has_aws = True
+        except Exception:
+            has_aws = False
+
+        if has_aws and getattr(settings, "USE_DYNAMODB", True):
+            try:
+                self._resource = session.resource("dynamodb")
+                tbl = self._resource.Table(self.table_name)
+                tbl.load()
+                self._table = tbl
+                print(f"[DynamoDBService] Connected to AWS DynamoDB: {self.table_name}")
+                return self._table
+            except Exception as e:
+                print(f"[DynamoDBService] AWS DynamoDB connect failed: {e}. Falling back to local storage.")
+
+        if self._local_table is None:
+            self._local_table = LocalDynamoTable()
+            print(f"[DynamoDBService] Active store: Local SQLite ({self._local_table.db_path})")
+        self._table = self._local_table
         return self._table
 
     # ==================== USERS ====================
