@@ -349,6 +349,17 @@ class DynamoDBService:
         )
         return _from_dynamo(res.get("Items", []))
 
+    def update_data_source(self, ds: Dict[str, Any]) -> Dict[str, Any]:
+        item = {
+            **ds,
+            "PK": f"WS#{ds['workspace_id']}",
+            "SK": f"DATASOURCE#{ds['id']}",
+            "entity_type": "DATA_SOURCE",
+        }
+        dynamo_item = _to_dynamo({k: v for k, v in item.items() if v is not None})
+        self.table.put_item(Item=dynamo_item)
+        return _from_dynamo(dynamo_item)
+
     def delete_data_source(self, workspace_id: str, source_id: str) -> bool:
         self.table.delete_item(Key={"PK": f"WS#{workspace_id}", "SK": f"DATASOURCE#{source_id}"})
         return True

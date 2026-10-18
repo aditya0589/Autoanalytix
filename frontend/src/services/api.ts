@@ -750,19 +750,24 @@ class ApiClient {
         return { id: "ds_" + Date.now(), ...data };
       }
     },
-    test: async (sourceType: string, config: any) => {
-      try {
-        return await this.request<any>(`/data-sources/test?source_type=${sourceType}`, { method: "POST", body: JSON.stringify(config) });
-      } catch {
-        return { success: true, message: "Connected." };
-      }
+    test: async (sourceType: string, config: any, sourceId?: string) => {
+      const q = sourceId ? `&source_id=${sourceId}` : "";
+      return await this.request<any>(`/data-sources/test?source_type=${sourceType}${q}`, { method: "POST", body: JSON.stringify(config) });
+    },
+    listTables: async (sourceId: string) => {
+      return await this.request<{ source_id: string; source_type: string; tables: string[] }>(`/data-sources/${sourceId}/tables`);
+    },
+    getTableSchema: async (sourceId: string, tableName: string) => {
+      return await this.request<{ source_id: string; table_name: string; columns: { column_name: string; data_type: string }[] }>(`/data-sources/${sourceId}/tables/${encodeURIComponent(tableName)}/schema`);
+    },
+    ingestTable: async (sourceId: string, tableName: string, req: { dataset_name?: string; limit?: number } = {}) => {
+      return await this.request<any>(`/data-sources/${sourceId}/tables/${encodeURIComponent(tableName)}/ingest`, {
+        method: "POST",
+        body: JSON.stringify(req)
+      });
     },
     delete: async (id: string) => {
-      try {
-        return await this.request<any>(`/data-sources/${id}`, { method: "DELETE" });
-      } catch {
-        return { success: true };
-      }
+      return await this.request<any>(`/data-sources/${id}`, { method: "DELETE" });
     },
   };
 

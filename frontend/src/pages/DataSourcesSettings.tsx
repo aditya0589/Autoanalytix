@@ -21,7 +21,14 @@ import {
   Link2,
   Unlink,
   AlertTriangle,
-  MessageSquare
+  MessageSquare,
+  Server,
+  Cloud,
+  ChevronRight,
+  ChevronDown,
+  Table,
+  Search,
+  Lock,
 } from "lucide-react";
 
 export const DataSourcesSettings: React.FC = () => {
@@ -41,14 +48,55 @@ export const DataSourcesSettings: React.FC = () => {
     message?: string;
   } | null>(null);
 
-  // --- SQL Connectors state ---
+  // --- SQL & Warehouse Connectors state ---
   const [sources, setSources] = useState<any[]>([]);
   const [loadingSources, setLoadingSources] = useState(true);
   const [sourceName, setSourceName] = useState("");
-  const [sourceType, setSourceType] = useState("sqlite");
-  const [dbPath, setDbPath] = useState("./storage/demo.sqlite");
+  const [sourceType, setSourceType] = useState<"sqlite" | "postgresql" | "bigquery" | "snowflake">("postgresql");
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
+
+  // SQLite fields
+  const [dbPath, setDbPath] = useState("./storage/demo.sqlite");
+
+  // PostgreSQL fields
+  const [pgHost, setPgHost] = useState("localhost");
+  const [pgPort, setPgPort] = useState("5432");
+  const [pgDatabase, setPgDatabase] = useState("");
+  const [pgUser, setPgUser] = useState("postgres");
+  const [pgPassword, setPgPassword] = useState("");
+  const [pgSchema, setPgSchema] = useState("public");
+  const [pgSslMode, setPgSslMode] = useState("prefer");
+
+  // BigQuery fields
+  const [bqProjectId, setBqProjectId] = useState("");
+  const [bqDatasetId, setBqDatasetId] = useState("");
+  const [bqLocation, setBqLocation] = useState("US");
+  const [bqServiceAccount, setBqServiceAccount] = useState("");
+
+  // Snowflake fields
+  const [sfAccount, setSfAccount] = useState("");
+  const [sfWarehouse, setSfWarehouse] = useState("COMPUTE_WH");
+  const [sfDatabase, setSfDatabase] = useState("");
+  const [sfSchema, setSfSchema] = useState("PUBLIC");
+  const [sfUser, setSfUser] = useState("");
+  const [sfPassword, setSfPassword] = useState("");
+  const [sfRole, setSfRole] = useState("");
+
+  // Table browser modal & Ingestion state
+  const [activeBrowseSource, setActiveBrowseSource] = useState<any>(null);
+  const [browseTables, setBrowseTables] = useState<string[]>([]);
+  const [tableFilter, setTableFilter] = useState("");
+  const [loadingBrowseTables, setLoadingBrowseTables] = useState(false);
+  const [tableSchemas, setTableSchemas] = useState<Record<string, any[]>>({});
+  const [expandedTableSchema, setExpandedTableSchema] = useState<string | null>(null);
+  const [loadingTableSchema, setLoadingTableSchema] = useState(false);
+  const [ingestingTableName, setIngestingTableName] = useState<string | null>(null);
+  const [ingestLimit, setIngestLimit] = useState(10000);
+
+  // Card-level test status
+  const [testingSourceId, setTestingSourceId] = useState<string | null>(null);
+  const [sourceTestStatus, setSourceTestStatus] = useState<Record<string, { success: boolean; message: string }>>({});
 
   // --- Google Workspace state ---
   const [googleStatus, setGoogleStatus] = useState<any>(null);
@@ -207,12 +255,48 @@ export const DataSourcesSettings: React.FC = () => {
     }
   };
 
-  // --- SQL handlers ---
+  // --- Warehouse & SQL Config Builder ---
+  const buildCurrentConfig = () => {
+    switch (sourceType) {
+      case "postgresql":
+        return {
+          host: pgHost,
+          port: parseInt(pgPort) || 5432,
+          database: pgDatabase,
+          user: pgUser,
+          password: pgPassword,
+          schema: pgSchema || "public",
+          sslmode: pgSslMode,
+        };
+      case "bigquery":
+        return {
+          project_id: bqProjectId,
+          dataset_id: bqDatasetId,
+          location: bqLocation,
+          service_account_json: bqServiceAccount.trim() || undefined,
+        };
+      case "snowflake":
+        return {
+          account: sfAccount,
+          warehouse: sfWarehouse,
+          database: sfDatabase,
+          schema: sfSchema || "PUBLIC",
+          user: sfUser,
+          password: sfPassword,
+          role: sfRole || undefined,
+        };
+      case "sqlite":
+      default:
+        return { database_path: dbPath };
+    }
+  };
+
   const handleTest = async () => {
     setTesting(true);
     setTestResult(null);
     try {
-      const res = await api.dataSources.test(sourceType, { database_path: dbPath });
+      const cfg = buildCurrentConfig();
+      const res = await api.dataSources.test(sourceType, cfg);
       setTestResult(res);
     } catch (err: any) {
       setTestResult({ success: false, message: err.message });
@@ -225,11 +309,12 @@ export const DataSourcesSettings: React.FC = () => {
     e.preventDefault();
     if (!currentWorkspace || !sourceName) return;
     try {
+      const cfg = buildCurrentConfig();
       await api.dataSources.create({
         workspace_id: currentWorkspace.id,
         name: sourceName,
         source_type: sourceType,
-        connection_config: { database_path: dbPath },
+        connection_config: cfg,
       });
       setSourceName("");
       setTestResult(null);
@@ -246,6 +331,80 @@ export const DataSourcesSettings: React.FC = () => {
       await loadSources();
     } catch (err: any) {
       alert("Delete failed: " + err.message);
+    }
+  };
+
+  // Table Browser & Ingestion Handlers
+  const handleOpenTableBrowser = async (source: any) => {
+    setActiveBrowseSource(source);
+    setBrowseTables([]);
+    setTableSchemas({});
+    setExpandedTableSchema(null);
+    setTableFilter("");
+    setLoadingBrowseTables(true);
+    try {
+      const res = await api.dataSources.listTables(source.id);
+      setBrowseTables(res.tables || []);
+    } catch (err: any) {
+      alert(`Failed to list tables: ${err.message}`);
+    } finally {
+      setLoadingBrowseTables(false);
+    }
+  };
+
+  const handleToggleTableSchema = async (tableName: string) => {
+    if (!activeBrowseSource) return;
+    if (expandedTableSchema === tableName) {
+      setExpandedTableSchema(null);
+      return;
+    }
+    setExpandedTableSchema(tableName);
+    if (!tableSchemas[tableName]) {
+      setLoadingTableSchema(true);
+      try {
+        const res = await api.dataSources.getTableSchema(activeBrowseSource.id, tableName);
+        setTableSchemas((prev) => ({ ...prev, [tableName]: res.columns || [] }));
+      } catch (err: any) {
+        alert(`Failed to fetch schema for ${tableName}: ${err.message}`);
+      } finally {
+        setLoadingTableSchema(false);
+      }
+    }
+  };
+
+  const handleIngestTable = async (tableName: string) => {
+    if (!activeBrowseSource) return;
+    try {
+      setIngestingTableName(tableName);
+      const res = await api.dataSources.ingestTable(activeBrowseSource.id, tableName, {
+        limit: ingestLimit,
+        dataset_name: `${activeBrowseSource.name} - ${tableName}`,
+      });
+      setIngestSuccess({
+        id: res.id,
+        name: res.name || tableName,
+        rowCount: res.row_count || 0,
+        columnCount: res.column_count || 0,
+        type: activeBrowseSource.source_type,
+        message: `Extracted ${res.row_count?.toLocaleString()} rows from '${tableName}' and ingested into DuckDB analytical engine.`,
+      });
+      await loadSources();
+    } catch (err: any) {
+      alert(`Ingestion failed: ${err.message}`);
+    } finally {
+      setIngestingTableName(null);
+    }
+  };
+
+  const handleTestSavedSource = async (source: any) => {
+    setTestingSourceId(source.id);
+    try {
+      const res = await api.dataSources.test(source.source_type, source.connection_config, source.id);
+      setSourceTestStatus((prev) => ({ ...prev, [source.id]: res }));
+    } catch (err: any) {
+      setSourceTestStatus((prev) => ({ ...prev, [source.id]: { success: false, message: err.message } }));
+    } finally {
+      setTestingSourceId(null);
     }
   };
 
@@ -616,86 +775,477 @@ export const DataSourcesSettings: React.FC = () => {
           <div className="space-y-6">
             {/* Existing sources */}
             <div className="bg-white dark:bg-slate-900/90 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 sm:p-8 shadow-sm space-y-4 transition-colors">
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white">Connected Sources</h3>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">Connected Warehouses & Databases</h3>
+                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+                    Query, browse tables, and ingest datasets directly into DuckDB from your external databases
+                  </p>
+                </div>
+                <span className="text-xs font-semibold text-slate-400">
+                  {sources.length} {sources.length === 1 ? "source" : "sources"}
+                </span>
+              </div>
+
               {loadingSources ? (
                 <div className="text-xs text-slate-400 dark:text-slate-500 py-8 text-center">Loading sources...</div>
               ) : sources.length === 0 ? (
                 <div className="text-center py-10 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800">
                   <Database className="w-8 h-8 text-slate-400 dark:text-slate-500 mx-auto mb-2" />
-                  <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">No external SQL databases configured</p>
-                  <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">Use the form below to connect an external SQL database.</p>
+                  <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">No external databases configured</p>
+                  <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
+                    Add PostgreSQL, Google BigQuery, Snowflake, or SQLite using the configuration panel below.
+                  </p>
                 </div>
               ) : (
                 <div className="divide-y divide-slate-100 dark:divide-slate-800">
-                  {sources.map((s) => (
-                    <div key={s.id} className="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                      <div className="flex items-center space-x-3.5 min-w-0">
-                        <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200/50 dark:border-blue-800/40 text-blue-600 dark:text-blue-400 flex items-center justify-center font-black text-xs uppercase shrink-0">
-                          {s.source_type}
-                        </div>
-                        <div className="min-w-0">
-                          <div className="text-xs font-bold text-slate-900 dark:text-white truncate">{s.name}</div>
-                          <div className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5 font-mono truncate">
-                            Path: {s.connection_config?.database_path}
+                  {sources.map((s) => {
+                    const st = (s.source_type || "").toLowerCase();
+                    const isPg = st === "postgresql";
+                    const isBq = st === "bigquery";
+                    const isSf = st === "snowflake";
+                    const isSqlite = st === "sqlite";
+
+                    let iconBadge = <Database className="w-4 h-4 text-emerald-500" />;
+                    let badgeColor = "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-800/40";
+                    let displayHost = s.connection_config?.database_path || "Configured";
+
+                    if (isPg) {
+                      iconBadge = <Server className="w-4 h-4 text-indigo-500" />;
+                      badgeColor = "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border-indigo-200/50 dark:border-indigo-800/40";
+                      displayHost = `${s.connection_config?.host || "localhost"}:${s.connection_config?.port || 5432} / ${s.connection_config?.database || "db"}`;
+                    } else if (isBq) {
+                      iconBadge = <Cloud className="w-4 h-4 text-amber-500" />;
+                      badgeColor = "bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border-amber-200/50 dark:border-amber-800/40";
+                      displayHost = `${s.connection_config?.project_id || "gcp"}.${s.connection_config?.dataset_id || "dataset"}`;
+                    } else if (isSf) {
+                      iconBadge = <Sparkles className="w-4 h-4 text-cyan-500" />;
+                      badgeColor = "bg-cyan-50 dark:bg-cyan-950/60 text-cyan-600 dark:text-cyan-400 border-cyan-200/50 dark:border-cyan-800/40";
+                      displayHost = `${s.connection_config?.account || "account"} / ${s.connection_config?.database || "db"}`;
+                    }
+
+                    const testStatus = sourceTestStatus[s.id];
+
+                    return (
+                      <div key={s.id} className="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="flex items-center space-x-3.5 min-w-0">
+                          <div className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 ${badgeColor}`}>
+                            {iconBadge}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="flex items-center space-x-2">
+                              <span className="text-xs font-bold text-slate-900 dark:text-white truncate">{s.name}</span>
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                                {s.source_type}
+                              </span>
+                            </div>
+                            <div className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5 font-mono truncate">
+                              {displayHost}
+                              {s.last_sync_at && (
+                                <span className="ml-2 text-slate-400 font-sans">
+                                  • Synced {new Date(s.last_sync_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                              )}
+                            </div>
+                            {testStatus && (
+                              <div className={`text-[10.5px] mt-1 flex items-center space-x-1 ${
+                                testStatus.success ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"
+                              }`}>
+                                {testStatus.success ? <CheckCircle2 className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />}
+                                <span>{testStatus.message}</span>
+                              </div>
+                            )}
                           </div>
                         </div>
-                      </div>
 
-                      <button
-                        onClick={() => handleDelete(s.id)}
-                        className="self-end sm:self-auto p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-xl transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ))}
+                        <div className="flex items-center space-x-2 self-end sm:self-auto">
+                          <button
+                            onClick={() => handleTestSavedSource(s)}
+                            disabled={testingSourceId === s.id}
+                            className="px-2.5 py-1.5 text-[11px] font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors disabled:opacity-50"
+                          >
+                            {testingSourceId === s.id ? "Pinging..." : "Test"}
+                          </button>
+
+                          <button
+                            onClick={() => handleOpenTableBrowser(s)}
+                            className="px-3 py-1.5 text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white rounded-lg shadow-sm transition-colors flex items-center space-x-1"
+                          >
+                            <Table className="w-3.5 h-3.5" />
+                            <span>Browse Tables</span>
+                          </button>
+
+                          <button
+                            onClick={() => handleDelete(s.id)}
+                            className="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg transition-colors"
+                            title="Remove connector"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
 
             {/* Add Connector Form */}
-            <div className="bg-white dark:bg-slate-900/90 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 sm:p-8 shadow-sm space-y-5 transition-colors">
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white">Add External Database Connector</h3>
+            <div className="bg-white dark:bg-slate-900/90 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 sm:p-8 shadow-sm space-y-6 transition-colors">
+              <div>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">Add Cloud Warehouse or Database</h3>
+                <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+                  Connect PostgreSQL, BigQuery, Snowflake, or local SQLite for automated schema inference and analytical ingestion.
+                </p>
+              </div>
+
+              {/* Source Type Selector Cards */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {[
+                  {
+                    type: "postgresql",
+                    name: "PostgreSQL",
+                    desc: "Relational DB & Supabase",
+                    icon: <Server className="w-4 h-4 text-indigo-500" />,
+                    activeBorder: "border-indigo-500 bg-indigo-50/20 dark:bg-indigo-950/20",
+                  },
+                  {
+                    type: "bigquery",
+                    name: "Google BigQuery",
+                    desc: "Serverless Cloud DW",
+                    icon: <Cloud className="w-4 h-4 text-amber-500" />,
+                    activeBorder: "border-amber-500 bg-amber-50/20 dark:bg-amber-950/20",
+                  },
+                  {
+                    type: "snowflake",
+                    name: "Snowflake",
+                    desc: "Data Cloud Platform",
+                    icon: <Sparkles className="w-4 h-4 text-cyan-500" />,
+                    activeBorder: "border-cyan-500 bg-cyan-50/20 dark:bg-cyan-950/20",
+                  },
+                  {
+                    type: "sqlite",
+                    name: "SQLite File",
+                    desc: "Local / Embedded SQL",
+                    icon: <Database className="w-4 h-4 text-emerald-500" />,
+                    activeBorder: "border-emerald-500 bg-emerald-50/20 dark:bg-emerald-950/20",
+                  },
+                ].map((item) => (
+                  <button
+                    key={item.type}
+                    type="button"
+                    onClick={() => {
+                      setSourceType(item.type as any);
+                      setTestResult(null);
+                    }}
+                    className={`p-3.5 rounded-2xl border text-left transition-all ${
+                      sourceType === item.type
+                        ? `${item.activeBorder} shadow-sm ring-1 ring-blue-500/30`
+                        : "border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 hover:border-slate-300 dark:hover:border-slate-700"
+                    }`}
+                  >
+                    <div className="flex items-center space-x-2">
+                      {item.icon}
+                      <span className="text-xs font-bold text-slate-900 dark:text-white">{item.name}</span>
+                    </div>
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1">{item.desc}</p>
+                  </button>
+                ))}
+              </div>
 
               <form onSubmit={handleCreate} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Connector Name</label>
-                    <input
-                      type="text"
-                      required
-                      value={sourceName}
-                      onChange={(e) => setSourceName(e.target.value)}
-                      placeholder="e.g. Production Read Replica"
-                      className="w-full text-xs px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Source Type</label>
-                    <select
-                      value={sourceType}
-                      onChange={(e) => setSourceType(e.target.value)}
-                      className="w-full text-xs px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
-                    >
-                      <option value="sqlite" className="dark:bg-slate-900">SQLite Database / File</option>
-                      <option value="postgresql" disabled className="dark:bg-slate-900">PostgreSQL (Phase 5)</option>
-                      <option value="bigquery" disabled className="dark:bg-slate-900">Google BigQuery (Phase 5)</option>
-                      <option value="snowflake" disabled className="dark:bg-slate-900">Snowflake (Phase 5)</option>
-                    </select>
-                  </div>
-                </div>
-
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Database File Path / URI</label>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                    Connector Name / Display Label
+                  </label>
                   <input
                     type="text"
                     required
-                    value={dbPath}
-                    onChange={(e) => setDbPath(e.target.value)}
-                    placeholder="./storage/database.sqlite"
-                    className="w-full text-xs px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                    value={sourceName}
+                    onChange={(e) => setSourceName(e.target.value)}
+                    placeholder="e.g. Production Analytics Replica"
+                    className="w-full text-xs px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
+                </div>
+
+                {/* --- PostgreSQL Form Fields --- */}
+                {sourceType === "postgresql" && (
+                  <div className="space-y-3.5 pt-1">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className="sm:col-span-2">
+                        <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                          Host / Server Endpoint
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={pgHost}
+                          onChange={(e) => setPgHost(e.target.value)}
+                          placeholder="localhost or db.xyz.supabase.co"
+                          className="w-full text-xs px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                          Port
+                        </label>
+                        <input
+                          type="number"
+                          required
+                          value={pgPort}
+                          onChange={(e) => setPgPort(e.target.value)}
+                          placeholder="5432"
+                          className="w-full text-xs px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                          Database Name
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={pgDatabase}
+                          onChange={(e) => setPgDatabase(e.target.value)}
+                          placeholder="e.g. postgres or analytics_dw"
+                          className="w-full text-xs px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                          Schema (Default: public)
+                        </label>
+                        <input
+                          type="text"
+                          value={pgSchema}
+                          onChange={(e) => setPgSchema(e.target.value)}
+                          placeholder="public"
+                          className="w-full text-xs px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div>
+                        <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                          Username
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={pgUser}
+                          onChange={(e) => setPgUser(e.target.value)}
+                          placeholder="postgres"
+                          className="w-full text-xs px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                          Password
+                        </label>
+                        <input
+                          type="password"
+                          value={pgPassword}
+                          onChange={(e) => setPgPassword(e.target.value)}
+                          placeholder="••••••••"
+                          className="w-full text-xs px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                          SSL Mode
+                        </label>
+                        <select
+                          value={pgSslMode}
+                          onChange={(e) => setPgSslMode(e.target.value)}
+                          className="w-full text-xs px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="prefer">prefer</option>
+                          <option value="require">require</option>
+                          <option value="disable">disable</option>
+                          <option value="verify-ca">verify-ca</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* --- Google BigQuery Form Fields --- */}
+                {sourceType === "bigquery" && (
+                  <div className="space-y-3.5 pt-1">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className="sm:col-span-2">
+                        <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                          GCP Project ID
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={bqProjectId}
+                          onChange={(e) => setBqProjectId(e.target.value)}
+                          placeholder="e.g. acme-analytics-production"
+                          className="w-full text-xs px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                          Dataset ID
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={bqDatasetId}
+                          onChange={(e) => setBqDatasetId(e.target.value)}
+                          placeholder="e.g. sales_mart"
+                          className="w-full text-xs px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                        Service Account JSON Key (Optional if GCP Application Default Credentials are set)
+                      </label>
+                      <textarea
+                        rows={3}
+                        value={bqServiceAccount}
+                        onChange={(e) => setBqServiceAccount(e.target.value)}
+                        placeholder='{"type": "service_account", "project_id": "...", "private_key": "..."}'
+                        className="w-full text-xs p-3 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                      />
+                      <p className="text-[10.5px] text-slate-400 mt-1">
+                        Key is securely encrypted with AES-256-GCM and never exposed. Leave empty if your backend runs with GCP service account identity.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* --- Snowflake Form Fields --- */}
+                {sourceType === "snowflake" && (
+                  <div className="space-y-3.5 pt-1">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                          Snowflake Account Identifier
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={sfAccount}
+                          onChange={(e) => setSfAccount(e.target.value)}
+                          placeholder="e.g. xy12345.us-east-1 or org-account"
+                          className="w-full text-xs px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                          Warehouse
+                        </label>
+                        <input
+                          type="text"
+                          value={sfWarehouse}
+                          onChange={(e) => setSfWarehouse(e.target.value)}
+                          placeholder="COMPUTE_WH"
+                          className="w-full text-xs px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                          Database Name
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={sfDatabase}
+                          onChange={(e) => setSfDatabase(e.target.value)}
+                          placeholder="e.g. ANALYTICS_DB"
+                          className="w-full text-xs px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                          Schema (Default: PUBLIC)
+                        </label>
+                        <input
+                          type="text"
+                          value={sfSchema}
+                          onChange={(e) => setSfSchema(e.target.value)}
+                          placeholder="PUBLIC"
+                          className="w-full text-xs px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div>
+                        <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                          Username
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={sfUser}
+                          onChange={(e) => setSfUser(e.target.value)}
+                          placeholder="analyst_user"
+                          className="w-full text-xs px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                          Password
+                        </label>
+                        <input
+                          type="password"
+                          required
+                          value={sfPassword}
+                          onChange={(e) => setSfPassword(e.target.value)}
+                          placeholder="••••••••"
+                          className="w-full text-xs px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                          Role (Optional)
+                        </label>
+                        <input
+                          type="text"
+                          value={sfRole}
+                          onChange={(e) => setSfRole(e.target.value)}
+                          placeholder="e.g. ACCOUNTADMIN"
+                          className="w-full text-xs px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* --- SQLite Form Fields --- */}
+                {sourceType === "sqlite" && (
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                      Database File Path / URI
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={dbPath}
+                      onChange={(e) => setDbPath(e.target.value)}
+                      placeholder="./storage/demo.sqlite"
+                      className="w-full text-xs px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                    />
+                  </div>
+                )}
+
+                {/* Security reassurance banner */}
+                <div className="flex items-center space-x-2 text-[11px] text-slate-500 dark:text-slate-400 bg-slate-50/80 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
+                  <ShieldCheck className="w-4 h-4 text-blue-500 shrink-0" />
+                  <span>All database passwords and private keys are encrypted with authenticated <strong>AES-256-GCM</strong> before storage.</span>
                 </div>
 
                 {testResult && (
@@ -720,9 +1270,9 @@ export const DataSourcesSettings: React.FC = () => {
                     type="button"
                     onClick={handleTest}
                     disabled={testing}
-                    className="flex-1 sm:flex-none flex items-center justify-center px-4 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-colors"
+                    className="flex-1 sm:flex-none flex items-center justify-center px-4 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-colors disabled:opacity-50"
                   >
-                    {testing ? "Testing..." : "Test Connection"}
+                    {testing ? "Testing Connection..." : "Test Connection"}
                   </button>
 
                   <button
@@ -734,6 +1284,164 @@ export const DataSourcesSettings: React.FC = () => {
                 </div>
               </form>
             </div>
+
+            {/* Interactive Table Browser & Ingestion Modal */}
+            {activeBrowseSource && (
+              <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-3xl w-full p-6 space-y-4 shadow-2xl max-h-[85vh] flex flex-col animate-in fade-in zoom-in-95 duration-150">
+                  <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3.5">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-200/50 dark:border-blue-800/40">
+                        <Table className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold text-slate-900 dark:text-white flex items-center space-x-2">
+                          <span>{activeBrowseSource.name}</span>
+                          <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 font-bold uppercase text-slate-500">
+                            {activeBrowseSource.source_type}
+                          </span>
+                        </h4>
+                        <p className="text-[11px] text-slate-400">
+                          Browse available tables, inspect schema columns, and ingest directly into DuckDB
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => setActiveBrowseSource(null)}
+                      className="text-xs px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-600 dark:text-slate-300 font-medium"
+                    >
+                      Close
+                    </button>
+                  </div>
+
+                  {/* Search and Limit bar */}
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <div className="relative w-full sm:w-72">
+                      <Search className="w-3.5 h-3.5 absolute left-3 top-3 text-slate-400" />
+                      <input
+                        type="text"
+                        value={tableFilter}
+                        onChange={(e) => setTableFilter(e.target.value)}
+                        placeholder="Search tables..."
+                        className="w-full text-xs pl-8 pr-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+
+                    <div className="flex items-center space-x-2 w-full sm:w-auto justify-end text-xs text-slate-500">
+                      <span>Row limit:</span>
+                      <select
+                        value={ingestLimit}
+                        onChange={(e) => setIngestLimit(Number(e.target.value))}
+                        className="text-xs px-2.5 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none"
+                      >
+                        <option value={1000}>1,000 rows</option>
+                        <option value={5000}>5,000 rows</option>
+                        <option value={10000}>10,000 rows</option>
+                        <option value={50000}>50,000 rows</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Table listing */}
+                  <div className="overflow-y-auto flex-1 divide-y divide-slate-100 dark:divide-slate-800 pr-1">
+                    {loadingBrowseTables ? (
+                      <div className="py-12 text-center text-xs text-slate-400">
+                        Querying remote warehouse information schema...
+                      </div>
+                    ) : browseTables.length === 0 ? (
+                      <div className="py-12 text-center text-xs text-slate-400">
+                        No tables discovered in this database or schema.
+                      </div>
+                    ) : (
+                      browseTables
+                        .filter((t) => !tableFilter || t.toLowerCase().includes(tableFilter.toLowerCase()))
+                        .map((tbl) => {
+                          const isExpanded = expandedTableSchema === tbl;
+                          const isIngesting = ingestingTableName === tbl;
+                          const cols = tableSchemas[tbl];
+
+                          return (
+                            <div key={tbl} className="py-3 space-y-2">
+                              <div className="flex items-center justify-between">
+                                <div
+                                  onClick={() => handleToggleTableSchema(tbl)}
+                                  className="flex items-center space-x-2.5 cursor-pointer group select-none"
+                                >
+                                  {isExpanded ? (
+                                    <ChevronDown className="w-4 h-4 text-blue-500" />
+                                  ) : (
+                                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-slate-600" />
+                                  )}
+                                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 font-mono">
+                                    {tbl}
+                                  </span>
+                                  {cols && (
+                                    <span className="text-[10px] text-slate-400">
+                                      ({cols.length} columns)
+                                    </span>
+                                  )}
+                                </div>
+
+                                <div className="flex items-center space-x-2">
+                                  <button
+                                    onClick={() => handleToggleTableSchema(tbl)}
+                                    className="px-2.5 py-1 text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                                  >
+                                    {isExpanded ? "Hide Schema" : "Inspect Schema"}
+                                  </button>
+
+                                  <button
+                                    onClick={() => handleIngestTable(tbl)}
+                                    disabled={isIngesting}
+                                    className="px-3 py-1.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg transition-all shadow-sm flex items-center space-x-1.5 disabled:opacity-50"
+                                  >
+                                    {isIngesting ? (
+                                      <span>Ingesting...</span>
+                                    ) : (
+                                      <>
+                                        <span>Ingest into DuckDB</span>
+                                        <ArrowRight className="w-3 h-3" />
+                                      </>
+                                    )}
+                                  </button>
+                                </div>
+                              </div>
+
+                              {/* Schema preview dropdown */}
+                              {isExpanded && (
+                                <div className="ml-6 p-3 bg-slate-50 dark:bg-slate-950/60 rounded-xl border border-slate-100 dark:border-slate-800 text-xs">
+                                  {loadingTableSchema && !cols ? (
+                                    <div className="py-2 text-slate-400 text-[11px]">Inspecting columns...</div>
+                                  ) : !cols || cols.length === 0 ? (
+                                    <div className="py-2 text-slate-400 text-[11px]">No columns discovered.</div>
+                                  ) : (
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                      {cols.map((c: any, idx: number) => (
+                                        <div
+                                          key={idx}
+                                          className="p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex items-center justify-between"
+                                        >
+                                          <span className="font-mono text-[11px] text-slate-800 dark:text-slate-200 truncate" title={c.column_name}>
+                                            {c.column_name}
+                                          </span>
+                                          <span className="text-[9.5px] uppercase font-bold text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 px-1 py-0.2 rounded">
+                                            {c.data_type}
+                                          </span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 

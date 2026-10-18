@@ -327,6 +327,10 @@ class DataSourceResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+class DataSourceTableIngestRequest(BaseModel):
+    dataset_name: Optional[str] = None
+    limit: Optional[int] = 10000
+
 # --- Google Workspace Integration Schemas ---
 class GoogleAuthUrlResponse(BaseModel):
     auth_url: str
