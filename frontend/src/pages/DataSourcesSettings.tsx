@@ -30,6 +30,14 @@ import {
   Search,
   Lock,
 } from "lucide-react";
+import {
+  PostgresLogo,
+  BigQueryLogo,
+  SnowflakeLogo,
+  SQLiteLogo,
+  GoogleSheetsLogo,
+  DatabaseSourceLogo,
+} from "../components/icons/DatabaseLogos";
 
 export const DataSourcesSettings: React.FC = () => {
   const navigate = useNavigate();
@@ -470,7 +478,7 @@ export const DataSourcesSettings: React.FC = () => {
                 <div className="flex flex-col sm:flex-row items-start gap-4">
                   <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-500 via-emerald-500 to-amber-500 p-0.5 shrink-0 shadow-sm">
                     <div className="w-full h-full bg-white dark:bg-slate-900 rounded-[14px] flex items-center justify-center">
-                      <FileSpreadsheet className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+                      <GoogleSheetsLogo className="w-6 h-6" />
                     </div>
                   </div>
                   <div>
@@ -506,7 +514,7 @@ export const DataSourcesSettings: React.FC = () => {
               <form onSubmit={handleImportDirectLink} className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800 space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-xs font-bold text-slate-900 dark:text-white flex items-center space-x-2">
-                    <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+                    <GoogleSheetsLogo className="w-4 h-4" />
                     <span>Import Shared Google Sheet into DuckDB</span>
                   </h3>
                   <span className="text-[10px] text-slate-400 font-mono">Format: https://docs.google.com/spreadsheets/d/...</span>
@@ -806,21 +814,21 @@ export const DataSourcesSettings: React.FC = () => {
                     const isSf = st === "snowflake";
                     const isSqlite = st === "sqlite";
 
-                    let iconBadge = <Database className="w-4 h-4 text-emerald-500" />;
-                    let badgeColor = "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-800/40";
+                    let iconBadge = <SQLiteLogo className="w-5 h-5" />;
+                    let badgeColor = "bg-[#0f80cc]/10 border-[#0f80cc]/30 text-[#0f80cc]";
                     let displayHost = s.connection_config?.database_path || "Configured";
 
                     if (isPg) {
-                      iconBadge = <Server className="w-4 h-4 text-indigo-500" />;
-                      badgeColor = "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border-indigo-200/50 dark:border-indigo-800/40";
+                      iconBadge = <PostgresLogo className="w-5 h-5" />;
+                      badgeColor = "bg-[#336791]/10 border-[#336791]/30 text-[#336791]";
                       displayHost = `${s.connection_config?.host || "localhost"}:${s.connection_config?.port || 5432} / ${s.connection_config?.database || "db"}`;
                     } else if (isBq) {
-                      iconBadge = <Cloud className="w-4 h-4 text-amber-500" />;
-                      badgeColor = "bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border-amber-200/50 dark:border-amber-800/40";
+                      iconBadge = <BigQueryLogo className="w-5 h-5" />;
+                      badgeColor = "bg-[#4386fa]/10 border-[#4386fa]/30 text-[#4386fa]";
                       displayHost = `${s.connection_config?.project_id || "gcp"}.${s.connection_config?.dataset_id || "dataset"}`;
                     } else if (isSf) {
-                      iconBadge = <Sparkles className="w-4 h-4 text-cyan-500" />;
-                      badgeColor = "bg-cyan-50 dark:bg-cyan-950/60 text-cyan-600 dark:text-cyan-400 border-cyan-200/50 dark:border-cyan-800/40";
+                      iconBadge = <SnowflakeLogo className="w-5 h-5" />;
+                      badgeColor = "bg-[#29b5e8]/10 border-[#29b5e8]/30 text-[#29b5e8]";
                       displayHost = `${s.connection_config?.account || "account"} / ${s.connection_config?.database || "db"}`;
                     }
 
@@ -906,29 +914,29 @@ export const DataSourcesSettings: React.FC = () => {
                     type: "postgresql",
                     name: "PostgreSQL",
                     desc: "Relational DB & Supabase",
-                    icon: <Server className="w-4 h-4 text-indigo-500" />,
-                    activeBorder: "border-indigo-500 bg-indigo-50/20 dark:bg-indigo-950/20",
+                    icon: <PostgresLogo className="w-5 h-5" />,
+                    activeBorder: "border-[#336791] bg-sky-50/30 dark:bg-[#336791]/15 ring-1 ring-[#336791]/40",
                   },
                   {
                     type: "bigquery",
                     name: "Google BigQuery",
                     desc: "Serverless Cloud DW",
-                    icon: <Cloud className="w-4 h-4 text-amber-500" />,
-                    activeBorder: "border-amber-500 bg-amber-50/20 dark:bg-amber-950/20",
+                    icon: <BigQueryLogo className="w-5 h-5" />,
+                    activeBorder: "border-[#4386fa] bg-blue-50/30 dark:bg-[#4386fa]/15 ring-1 ring-[#4386fa]/40",
                   },
                   {
                     type: "snowflake",
                     name: "Snowflake",
                     desc: "Data Cloud Platform",
-                    icon: <Sparkles className="w-4 h-4 text-cyan-500" />,
-                    activeBorder: "border-cyan-500 bg-cyan-50/20 dark:bg-cyan-950/20",
+                    icon: <SnowflakeLogo className="w-5 h-5" />,
+                    activeBorder: "border-[#29b5e8] bg-cyan-50/30 dark:bg-[#29b5e8]/15 ring-1 ring-[#29b5e8]/40",
                   },
                   {
                     type: "sqlite",
                     name: "SQLite File",
                     desc: "Local / Embedded SQL",
-                    icon: <Database className="w-4 h-4 text-emerald-500" />,
-                    activeBorder: "border-emerald-500 bg-emerald-50/20 dark:bg-emerald-950/20",
+                    icon: <SQLiteLogo className="w-5 h-5" />,
+                    activeBorder: "border-[#0f80cc] bg-sky-50/30 dark:bg-[#0f80cc]/15 ring-1 ring-[#0f80cc]/40",
                   },
                 ].map((item) => (
                   <button
@@ -940,12 +948,14 @@ export const DataSourcesSettings: React.FC = () => {
                     }}
                     className={`p-3.5 rounded-2xl border text-left transition-all ${
                       sourceType === item.type
-                        ? `${item.activeBorder} shadow-sm ring-1 ring-blue-500/30`
+                        ? `${item.activeBorder} shadow-sm`
                         : "border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 hover:border-slate-300 dark:hover:border-slate-700"
                     }`}
                   >
-                    <div className="flex items-center space-x-2">
-                      {item.icon}
+                    <div className="flex items-center space-x-2.5">
+                      <div className="w-6 h-6 flex items-center justify-center shrink-0">
+                        {item.icon}
+                      </div>
                       <span className="text-xs font-bold text-slate-900 dark:text-white">{item.name}</span>
                     </div>
                     <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1">{item.desc}</p>
@@ -1291,8 +1301,8 @@ export const DataSourcesSettings: React.FC = () => {
                 <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-3xl w-full p-6 space-y-4 shadow-2xl max-h-[85vh] flex flex-col animate-in fade-in zoom-in-95 duration-150">
                   <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3.5">
                     <div className="flex items-center space-x-3">
-                      <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-200/50 dark:border-blue-800/40">
-                        <Table className="w-4 h-4" />
+                      <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center border border-slate-200 dark:border-slate-700">
+                        <DatabaseSourceLogo type={activeBrowseSource.source_type} className="w-5 h-5" />
                       </div>
                       <div>
                         <h4 className="text-sm font-bold text-slate-900 dark:text-white flex items-center space-x-2">
