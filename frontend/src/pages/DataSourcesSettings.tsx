@@ -34,6 +34,7 @@ import {
   PostgresLogo,
   BigQueryLogo,
   SnowflakeLogo,
+  DatabricksLogo,
   SQLiteLogo,
   GoogleSheetsLogo,
   DatabaseSourceLogo,
@@ -60,7 +61,7 @@ export const DataSourcesSettings: React.FC = () => {
   const [sources, setSources] = useState<any[]>([]);
   const [loadingSources, setLoadingSources] = useState(true);
   const [sourceName, setSourceName] = useState("");
-  const [sourceType, setSourceType] = useState<"sqlite" | "postgresql" | "bigquery" | "snowflake">("postgresql");
+  const [sourceType, setSourceType] = useState<"sqlite" | "postgresql" | "bigquery" | "snowflake" | "databricks">("postgresql");
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
 
@@ -90,6 +91,13 @@ export const DataSourcesSettings: React.FC = () => {
   const [sfUser, setSfUser] = useState("");
   const [sfPassword, setSfPassword] = useState("");
   const [sfRole, setSfRole] = useState("");
+
+  // Databricks fields
+  const [dbxServerHostname, setDbxServerHostname] = useState("");
+  const [dbxHttpPath, setDbxHttpPath] = useState("");
+  const [dbxToken, setDbxToken] = useState("");
+  const [dbxCatalog, setDbxCatalog] = useState("");
+  const [dbxSchema, setDbxSchema] = useState("default");
 
   // Table browser modal & Ingestion state
   const [activeBrowseSource, setActiveBrowseSource] = useState<any>(null);
@@ -264,6 +272,39 @@ export const DataSourcesSettings: React.FC = () => {
   };
 
   // --- Warehouse & SQL Config Builder ---
+  const normalizeSnowflakeAccount = (raw: string): string => {
+    let val = (raw || "").trim();
+    if (val.startsWith("http://") || val.startsWith("https://")) {
+      try {
+        const url = new URL(val);
+        if (url.hostname.includes("app.snowflake.com")) {
+          const parts = url.pathname.split("/").filter((p) => p && p !== "#");
+          if (parts.length >= 2) return `${parts[0]}-${parts[1]}`.toLowerCase();
+        }
+        val = url.hostname;
+      } catch {}
+    }
+    if (val.includes(":")) {
+      val = val.split(":")[0];
+    }
+    val = val.replace(/\.snowflakecomputing\.com$/i, "");
+    if (val.includes("/") && !val.includes(".")) {
+      const parts = val.split("/").filter(Boolean);
+      if (parts.length === 2) return `${parts[0]}-${parts[1]}`.toLowerCase();
+    }
+    if (val.includes(".")) {
+      const parts = val.split(".");
+      if (
+        parts.length === 2 &&
+        !/^(us|eu|ap|ca|sa|me|af)-/i.test(parts[1]) &&
+        !/\.(aws|gcp|azure)$/i.test(parts[1])
+      ) {
+        val = `${parts[0]}-${parts[1]}`;
+      }
+    }
+    return val.toLowerCase();
+  };
+
   const buildCurrentConfig = () => {
     switch (sourceType) {
       case "postgresql":
@@ -285,13 +326,21 @@ export const DataSourcesSettings: React.FC = () => {
         };
       case "snowflake":
         return {
-          account: sfAccount,
-          warehouse: sfWarehouse,
-          database: sfDatabase,
-          schema: sfSchema || "PUBLIC",
-          user: sfUser,
+          account: normalizeSnowflakeAccount(sfAccount),
+          warehouse: sfWarehouse.trim(),
+          database: sfDatabase.trim(),
+          schema: sfSchema.trim() || "PUBLIC",
+          user: sfUser.trim(),
           password: sfPassword,
-          role: sfRole || undefined,
+          role: sfRole.trim() || undefined,
+        };
+      case "databricks":
+        return {
+          server_hostname: dbxServerHostname.trim(),
+          http_path: dbxHttpPath.trim(),
+          access_token: dbxToken.trim(),
+          catalog: dbxCatalog.trim() || undefined,
+          schema: dbxSchema.trim() || "default",
         };
       case "sqlite":
       default:
@@ -812,6 +861,7 @@ export const DataSourcesSettings: React.FC = () => {
                     const isPg = st === "postgresql";
                     const isBq = st === "bigquery";
                     const isSf = st === "snowflake";
+                    const isDbx = st === "databricks";
                     const isSqlite = st === "sqlite";
 
                     let iconBadge = <SQLiteLogo className="w-5 h-5" />;
@@ -830,6 +880,10 @@ export const DataSourcesSettings: React.FC = () => {
                       iconBadge = <SnowflakeLogo className="w-5 h-5" />;
                       badgeColor = "bg-[#29b5e8]/10 border-[#29b5e8]/30 text-[#29b5e8]";
                       displayHost = `${s.connection_config?.account || "account"} / ${s.connection_config?.database || "db"}`;
+                    } else if (isDbx) {
+                      iconBadge = <DatabricksLogo className="w-5 h-5" />;
+                      badgeColor = "bg-[#FF3621]/10 border-[#FF3621]/30 text-[#FF3621]";
+                      displayHost = `${s.connection_config?.server_hostname || "databricks"} / ${s.connection_config?.catalog || "default"}.${s.connection_config?.schema || "default"}`;
                     }
 
                     const testStatus = sourceTestStatus[s.id];
@@ -908,7 +962,7 @@ export const DataSourcesSettings: React.FC = () => {
               </div>
 
               {/* Source Type Selector Cards */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
                 {[
                   {
                     type: "postgresql",
@@ -930,6 +984,13 @@ export const DataSourcesSettings: React.FC = () => {
                     desc: "Data Cloud Platform",
                     icon: <SnowflakeLogo className="w-5 h-5" />,
                     activeBorder: "border-[#29b5e8] bg-cyan-50/30 dark:bg-[#29b5e8]/15 ring-1 ring-[#29b5e8]/40",
+                  },
+                  {
+                    type: "databricks",
+                    name: "Databricks",
+                    desc: "Lakehouse & Unity Catalog",
+                    icon: <DatabricksLogo className="w-5 h-5" />,
+                    activeBorder: "border-[#FF3621] bg-red-50/30 dark:bg-[#FF3621]/15 ring-1 ring-[#FF3621]/40",
                   },
                   {
                     type: "sqlite",
@@ -1146,9 +1207,13 @@ export const DataSourcesSettings: React.FC = () => {
                           required
                           value={sfAccount}
                           onChange={(e) => setSfAccount(e.target.value)}
-                          placeholder="e.g. xy12345.us-east-1 or org-account"
+                          onBlur={() => setSfAccount(normalizeSnowflakeAccount(sfAccount))}
+                          placeholder="e.g. org-account (or xy12345.us-east-1)"
                           className="w-full text-xs px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
                         />
+                        <p className="text-[10.5px] text-slate-400 mt-1">
+                          Use <code className="text-blue-500 dark:text-blue-400 font-mono">org-account</code> with a hyphen (e.g. <span className="font-mono">siayxsi-yv85842</span>). Snowsight's copied dot format (<span className="font-mono">org.account</span>) is automatically converted to prevent SSL certificate errors.
+                        </p>
                       </div>
                       <div>
                         <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
@@ -1229,6 +1294,84 @@ export const DataSourcesSettings: React.FC = () => {
                           onChange={(e) => setSfRole(e.target.value)}
                           placeholder="e.g. ACCOUNTADMIN"
                           className="w-full text-xs px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* --- Databricks Form Fields --- */}
+                {sourceType === "databricks" && (
+                  <div className="space-y-3.5 pt-1">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                          Server Hostname
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={dbxServerHostname}
+                          onChange={(e) => setDbxServerHostname(e.target.value)}
+                          placeholder="e.g. adb-123456789.12.azuredatabricks.net or dbc-xxx.cloud.databricks.com"
+                          className="w-full text-xs px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                          HTTP Path
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={dbxHttpPath}
+                          onChange={(e) => setDbxHttpPath(e.target.value)}
+                          placeholder="/sql/1.0/warehouses/a1b2c3d4e5f6g7h8"
+                          className="w-full text-xs px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                        Personal Access Token (PAT)
+                      </label>
+                      <input
+                        type="password"
+                        required
+                        value={dbxToken}
+                        onChange={(e) => setDbxToken(e.target.value)}
+                        placeholder="dapi••••••••••••••••••••••••"
+                        className="w-full text-xs px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                      />
+                      <p className="text-[10.5px] text-slate-400 mt-1">
+                        Generated in Databricks Workspace &gt; User Settings &gt; Developer &gt; Access Tokens. Encrypted with AES-256-GCM.
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                          Catalog (Unity Catalog / Optional)
+                        </label>
+                        <input
+                          type="text"
+                          value={dbxCatalog}
+                          onChange={(e) => setDbxCatalog(e.target.value)}
+                          placeholder="e.g. main or samples"
+                          className="w-full text-xs px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                          Schema / Database (Default: default)
+                        </label>
+                        <input
+                          type="text"
+                          value={dbxSchema}
+                          onChange={(e) => setDbxSchema(e.target.value)}
+                          placeholder="default"
+                          className="w-full text-xs px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
                       </div>
                     </div>

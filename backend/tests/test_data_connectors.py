@@ -16,6 +16,7 @@ from app.data_sources.sqlite_connector import SQLiteDataConnector
 from app.data_sources.postgres_connector import PostgreSQLDataConnector
 from app.data_sources.bigquery_connector import BigQueryDataConnector
 from app.data_sources.snowflake_connector import SnowflakeDataConnector
+from app.data_sources.databricks_connector import DatabricksDataConnector
 from app.data_sources.google_sheets_connector import GoogleSheetsDataConnector
 from app.api.data_sources import (
     _encrypt_connection_config,
@@ -122,8 +123,35 @@ def test_snowflake_connector_serialization_and_validation():
 
     assert connector._serialize_value(Decimal("123.456")) == 123.456
 
+    # Test account normalization (dot to hyphen, URL stripping, domain stripping)
+    assert SnowflakeDataConnector.clean_account("siayxsi.yv85842") == "siayxsi-yv85842"
+    assert SnowflakeDataConnector.clean_account("SIAYXSI.YV85842") == "siayxsi-yv85842"
+    assert SnowflakeDataConnector.clean_account("https://siayxsi-yv85842.snowflakecomputing.com") == "siayxsi-yv85842"
+    assert SnowflakeDataConnector.clean_account("https://app.snowflake.com/siayxsi/yv85842") == "siayxsi-yv85842"
+    assert SnowflakeDataConnector.clean_account("xy12345.us-east-1") == "xy12345.us-east-1"
+    assert SnowflakeDataConnector.clean_account("xy12345.us-central1.gcp") == "xy12345.us-central1.gcp"
+
     # Missing account/user should raise graceful error
     res = connector.test_connection({"account": "", "user": "", "database": ""})
+    assert res["success"] is False
+    assert "required" in res["message"].lower() or "failed" in res["message"].lower()
+
+
+def test_databricks_connector_serialization_and_validation():
+    connector = DatabricksDataConnector()
+
+    assert connector._serialize_value(Decimal("456.789")) == 456.789
+    u = uuid.uuid4()
+    assert connector._serialize_value(u) == str(u)
+
+    # Test cleaning helpers
+    assert DatabricksDataConnector.clean_hostname("https://adb-123456789.12.azuredatabricks.net/") == "adb-123456789.12.azuredatabricks.net"
+    assert DatabricksDataConnector.clean_hostname("dbc-xxxx.cloud.databricks.com:443") == "dbc-xxxx.cloud.databricks.com"
+    assert DatabricksDataConnector.clean_http_path("sql/1.0/warehouses/a1b2c3d4e5") == "/sql/1.0/warehouses/a1b2c3d4e5"
+    assert DatabricksDataConnector.clean_http_path("https://adb-123.azuredatabricks.net/sql/1.0/warehouses/a1b2") == "/sql/1.0/warehouses/a1b2"
+
+    # Missing parameters should fail gracefully
+    res = connector.test_connection({})
     assert res["success"] is False
     assert "required" in res["message"].lower() or "failed" in res["message"].lower()
 
@@ -141,28 +169,32 @@ def test_data_sources_encryption_and_masking():
         "database": "sales_dw",
         "user": "reporter",
         "password": "SuperSecretPassword123!",
+        "access_token": "dapi_secret_token_12345",
         "service_account_json": '{"project_id": "my-gcp-project"}'
     }
 
     # Encrypt
     encrypted = _encrypt_connection_config(raw_cfg)
     assert encrypted["password"].startswith("ENC:")
+    assert encrypted["access_token"].startswith("ENC:")
     assert encrypted["service_account_json"].startswith("ENC:")
     assert encrypted["user"] == "reporter"
 
     # Decrypt
     decrypted = _decrypt_connection_config(encrypted)
     assert decrypted["password"] == "SuperSecretPassword123!"
+    assert decrypted["access_token"] == "dapi_secret_token_12345"
     assert decrypted["service_account_json"] == '{"project_id": "my-gcp-project"}'
 
     # Mask
     masked = _mask_connection_config(raw_cfg)
     assert masked["password"] == "••••••••"
+    assert masked["access_token"] == "••••••••"
     assert masked["service_account_json"] == "••••••••"
     assert masked["user"] == "reporter"
     assert masked["host"] == "pg.example.com"
 
 
 def test_registered_connectors():
-    expected_types = {"sqlite", "postgresql", "bigquery", "snowflake", "google_sheets"}
+    expected_types = {"sqlite", "postgresql", "bigquery", "snowflake", "databricks", "google_sheets"}
     assert expected_types.issubset(set(CONNECTORS.keys()))

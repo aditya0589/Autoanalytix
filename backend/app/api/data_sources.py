@@ -21,6 +21,7 @@ from app.data_sources.sqlite_connector import SQLiteDataConnector
 from app.data_sources.postgres_connector import PostgreSQLDataConnector
 from app.data_sources.bigquery_connector import BigQueryDataConnector
 from app.data_sources.snowflake_connector import SnowflakeDataConnector
+from app.data_sources.databricks_connector import DatabricksDataConnector
 from app.data_sources.google_sheets_connector import GoogleSheetsDataConnector
 from app.ingestion.parser import DataParser
 from app.analytics.profiler import DatasetProfiler
@@ -33,11 +34,15 @@ CONNECTORS = {
     "postgresql": PostgreSQLDataConnector(),
     "bigquery": BigQueryDataConnector(),
     "snowflake": SnowflakeDataConnector(),
+    "databricks": DatabricksDataConnector(),
     "google_sheets": GoogleSheetsDataConnector(),
 }
 
 SENSITIVE_CONFIG_KEYS = {
     "password",
+    "access_token",
+    "token",
+    "api_key",
     "service_account_json",
     "credentials_json",
     "private_key",
@@ -111,8 +116,18 @@ def create_data_source(
             detail=f"Unsupported connector type '{ds_in.source_type}'. Supported: {list(CONNECTORS.keys())}"
         )
 
+    # Normalize connector specific parameters if applicable
+    raw_config = dict(ds_in.connection_config)
+    if st == "snowflake" and "account" in raw_config:
+        raw_config["account"] = SnowflakeDataConnector.clean_account(raw_config["account"])
+    elif st == "databricks":
+        if "server_hostname" in raw_config:
+            raw_config["server_hostname"] = DatabricksDataConnector.clean_hostname(raw_config["server_hostname"])
+        if "http_path" in raw_config:
+            raw_config["http_path"] = DatabricksDataConnector.clean_http_path(raw_config["http_path"])
+
     # Securely encrypt sensitive credentials before writing to DynamoDB
-    secure_config = _encrypt_connection_config(ds_in.connection_config)
+    secure_config = _encrypt_connection_config(raw_config)
 
     source_id = str(uuid.uuid4())
     now_str = datetime.now(timezone.utc).isoformat()
@@ -130,7 +145,7 @@ def create_data_source(
 
     created = dynamodb_store.create_data_source(source_dict)
     resp_dict = dict(created)
-    resp_dict["connection_config"] = _mask_connection_config(ds_in.connection_config)
+    resp_dict["connection_config"] = _mask_connection_config(raw_config)
     return DataSourceResponse.model_validate(resp_dict)
 
 
@@ -157,6 +172,14 @@ def test_connection_adhoc(
             for k, v in saved_decrypted.items():
                 if effective_config.get(k) in ("", None, "••••••••"):
                     effective_config[k] = v
+
+    if st == "snowflake" and "account" in effective_config:
+        effective_config["account"] = SnowflakeDataConnector.clean_account(effective_config["account"])
+    elif st == "databricks":
+        if "server_hostname" in effective_config:
+            effective_config["server_hostname"] = DatabricksDataConnector.clean_hostname(effective_config["server_hostname"])
+        if "http_path" in effective_config:
+            effective_config["http_path"] = DatabricksDataConnector.clean_http_path(effective_config["http_path"])
 
     # Decrypt any encrypted fields passed
     effective_config = _decrypt_connection_config(effective_config)
