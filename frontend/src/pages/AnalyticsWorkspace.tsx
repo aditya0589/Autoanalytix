@@ -422,9 +422,9 @@ export const AnalyticsWorkspace: React.FC = () => {
 
           <div className="flex items-center gap-2 shrink-0">
             {activeAi ? (
-              <span className="flex items-center gap-1.5 text-[12px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-800/50 px-3 py-1.5 rounded-full">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                {activeAi.provider.toUpperCase()} · {activeAi.model_name?.split("/").pop()}
+              <span className="flex items-center gap-1.5 text-[11px] sm:text-[12px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-800/50 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full max-w-full">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                <span className="truncate">{activeAi.provider.toUpperCase()}<span className="hidden sm:inline"> · {activeAi.model_name?.split("/").pop()}</span></span>
               </span>
             ) : (
               <Link
@@ -799,14 +799,14 @@ export const AnalyticsWorkspace: React.FC = () => {
                       ? `Continue this analysis (e.g. 'breakdown by region', 'filter for 2026')…`
                       : `Ask anything about ${dataset?.name || "your data"} in plain English…`
                   }
-                  className="flex-1 input text-sm py-3.5 rounded-2xl"
+                  className="flex-1 min-w-0 input text-xs sm:text-sm py-2.5 sm:py-3.5 px-3 sm:px-4 rounded-xl sm:rounded-2xl"
                 />
                 <button
                   type="submit"
                   disabled={loading || !inputQuestion.trim()}
-                  className="btn-primary text-sm px-5 py-3.5 rounded-2xl gap-1.5 shrink-0"
+                  className="btn-primary text-xs sm:text-sm px-3.5 sm:px-5 py-2.5 sm:py-3.5 rounded-xl sm:rounded-2xl gap-1.5 shrink-0"
                 >
-                  Ask
+                  <span className="hidden xs:inline">Ask</span>
                   <Send className="w-3.5 h-3.5" />
                 </button>
               </form>

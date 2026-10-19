@@ -26,14 +26,14 @@ const Skeleton: React.FC<{ className?: string }> = ({ className = "" }) => (
 
 // Metric card skeleton
 const MetricSkeleton: React.FC = () => (
-  <div className="card p-5">
-    <div className="flex items-center justify-between">
-      <div className="space-y-2">
-        <Skeleton className="h-3 w-20" />
-        <Skeleton className="h-7 w-12" />
-        <Skeleton className="h-3 w-28" />
+  <div className="card p-3.5 sm:p-5">
+    <div className="flex items-center justify-between gap-2">
+      <div className="space-y-2 min-w-0 flex-1">
+        <Skeleton className="h-3 w-16 sm:w-20" />
+        <Skeleton className="h-6 sm:h-7 w-10 sm:w-12" />
+        <Skeleton className="h-3 w-20 sm:w-28" />
       </div>
-      <Skeleton className="w-11 h-11 rounded-2xl" />
+      <Skeleton className="w-8 h-8 sm:w-11 sm:h-11 rounded-lg sm:rounded-2xl shrink-0" />
     </div>
   </div>
 );
@@ -86,20 +86,22 @@ const StatCard: React.FC<StatCardProps> = ({ label, value, sub, icon: Icon, colo
   const cfg = colorConfig[color];
   const inner = (
     <div
-      className={`card p-5 group transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${cfg.glow} ${cfg.border} ${href ? "cursor-pointer" : ""}`}
+      className={`card p-3.5 sm:p-5 group transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${cfg.glow} ${cfg.border} ${href ? "cursor-pointer" : ""}`}
     >
-      <div className="flex items-start justify-between">
-        <div className="space-y-1">
-          <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+      <div className="flex items-start justify-between gap-2">
+        <div className="space-y-0.5 sm:space-y-1 min-w-0 flex-1">
+          <div className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 truncate">
             {label}
           </div>
-          <div className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+          <div className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight truncate">
             {value}
           </div>
-          <div className="text-[12px] text-slate-500 dark:text-slate-400">{sub}</div>
+          <div className="text-[11px] sm:text-[12px] text-slate-500 dark:text-slate-400 leading-tight">
+            {sub}
+          </div>
         </div>
-        <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${cfg.icon} transition-transform group-hover:scale-110`}>
-          <Icon className="w-4.5 h-4.5" style={{ width: 18, height: 18 }} />
+        <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl flex items-center justify-center border ${cfg.icon} transition-transform group-hover:scale-110 shrink-0`}>
+          <Icon className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
         </div>
       </div>
     </div>
@@ -173,10 +175,10 @@ export const DashboardHome: React.FC = () => {
 
   return (
     <Layout>
-      <div className="max-w-6xl mx-auto space-y-8 animate-fade-in">
+      <div className="max-w-6xl mx-auto space-y-6 sm:space-y-8 animate-fade-in">
 
         {/* ── Hero Section ── */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-950 p-6 sm:p-8 md:p-10 text-white shadow-2xl shadow-indigo-950/40 border border-white/[0.07]">
+        <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-950 p-4 sm:p-8 md:p-10 text-white shadow-2xl shadow-indigo-950/40 border border-white/[0.07]">
           {/* Glow blobs */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
             <div className="absolute -top-20 -right-20 w-80 h-80 bg-indigo-600/20 rounded-full blur-3xl" />
@@ -188,27 +190,29 @@ export const DashboardHome: React.FC = () => {
 
           <div className="relative z-10 max-w-3xl">
             {/* Status chip */}
-            <div className="inline-flex items-center gap-2 mb-5 text-[11px] font-semibold bg-white/[0.08] border border-white/[0.12] px-3 py-1.5 rounded-full text-blue-200 backdrop-blur-sm">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              <Sparkles className="w-3 h-3 text-indigo-300" />
-              AI-Native Analytics · DuckDB Vectorized Engine
+            <div className="inline-flex items-center gap-1.5 sm:gap-2 mb-4 sm:mb-5 text-[11px] font-semibold bg-white/[0.08] border border-white/[0.12] px-2.5 sm:px-3 py-1.5 rounded-full text-blue-200 backdrop-blur-sm max-w-full">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+              <Sparkles className="w-3 h-3 text-indigo-300 shrink-0" />
+              <span className="truncate">
+                AI-Native Analytics<span className="hidden sm:inline"> · DuckDB Vectorized Engine</span>
+              </span>
             </div>
 
-            <h1 className="text-3xl sm:text-4xl font-black tracking-tight leading-tight mb-3">
+            <h1 className="text-2xl sm:text-4xl font-black tracking-tight leading-tight mb-2 sm:mb-3">
               {greeting()},{" "}
               <span className="bg-gradient-to-r from-indigo-300 via-purple-300 to-pink-300 bg-clip-text text-transparent">
                 {user?.full_name?.split(" ")[0] || "Analyst"}
               </span>
             </h1>
 
-            <p className="text-sm text-slate-300 leading-relaxed mb-6 max-w-xl">
+            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed mb-5 sm:mb-6 max-w-xl">
               Ask questions in plain English. AutoAnalytix generates verified SQL, executes it in DuckDB, and delivers narrative insights with interactive charts.
             </p>
 
             {/* Search bar */}
-            <form onSubmit={handleQuickSubmit}>
-              <div className="relative flex items-center max-w-2xl bg-white/[0.08] hover:bg-white/[0.12] focus-within:bg-white/[0.14] border border-white/[0.12] focus-within:border-indigo-400/60 rounded-2xl p-1.5 backdrop-blur-sm transition-all group">
-                <Search className="w-4 h-4 text-indigo-300 ml-3 shrink-0" />
+            <form onSubmit={handleQuickSubmit} className="w-full">
+              <div className="relative flex items-center w-full max-w-2xl bg-white/[0.08] hover:bg-white/[0.12] focus-within:bg-white/[0.14] border border-white/[0.12] focus-within:border-indigo-400/60 rounded-xl sm:rounded-2xl p-1 sm:p-1.5 backdrop-blur-sm transition-all group">
+                <Search className="w-4 h-4 text-indigo-300 ml-2.5 sm:ml-3 shrink-0" />
                 <input
                   type="text"
                   value={quickQuery}
@@ -216,21 +220,21 @@ export const DashboardHome: React.FC = () => {
                   placeholder={
                     datasets.length > 0
                       ? `Ask anything about ${datasets[0].name}…`
-                      : "Load a demo dataset and ask questions in plain English…"
+                      : "Ask questions in plain English…"
                   }
-                  className="flex-1 bg-transparent px-3 py-2 text-sm text-white placeholder-slate-400 focus:outline-none"
+                  className="flex-1 min-w-0 bg-transparent px-2.5 sm:px-3 py-2 text-xs sm:text-sm text-white placeholder-slate-400 focus:outline-none"
                 />
                 <button
                   type="submit"
-                  className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs py-2.5 px-5 rounded-xl shadow-sm transition-all flex items-center gap-2 shrink-0"
+                  className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs py-2 sm:py-2.5 px-3 sm:px-5 rounded-lg sm:rounded-xl shadow-sm transition-all flex items-center gap-1.5 sm:gap-2 shrink-0 active:scale-95"
                 >
-                  <Zap className="w-3.5 h-3.5" />
-                  Analyze
+                  <Zap className="w-3.5 h-3.5 shrink-0" />
+                  <span>Analyze</span>
                 </button>
               </div>
 
               {/* Sample prompts */}
-              <div className="flex flex-wrap items-center gap-2 mt-3 text-[11px]">
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mt-3 text-[11px]">
                 <span className="text-slate-400">Try:</span>
                 {sampleQueries.map((q) => (
                   <button
@@ -244,7 +248,7 @@ export const DashboardHome: React.FC = () => {
                         handleLoadDemo();
                       }
                     }}
-                    className="bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.08] rounded-full px-2.5 py-1 text-slate-300 hover:text-white transition-colors cursor-pointer"
+                    className="bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.08] rounded-full px-2.5 py-1 text-slate-300 hover:text-white transition-colors cursor-pointer text-[11px]"
                   >
                     {q}
                   </button>
@@ -253,28 +257,28 @@ export const DashboardHome: React.FC = () => {
             </form>
 
             {/* CTA buttons */}
-            <div className="flex flex-wrap gap-3 mt-6">
+            <div className="flex flex-col sm:flex-row gap-2.5 sm:gap-3 mt-5 sm:mt-6">
               <button
                 onClick={handleLoadDemo}
                 disabled={loadingDemo}
-                className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm py-2.5 px-5 rounded-xl shadow-lg shadow-indigo-600/30 transition-all disabled:opacity-60 active:scale-[0.98]"
+                className="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs sm:text-sm py-2.5 px-4 sm:px-5 rounded-xl shadow-lg shadow-indigo-600/30 transition-all disabled:opacity-60 active:scale-[0.98] w-full sm:w-auto"
               >
-                <Sparkles className="w-4 h-4" />
-                {loadingDemo ? "Loading demo…" : "Explore Demo Dataset"}
+                <Sparkles className="w-4 h-4 shrink-0" />
+                <span>{loadingDemo ? "Loading demo…" : "Explore Demo Dataset"}</span>
               </button>
               <Link
                 to="/datasets"
-                className="flex items-center gap-2 bg-white/[0.08] hover:bg-white/[0.14] border border-white/[0.12] text-white font-semibold text-sm py-2.5 px-5 rounded-xl backdrop-blur-sm transition-all active:scale-[0.98]"
+                className="flex items-center justify-center gap-2 bg-white/[0.08] hover:bg-white/[0.14] border border-white/[0.12] text-white font-semibold text-xs sm:text-sm py-2.5 px-4 sm:px-5 rounded-xl backdrop-blur-sm transition-all active:scale-[0.98] w-full sm:w-auto"
               >
-                <UploadCloud className="w-4 h-4" />
-                Upload Your Data
+                <UploadCloud className="w-4 h-4 shrink-0" />
+                <span>Upload Your Data</span>
               </Link>
             </div>
           </div>
         </div>
 
         {/* ── Metric Cards ── */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 stagger-children">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 stagger-children">
           {loading ? (
             <>
               <MetricSkeleton />
@@ -320,9 +324,9 @@ export const DashboardHome: React.FC = () => {
         </div>
 
         {/* ── Recent Grid ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           {/* Datasets card */}
-          <div className="card p-6 space-y-4">
+          <div className="card p-4 sm:p-6 space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center border border-indigo-100 dark:border-indigo-900/50">
@@ -342,7 +346,7 @@ export const DashboardHome: React.FC = () => {
               </Link>
             </div>
 
-            <div className="border-t border-slate-100 dark:border-white/[0.05] -mx-6" />
+            <div className="border-t border-slate-100 dark:border-white/[0.05] -mx-4 sm:-mx-6" />
 
             {loading ? (
               <div className="space-y-2">
@@ -406,7 +410,7 @@ export const DashboardHome: React.FC = () => {
           </div>
 
           {/* Dashboards card */}
-          <div className="card p-6 space-y-4">
+          <div className="card p-4 sm:p-6 space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-purple-50 dark:bg-purple-950/50 text-purple-600 dark:text-purple-400 flex items-center justify-center border border-purple-100 dark:border-purple-900/50">
@@ -426,7 +430,7 @@ export const DashboardHome: React.FC = () => {
               </Link>
             </div>
 
-            <div className="border-t border-slate-100 dark:border-white/[0.05] -mx-6" />
+            <div className="border-t border-slate-100 dark:border-white/[0.05] -mx-4 sm:-mx-6" />
 
             {loading ? (
               <div className="space-y-2">

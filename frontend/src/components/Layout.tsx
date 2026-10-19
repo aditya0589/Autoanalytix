@@ -370,7 +370,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto bg-slate-50 dark:bg-[#09090b] transition-colors duration-200">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden bg-slate-50 dark:bg-[#09090b] transition-colors duration-200">
           <div className="p-4 sm:p-6 lg:p-8">
             {children}
           </div>
