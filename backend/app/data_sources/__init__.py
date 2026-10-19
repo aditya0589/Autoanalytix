@@ -5,6 +5,7 @@ from app.data_sources.bigquery_connector import BigQueryDataConnector
 from app.data_sources.snowflake_connector import SnowflakeDataConnector
 from app.data_sources.databricks_connector import DatabricksDataConnector
 from app.data_sources.google_sheets_connector import GoogleSheetsDataConnector
+from app.data_sources.s3_connector import S3DataConnector
 
 __all__ = [
     "BaseDataConnector",
@@ -14,4 +15,5 @@ __all__ = [
     "SnowflakeDataConnector",
     "DatabricksDataConnector",
     "GoogleSheetsDataConnector",
+    "S3DataConnector",
 ]

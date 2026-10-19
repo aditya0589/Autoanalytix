@@ -37,6 +37,7 @@ import {
   DatabricksLogo,
   SQLiteLogo,
   GoogleSheetsLogo,
+  S3Logo,
   DatabaseSourceLogo,
 } from "../components/icons/DatabaseLogos";
 
@@ -61,7 +62,7 @@ export const DataSourcesSettings: React.FC = () => {
   const [sources, setSources] = useState<any[]>([]);
   const [loadingSources, setLoadingSources] = useState(true);
   const [sourceName, setSourceName] = useState("");
-  const [sourceType, setSourceType] = useState<"sqlite" | "postgresql" | "bigquery" | "snowflake" | "databricks">("postgresql");
+  const [sourceType, setSourceType] = useState<"sqlite" | "postgresql" | "bigquery" | "snowflake" | "databricks" | "s3">("postgresql");
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
 
@@ -98,6 +99,12 @@ export const DataSourcesSettings: React.FC = () => {
   const [dbxToken, setDbxToken] = useState("");
   const [dbxCatalog, setDbxCatalog] = useState("");
   const [dbxSchema, setDbxSchema] = useState("default");
+
+  // Amazon S3 fields
+  const [s3AccessKeyId, setS3AccessKeyId] = useState("");
+  const [s3SecretAccessKey, setS3SecretAccessKey] = useState("");
+  const [s3Region, setS3Region] = useState("us-east-1");
+  const [s3Path, setS3Path] = useState("");
 
   // Table browser modal & Ingestion state
   const [activeBrowseSource, setActiveBrowseSource] = useState<any>(null);
@@ -341,6 +348,13 @@ export const DataSourcesSettings: React.FC = () => {
           access_token: dbxToken.trim(),
           catalog: dbxCatalog.trim() || undefined,
           schema: dbxSchema.trim() || "default",
+        };
+      case "s3":
+        return {
+          aws_access_key_id: s3AccessKeyId.trim(),
+          aws_secret_access_key: s3SecretAccessKey.trim(),
+          region_name: s3Region.trim() || "us-east-1",
+          s3_path: s3Path.trim(),
         };
       case "sqlite":
       default:
@@ -862,6 +876,7 @@ export const DataSourcesSettings: React.FC = () => {
                     const isBq = st === "bigquery";
                     const isSf = st === "snowflake";
                     const isDbx = st === "databricks";
+                    const isS3 = st === "s3" || st === "amazon_s3";
                     const isSqlite = st === "sqlite";
 
                     let iconBadge = <SQLiteLogo className="w-5 h-5" />;
@@ -884,6 +899,10 @@ export const DataSourcesSettings: React.FC = () => {
                       iconBadge = <DatabricksLogo className="w-5 h-5" />;
                       badgeColor = "bg-[#FF3621]/10 border-[#FF3621]/30 text-[#FF3621]";
                       displayHost = `${s.connection_config?.server_hostname || "databricks"} / ${s.connection_config?.catalog || "default"}.${s.connection_config?.schema || "default"}`;
+                    } else if (isS3) {
+                      iconBadge = <S3Logo className="w-5 h-5" />;
+                      badgeColor = "bg-[#E05243]/10 border-[#E05243]/30 text-[#E05243]";
+                      displayHost = `${s.connection_config?.s3_path || "s3://bucket"} (${s.connection_config?.region_name || "us-east-1"})`;
                     }
 
                     const testStatus = sourceTestStatus[s.id];
@@ -934,7 +953,7 @@ export const DataSourcesSettings: React.FC = () => {
                             className="px-3 py-1.5 text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white rounded-lg shadow-sm transition-colors flex items-center space-x-1"
                           >
                             <Table className="w-3.5 h-3.5" />
-                            <span>Browse Tables</span>
+                            <span>{isS3 ? "Browse Files" : "Browse Tables"}</span>
                           </button>
 
                           <button
@@ -962,7 +981,7 @@ export const DataSourcesSettings: React.FC = () => {
               </div>
 
               {/* Source Type Selector Cards */}
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
                 {[
                   {
                     type: "postgresql",
@@ -991,6 +1010,13 @@ export const DataSourcesSettings: React.FC = () => {
                     desc: "Lakehouse & Unity Catalog",
                     icon: <DatabricksLogo className="w-5 h-5" />,
                     activeBorder: "border-[#FF3621] bg-red-50/30 dark:bg-[#FF3621]/15 ring-1 ring-[#FF3621]/40",
+                  },
+                  {
+                    type: "s3",
+                    name: "Amazon S3",
+                    desc: "Bucket & Data Lake",
+                    icon: <S3Logo className="w-5 h-5" />,
+                    activeBorder: "border-[#E05243] bg-orange-50/30 dark:bg-[#E05243]/15 ring-1 ring-[#E05243]/40",
                   },
                   {
                     type: "sqlite",
@@ -1378,6 +1404,96 @@ export const DataSourcesSettings: React.FC = () => {
                   </div>
                 )}
 
+                {/* --- Amazon S3 Form Fields --- */}
+                {sourceType === "s3" && (
+                  <div className="space-y-4 pt-1">
+                    {/* IAM Security & Least Privilege Warning Banner */}
+                    <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/25 space-y-2.5">
+                      <div className="flex items-center space-x-2 text-xs font-bold text-amber-800 dark:text-amber-300">
+                        <AlertTriangle className="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400" />
+                        <span>Security Warning &amp; IAM Least Privilege Best Practice</span>
+                      </div>
+                      <p className="text-[11px] leading-relaxed text-amber-900/90 dark:text-amber-200/90">
+                        Ensure your AWS IAM user is configured with <strong>restricted, read-only permissions</strong> scoped strictly to your target S3 bucket:
+                      </p>
+                      <div className="p-3 rounded-xl bg-white/80 dark:bg-slate-900/80 border border-amber-200/50 dark:border-amber-900/40 font-mono text-[10.5px] text-amber-950 dark:text-amber-200 space-y-1">
+                        <div>• Required actions: <span className="font-bold text-emerald-700 dark:text-emerald-400">s3:GetObject</span>, <span className="font-bold text-emerald-700 dark:text-emerald-400">s3:ListBucket</span></div>
+                        <div>• Target resource ARN: <span className="text-blue-700 dark:text-blue-400 font-semibold">arn:aws:s3:::your-bucket</span> &amp; <span className="text-blue-700 dark:text-blue-400 font-semibold">arn:aws:s3:::your-bucket/*</span></div>
+                      </div>
+                      <div className="text-[10.5px] text-amber-800/90 dark:text-amber-300 font-medium flex items-center space-x-1.5 pt-0.5">
+                        <Lock className="w-3.5 h-3.5 shrink-0" />
+                        <span><strong>Never provide root AWS account credentials</strong> or administrator keys. Always click <strong>"Test Connection"</strong> below to confirm S3 connectivity before saving.</span>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                          AWS Access Key ID
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={s3AccessKeyId}
+                          onChange={(e) => setS3AccessKeyId(e.target.value)}
+                          placeholder="e.g. AKIAIOSFODNN7EXAMPLE"
+                          className="w-full text-xs px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 font-mono"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                          AWS Secret Access Key
+                        </label>
+                        <input
+                          type="password"
+                          required
+                          value={s3SecretAccessKey}
+                          onChange={(e) => setS3SecretAccessKey(e.target.value)}
+                          placeholder="wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+                          className="w-full text-xs px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 font-mono"
+                        />
+                        <p className="text-[10px] text-slate-400 mt-1">
+                          Encrypted at rest with authenticated AES-256-GCM.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div>
+                        <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                          AWS Region
+                        </label>
+                        <input
+                          type="text"
+                          value={s3Region}
+                          onChange={(e) => setS3Region(e.target.value)}
+                          placeholder="us-east-1"
+                          className="w-full text-xs px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 font-mono"
+                        />
+                        <p className="text-[10px] text-slate-400 mt-1">
+                          e.g. us-east-1, us-west-2, eu-west-1
+                        </p>
+                      </div>
+                      <div className="sm:col-span-2">
+                        <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                          S3 File Path or Bucket Prefix
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={s3Path}
+                          onChange={(e) => setS3Path(e.target.value)}
+                          placeholder="s3://my-bucket/data/ or s3://my-bucket/sales.parquet"
+                          className="w-full text-xs px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 font-mono"
+                        />
+                        <p className="text-[10px] text-slate-400 mt-1">
+                          Enter <code className="font-mono text-amber-600 dark:text-amber-400">s3://bucket/folder/</code> or a direct path to a <code className="font-mono">.parquet</code>, <code className="font-mono">.csv</code>, <code className="font-mono">.tsv</code>, or <code className="font-mono">.json</code> file.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* --- SQLite Form Fields --- */}
                 {sourceType === "sqlite" && (
                   <div>
@@ -1455,7 +1571,7 @@ export const DataSourcesSettings: React.FC = () => {
                           </span>
                         </h4>
                         <p className="text-[11px] text-slate-400">
-                          Browse available tables, inspect schema columns, and ingest directly into DuckDB
+                          Browse available tables and files, inspect schema columns, and ingest directly into DuckDB
                         </p>
                       </div>
                     </div>
@@ -1476,7 +1592,7 @@ export const DataSourcesSettings: React.FC = () => {
                         type="text"
                         value={tableFilter}
                         onChange={(e) => setTableFilter(e.target.value)}
-                        placeholder="Search tables..."
+                        placeholder="Search tables & files..."
                         className="w-full text-xs pl-8 pr-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                     </div>

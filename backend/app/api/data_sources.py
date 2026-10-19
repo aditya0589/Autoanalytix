@@ -23,6 +23,7 @@ from app.data_sources.bigquery_connector import BigQueryDataConnector
 from app.data_sources.snowflake_connector import SnowflakeDataConnector
 from app.data_sources.databricks_connector import DatabricksDataConnector
 from app.data_sources.google_sheets_connector import GoogleSheetsDataConnector
+from app.data_sources.s3_connector import S3DataConnector
 from app.ingestion.parser import DataParser
 from app.analytics.profiler import DatasetProfiler
 from app.analytics.engine import analytics_engine
@@ -36,6 +37,7 @@ CONNECTORS = {
     "snowflake": SnowflakeDataConnector(),
     "databricks": DatabricksDataConnector(),
     "google_sheets": GoogleSheetsDataConnector(),
+    "s3": S3DataConnector(),
 }
 
 SENSITIVE_CONFIG_KEYS = {
@@ -47,6 +49,9 @@ SENSITIVE_CONFIG_KEYS = {
     "credentials_json",
     "private_key",
     "secret",
+    "aws_secret_access_key",
+    "secret_access_key",
+    "secret_key",
 }
 
 
@@ -125,6 +130,10 @@ def create_data_source(
             raw_config["server_hostname"] = DatabricksDataConnector.clean_hostname(raw_config["server_hostname"])
         if "http_path" in raw_config:
             raw_config["http_path"] = DatabricksDataConnector.clean_http_path(raw_config["http_path"])
+    elif st == "s3":
+        for k in ("s3_path", "aws_access_key_id", "aws_secret_access_key", "region_name"):
+            if k in raw_config and isinstance(raw_config[k], str):
+                raw_config[k] = raw_config[k].strip()
 
     # Securely encrypt sensitive credentials before writing to DynamoDB
     secure_config = _encrypt_connection_config(raw_config)
@@ -180,6 +189,10 @@ def test_connection_adhoc(
             effective_config["server_hostname"] = DatabricksDataConnector.clean_hostname(effective_config["server_hostname"])
         if "http_path" in effective_config:
             effective_config["http_path"] = DatabricksDataConnector.clean_http_path(effective_config["http_path"])
+    elif st == "s3":
+        for k in ("s3_path", "aws_access_key_id", "aws_secret_access_key", "region_name"):
+            if k in effective_config and isinstance(effective_config[k], str):
+                effective_config[k] = effective_config[k].strip()
 
     # Decrypt any encrypted fields passed
     effective_config = _decrypt_connection_config(effective_config)

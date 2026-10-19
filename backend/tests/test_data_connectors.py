@@ -18,6 +18,7 @@ from app.data_sources.bigquery_connector import BigQueryDataConnector
 from app.data_sources.snowflake_connector import SnowflakeDataConnector
 from app.data_sources.databricks_connector import DatabricksDataConnector
 from app.data_sources.google_sheets_connector import GoogleSheetsDataConnector
+from app.data_sources.s3_connector import S3DataConnector
 from app.api.data_sources import (
     _encrypt_connection_config,
     _decrypt_connection_config,
@@ -195,6 +196,98 @@ def test_data_sources_encryption_and_masking():
     assert masked["host"] == "pg.example.com"
 
 
+def test_s3_connector_path_parsing():
+    assert S3DataConnector.parse_s3_path("s3://my-bucket/path/to/data.csv") == ("my-bucket", "path/to/data.csv")
+    assert S3DataConnector.parse_s3_path("s3://analytics-bucket/folder/") == ("analytics-bucket", "folder/")
+    assert S3DataConnector.parse_s3_path("s3://warehouse-lake") == ("warehouse-lake", "")
+    assert S3DataConnector.parse_s3_path("my-bucket/folder/data.parquet") == ("my-bucket", "folder/data.parquet")
+    assert S3DataConnector.parse_s3_path("my-bucket") == ("my-bucket", "")
+    assert S3DataConnector.parse_s3_path("") == ("", "")
+
+
+def test_s3_connector_validation_and_serialization():
+    connector = S3DataConnector()
+    assert connector._serialize_value(Decimal("99.95")) == 99.95
+    u = uuid.uuid4()
+    assert connector._serialize_value(u) == str(u)
+
+    # Empty config should fail gracefully
+    res = connector.test_connection({})
+    assert res["success"] is False
+    assert "required" in res["message"].lower() or "bucket" in res["message"].lower()
+
+
+def test_s3_credential_encryption_and_masking():
+    s3_cfg = {
+        "aws_access_key_id": "AKIAIOSFODNN7EXAMPLE",
+        "aws_secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+        "s3_path": "s3://analytics-prod/warehouse/",
+        "region_name": "us-east-1"
+    }
+
+    encrypted = _encrypt_connection_config(s3_cfg)
+    assert encrypted["aws_secret_access_key"].startswith("ENC:")
+    assert encrypted["aws_access_key_id"] == "AKIAIOSFODNN7EXAMPLE"
+
+    decrypted = _decrypt_connection_config(encrypted)
+    assert decrypted["aws_secret_access_key"] == "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+
+    masked = _mask_connection_config(s3_cfg)
+    assert masked["aws_secret_access_key"] == "••••••••"
+    assert masked["aws_access_key_id"] == "AKIAIOSFODNN7EXAMPLE"
+
+
+def test_s3_connector_schema_and_extract():
+    connector = S3DataConnector()
+    with tempfile.NamedTemporaryFile(suffix=".csv", mode="w", delete=False) as f:
+        f.write("order_id,customer_name,amount\n101,Acme,450.75\n102,Beta,120.00\n")
+        temp_csv = f.name
+
+    try:
+        from unittest.mock import MagicMock
+        mock_client = MagicMock()
+        config = {
+            "aws_access_key_id": "AKIA...",
+            "aws_secret_access_key": "secret...",
+            "s3_path": "s3://my-test-bucket/sales/orders.csv",
+            "region_name": "us-east-1"
+        }
+
+        import shutil
+
+        def mock_download(*args, **kwargs):
+            fd, copy_path = tempfile.mkstemp(suffix=".csv")
+            os.close(fd)
+            shutil.copyfile(temp_csv, copy_path)
+            return copy_path
+
+        # Mock client params and download to use our temp csv
+        connector._get_client_and_params = MagicMock(return_value=(mock_client, "my-test-bucket", "sales/orders.csv", "us-east-1"))
+        connector._download_s3_object_to_temp = MagicMock(side_effect=mock_download)
+
+        # 1. Test listing when path is a single file
+        tables = connector.list_tables(config)
+        assert tables == ["sales/orders.csv"]
+
+        # 2. Test schema inspection
+        cols = connector.get_table_schema(config, "sales/orders.csv")
+        col_names = [c["column_name"] for c in cols]
+        assert "order_id" in col_names
+        assert "customer_name" in col_names
+        assert "amount" in col_names
+
+        # 3. Test data extraction
+        rows = connector.extract_data(config, "sales/orders.csv", limit=10)
+        assert len(rows) == 2
+        assert rows[0]["customer_name"] == "Acme"
+        assert rows[0]["amount"] == 450.75
+    finally:
+        if os.path.exists(temp_csv):
+            os.remove(temp_csv)
+
+
 def test_registered_connectors():
-    expected_types = {"sqlite", "postgresql", "bigquery", "snowflake", "databricks", "google_sheets"}
+    expected_types = {"sqlite", "postgresql", "bigquery", "snowflake", "databricks", "google_sheets", "s3"}
     assert expected_types.issubset(set(CONNECTORS.keys()))
+
+

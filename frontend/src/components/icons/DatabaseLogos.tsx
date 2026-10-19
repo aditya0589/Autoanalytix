@@ -157,6 +157,28 @@ export const DatabricksLogo: React.FC<LogoProps> = ({ className = "w-5 h-5", siz
 );
 
 /**
+ * Official Amazon S3 Logo (AWS Cloud Object Storage)
+ */
+export const S3Logo: React.FC<LogoProps> = ({ className = "w-5 h-5", size }) => (
+  <svg
+    viewBox="0 0 24 24"
+    width={size}
+    height={size}
+    className={`${className} shrink-0`}
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    {/* Isometric AWS S3 Bucket / Block */}
+    <path d="M12 2L3 6.5v11L12 22l9-4.5v-11L12 2z" fill="#E05243" />
+    <path d="M12 3.6l7.2 3.6-7.2 3.6-7.2-3.6 7.2-3.6z" fill="#FA8574" />
+    <path d="M4.5 8.1l6.75 3.375v8.1L4.5 16.2V8.1z" fill="#BA3B2E" />
+    <path d="M12.75 11.475l6.75-3.375v8.1l-6.75 3.375v-8.1z" fill="#D34435" />
+    {/* Inner bucket detail lines */}
+    <path d="M8.5 7.85l3.5 1.75 3.5-1.75" stroke="#ffffff" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.9" />
+    <path d="M8.5 14.5l3.5 1.75 3.5-1.75" stroke="#ffffff" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.9" />
+  </svg>
+);
+
+/**
  * Convenience Helper for dynamically rendering logos by source type
  */
 export const DatabaseSourceLogo: React.FC<{ type: string; className?: string; size?: number }> = ({
@@ -176,6 +198,9 @@ export const DatabaseSourceLogo: React.FC<{ type: string; className?: string; si
   }
   if (t === "databricks" || t === "delta_lake") {
     return <DatabricksLogo className={className} size={size} />;
+  }
+  if (t === "s3" || t === "amazon_s3" || t === "aws_s3") {
+    return <S3Logo className={className} size={size} />;
   }
   if (t === "sqlite" || t === "sqlite3") {
     return <SQLiteLogo className={className} size={size} />;
