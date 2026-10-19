@@ -32,6 +32,15 @@ import {
   FileCheck
 } from "lucide-react";
 import { useThemeStore } from "../stores/useThemeStore";
+import {
+  PostgresLogo,
+  BigQueryLogo,
+  SnowflakeLogo,
+  DatabricksLogo,
+  S3Logo,
+  SQLiteLogo,
+  GoogleSheetsLogo,
+} from "../components/icons/DatabaseLogos";
 
 export const IntroPage: React.FC = () => {
   const { isDark, toggleTheme } = useThemeStore();
@@ -67,6 +76,12 @@ export const IntroPage: React.FC = () => {
           <nav className="hidden md:flex items-center space-x-8 text-xs font-semibold text-slate-600 dark:text-slate-300">
             <a href="#features" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
               Capabilities
+            </a>
+            <a href="#connectors" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center gap-1.5">
+              Connectors
+              <span className="text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.2 rounded-md bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                Live
+              </span>
             </a>
             <a href="#workspace" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center gap-1">
               Google Workspace & MCP
@@ -161,27 +176,33 @@ export const IntroPage: React.FC = () => {
 
           {/* Ecosystem / Integrations Bar */}
           <div className="w-full max-w-5xl pt-4 pb-12 border-t border-slate-200/80 dark:border-slate-800/80">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-6">
-              Connects seamlessly across your data & intelligence stack
+            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-6">
+              Connects seamlessly across your data &amp; intelligence stack
             </p>
-            <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-8 text-xs font-semibold text-slate-600 dark:text-slate-300">
-              <span className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs">
-                <FileSpreadsheet className="w-4 h-4 text-emerald-600" /> Google Sheets
+            <div className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-3.5 text-xs font-semibold text-slate-700 dark:text-slate-200">
+              <span className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs hover:border-[#E05243]/40 transition-all">
+                <S3Logo className="w-4 h-4" /> Amazon S3
               </span>
-              <span className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs">
-                <FileText className="w-4 h-4 text-blue-600" /> Google Docs
+              <span className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs hover:border-[#FF3621]/40 transition-all">
+                <DatabricksLogo className="w-4 h-4" /> Databricks
               </span>
-              <span className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs">
-                <Database className="w-4 h-4 text-amber-500" /> DuckDB Columnar
+              <span className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs hover:border-[#29b5e8]/40 transition-all">
+                <SnowflakeLogo className="w-4 h-4" /> Snowflake
               </span>
-              <span className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs">
-                <Sparkles className="w-4 h-4 text-sky-500" /> Google Gemini
+              <span className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs hover:border-[#4386fa]/40 transition-all">
+                <BigQueryLogo className="w-4 h-4" /> Google BigQuery
               </span>
-              <span className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs">
-                <Bot className="w-4 h-4 text-emerald-500" /> OpenAI & Claude
+              <span className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs hover:border-[#336791]/40 transition-all">
+                <PostgresLogo className="w-4 h-4" /> PostgreSQL
               </span>
-              <span className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs">
-                <Layers className="w-4 h-4 text-indigo-500" /> PostgreSQL & BigQuery
+              <span className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs hover:border-[#0F9D58]/40 transition-all">
+                <GoogleSheetsLogo className="w-4 h-4" /> Google Sheets
+              </span>
+              <span className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs hover:border-[#0f80cc]/40 transition-all">
+                <SQLiteLogo className="w-4 h-4" /> SQLite
+              </span>
+              <span className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs hover:border-amber-400/40 transition-all">
+                <Database className="w-4 h-4 text-amber-500" /> DuckDB Engine
               </span>
             </div>
           </div>
@@ -453,29 +474,115 @@ export const IntroPage: React.FC = () => {
 
               {activeShowcaseTab === "ingestion" && (
                 <div className="space-y-4">
-                  <div className="text-xs text-slate-600 dark:text-slate-400">
-                    Connect any data source in seconds. DuckDB parses schemas, profiles distributions, and indexes datasets without external ETL servers.
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-200 dark:border-slate-800">
+                    <div>
+                      <h4 className="text-sm font-bold text-slate-900 dark:text-white">
+                        Universal Cloud Warehouses &amp; Object Storage Connectors
+                      </h4>
+                      <p className="text-[11px] text-slate-500">
+                        Zero complex ETL setups. DuckDB connects, profiles distributions, and indexes datasets in-memory in milliseconds.
+                      </p>
+                    </div>
+                    <span className="text-[11px] font-mono px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 self-start sm:self-auto font-bold">
+                      7 Native Drivers Active
+                    </span>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                    <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900">
-                      <FileSpreadsheet className="w-6 h-6 text-emerald-600 mb-2" />
-                      <div className="text-xs font-bold text-slate-900 dark:text-white">Google Sheets</div>
-                      <p className="text-[11px] text-slate-500 mt-1">Paste shared link or pick via Google Drive</p>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {/* Amazon S3 */}
+                    <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/70 hover:border-[#E05243]/50 transition-colors space-y-2">
+                      <div className="flex items-center space-x-2.5">
+                        <div className="w-7 h-7 rounded-lg bg-[#E05243]/10 border border-[#E05243]/20 flex items-center justify-center shrink-0">
+                          <S3Logo className="w-4 h-4" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-xs font-bold text-slate-900 dark:text-white truncate">Amazon S3</div>
+                          <span className="text-[10px] text-slate-400 block truncate">AWS Object Storage &amp; Lake</span>
+                        </div>
+                      </div>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                        Query Parquet, CSV, or JSON buckets via IAM user least-privilege access keys.
+                      </p>
                     </div>
-                    <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900">
-                      <Database className="w-6 h-6 text-blue-600 mb-2" />
-                      <div className="text-xs font-bold text-slate-900 dark:text-white">CSV & Excel</div>
-                      <p className="text-[11px] text-slate-500 mt-1">Drag-and-drop .csv, .xlsx, .xls with auto-profiling</p>
+
+                    {/* Databricks */}
+                    <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/70 hover:border-[#FF3621]/50 transition-colors space-y-2">
+                      <div className="flex items-center space-x-2.5">
+                        <div className="w-7 h-7 rounded-lg bg-[#FF3621]/10 border border-[#FF3621]/20 flex items-center justify-center shrink-0">
+                          <DatabricksLogo className="w-4 h-4" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-xs font-bold text-slate-900 dark:text-white truncate">Databricks</div>
+                          <span className="text-[10px] text-slate-400 block truncate">Lakehouse &amp; Unity Catalog</span>
+                        </div>
+                      </div>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                        Connect to SQL Warehouses via Personal Access Tokens (PAT) to query catalogs &amp; Delta Lake.
+                      </p>
                     </div>
-                    <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900">
-                      <Layers className="w-6 h-6 text-indigo-600 mb-2" />
-                      <div className="text-xs font-bold text-slate-900 dark:text-white">PostgreSQL & SQLite</div>
-                      <p className="text-[11px] text-slate-500 mt-1">Direct read-only credentials with AST guardrails</p>
+
+                    {/* Snowflake */}
+                    <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/70 hover:border-[#29b5e8]/50 transition-colors space-y-2">
+                      <div className="flex items-center space-x-2.5">
+                        <div className="w-7 h-7 rounded-lg bg-[#29b5e8]/10 border border-[#29b5e8]/20 flex items-center justify-center shrink-0">
+                          <SnowflakeLogo className="w-4 h-4" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-xs font-bold text-slate-900 dark:text-white truncate">Snowflake</div>
+                          <span className="text-[10px] text-slate-400 block truncate">Data Cloud Platform</span>
+                        </div>
+                      </div>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                        Automated account normalization prevents SSL handshake errors across compute warehouses.
+                      </p>
                     </div>
-                    <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900">
-                      <Globe className="w-6 h-6 text-sky-600 mb-2" />
-                      <div className="text-xs font-bold text-slate-900 dark:text-white">BigQuery & Snowflake</div>
-                      <p className="text-[11px] text-slate-500 mt-1">Query enterprise cloud warehouses at scale</p>
+
+                    {/* Google BigQuery */}
+                    <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/70 hover:border-[#4386fa]/50 transition-colors space-y-2">
+                      <div className="flex items-center space-x-2.5">
+                        <div className="w-7 h-7 rounded-lg bg-[#4386fa]/10 border border-[#4386fa]/20 flex items-center justify-center shrink-0">
+                          <BigQueryLogo className="w-4 h-4" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-xs font-bold text-slate-900 dark:text-white truncate">Google BigQuery</div>
+                          <span className="text-[10px] text-slate-400 block truncate">Serverless Cloud DW</span>
+                        </div>
+                      </div>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                        Authenticate securely via GCP Service Account JSON keys to query datasets &amp; tables.
+                      </p>
+                    </div>
+
+                    {/* PostgreSQL */}
+                    <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/70 hover:border-[#336791]/50 transition-colors space-y-2">
+                      <div className="flex items-center space-x-2.5">
+                        <div className="w-7 h-7 rounded-lg bg-[#336791]/10 border border-[#336791]/20 flex items-center justify-center shrink-0">
+                          <PostgresLogo className="w-4 h-4" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-xs font-bold text-slate-900 dark:text-white truncate">PostgreSQL</div>
+                          <span className="text-[10px] text-slate-400 block truncate">Relational &amp; Supabase</span>
+                        </div>
+                      </div>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                        Direct encrypted read-only connection with schema inspection and AST safety checks.
+                      </p>
+                    </div>
+
+                    {/* Google Sheets */}
+                    <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/70 hover:border-[#0F9D58]/50 transition-colors space-y-2">
+                      <div className="flex items-center space-x-2.5">
+                        <div className="w-7 h-7 rounded-lg bg-[#0F9D58]/10 border border-[#0F9D58]/20 flex items-center justify-center shrink-0">
+                          <GoogleSheetsLogo className="w-4 h-4" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-xs font-bold text-slate-900 dark:text-white truncate">Google Sheets</div>
+                          <span className="text-[10px] text-slate-400 block truncate">Spreadsheet Ingestion</span>
+                        </div>
+                      </div>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                        Instant zero-auth shared link ingestion or full Google Drive OAuth sync.
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -578,6 +685,260 @@ export const IntroPage: React.FC = () => {
                 Generate secure cryptographic links for clients, investors, or board members. Viewers can interact with live charts without needing an account or API key.
               </p>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* External Data Sources & Lakehouses Section */}
+      <section id="connectors" className="py-20 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 relative overflow-hidden">
+        {/* Glow ambient background accents */}
+        <div className="absolute top-1/2 left-0 -translate-y-1/2 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl pointer-events-none -z-10" />
+        <div className="absolute top-1/2 right-0 -translate-y-1/2 w-72 h-72 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none -z-10" />
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-14">
+          <div className="text-center max-w-3xl mx-auto space-y-3">
+            <div className="inline-flex items-center space-x-2 bg-blue-50 dark:bg-blue-950/80 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 px-3.5 py-1 rounded-full text-xs font-semibold">
+              <Database className="w-3.5 h-3.5" />
+              <span>Universal Warehouse &amp; Storage Connectors</span>
+            </div>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 dark:text-white tracking-tight">
+              Connect Any Warehouse, Lakehouse, or Cloud Bucket
+            </h2>
+            <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed">
+              Eliminate data fragmentation. Autoanalytix connects directly to your databases, cloud lakes, and spreadsheets—turning isolated tables into instant DuckDB analytical datasets.
+            </p>
+          </div>
+
+          {/* Connectors Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* 1. Amazon S3 */}
+            <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800/90 shadow-sm hover:border-[#E05243]/50 dark:hover:border-[#E05243]/50 transition-all hover:shadow-md space-y-4 flex flex-col justify-between group">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="w-12 h-12 rounded-2xl bg-[#E05243]/10 border border-[#E05243]/20 flex items-center justify-center group-hover:scale-105 transition-transform">
+                    <S3Logo className="w-6 h-6" />
+                  </div>
+                  <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-[#E05243]/10 text-[#E05243] border border-[#E05243]/20">
+                    Object Storage Lake
+                  </span>
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white">Amazon S3</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                    Connect directly to S3 bucket paths. Inspect and ingest Parquet, CSV, TSV, JSON, or Excel files using scoped IAM user credentials.
+                  </p>
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-2">
+                <div className="flex flex-wrap gap-1.5 text-[10.5px]">
+                  <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium">
+                    Parquet &amp; CSV
+                  </span>
+                  <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium">
+                    IAM Least Privilege
+                  </span>
+                  <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium">
+                    Folder / Single File
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* 2. Databricks */}
+            <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800/90 shadow-sm hover:border-[#FF3621]/50 dark:hover:border-[#FF3621]/50 transition-all hover:shadow-md space-y-4 flex flex-col justify-between group">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="w-12 h-12 rounded-2xl bg-[#FF3621]/10 border border-[#FF3621]/20 flex items-center justify-center group-hover:scale-105 transition-transform">
+                    <DatabricksLogo className="w-6 h-6" />
+                  </div>
+                  <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-[#FF3621]/10 text-[#FF3621] border border-[#FF3621]/20">
+                    Lakehouse &amp; Spark
+                  </span>
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white">Databricks</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                    Connect to Databricks SQL Warehouses via Personal Access Tokens. Query Unity Catalogs, schemas, and high-performance Delta Lake tables.
+                  </p>
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-2">
+                <div className="flex flex-wrap gap-1.5 text-[10.5px]">
+                  <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium">
+                    Unity Catalog
+                  </span>
+                  <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium">
+                    SQL Warehouses
+                  </span>
+                  <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium">
+                    PAT Authenticated
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* 3. Snowflake */}
+            <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800/90 shadow-sm hover:border-[#29b5e8]/50 dark:hover:border-[#29b5e8]/50 transition-all hover:shadow-md space-y-4 flex flex-col justify-between group">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="w-12 h-12 rounded-2xl bg-[#29b5e8]/10 border border-[#29b5e8]/20 flex items-center justify-center group-hover:scale-105 transition-transform">
+                    <SnowflakeLogo className="w-6 h-6" />
+                  </div>
+                  <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-[#29b5e8]/10 text-[#29b5e8] border border-[#29b5e8]/20">
+                    Data Cloud Platform
+                  </span>
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white">Snowflake</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                    Automated Snowsight account normalization converts dot formats to hyphens, preventing SSL handshake errors during warehouse queries.
+                  </p>
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-2">
+                <div className="flex flex-wrap gap-1.5 text-[10.5px]">
+                  <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium">
+                    Auto-SSL Normalization
+                  </span>
+                  <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium">
+                    Virtual Warehouses
+                  </span>
+                  <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium">
+                    Role-Based Access
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* 4. Google BigQuery */}
+            <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800/90 shadow-sm hover:border-[#4386fa]/50 dark:hover:border-[#4386fa]/50 transition-all hover:shadow-md space-y-4 flex flex-col justify-between group">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="w-12 h-12 rounded-2xl bg-[#4386fa]/10 border border-[#4386fa]/20 flex items-center justify-center group-hover:scale-105 transition-transform">
+                    <BigQueryLogo className="w-6 h-6" />
+                  </div>
+                  <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-[#4386fa]/10 text-[#4386fa] border border-[#4386fa]/20">
+                    Serverless Cloud DW
+                  </span>
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white">Google BigQuery</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                    Authenticate securely with Google Cloud Service Account JSON keys. Browse datasets, schemas, and ingest enterprise tables in seconds.
+                  </p>
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-2">
+                <div className="flex flex-wrap gap-1.5 text-[10.5px]">
+                  <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium">
+                    Service Account JSON
+                  </span>
+                  <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium">
+                    GCP Multi-Region
+                  </span>
+                  <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium">
+                    Petabyte Scale
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* 5. PostgreSQL */}
+            <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800/90 shadow-sm hover:border-[#336791]/50 dark:hover:border-[#336791]/50 transition-all hover:shadow-md space-y-4 flex flex-col justify-between group">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="w-12 h-12 rounded-2xl bg-[#336791]/10 border border-[#336791]/20 flex items-center justify-center group-hover:scale-105 transition-transform">
+                    <PostgresLogo className="w-6 h-6" />
+                  </div>
+                  <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-[#336791]/10 text-[#336791] border border-[#336791]/20">
+                    Relational &amp; Supabase
+                  </span>
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white">PostgreSQL</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                    Direct SSL connection with configurable SSL modes. Compatible with AWS RDS, Supabase, Neon, GCP Cloud SQL, and production replicas.
+                  </p>
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-2">
+                <div className="flex flex-wrap gap-1.5 text-[10.5px]">
+                  <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium">
+                    SSL Require / Prefer
+                  </span>
+                  <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium">
+                    Supabase &amp; RDS
+                  </span>
+                  <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium">
+                    AST Safe Read-Only
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* 6. Google Sheets */}
+            <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800/90 shadow-sm hover:border-[#0F9D58]/50 dark:hover:border-[#0F9D58]/50 transition-all hover:shadow-md space-y-4 flex flex-col justify-between group">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="w-12 h-12 rounded-2xl bg-[#0F9D58]/10 border border-[#0F9D58]/20 flex items-center justify-center group-hover:scale-105 transition-transform">
+                    <GoogleSheetsLogo className="w-6 h-6" />
+                  </div>
+                  <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-[#0F9D58]/10 text-[#0F9D58] border border-[#0F9D58]/20">
+                    Live Spreadsheets
+                  </span>
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white">Google Sheets</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                    Paste any public or shared spreadsheet URL for instant zero-auth ingestion, or link your team's Google Drive via 1-click OAuth.
+                  </p>
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-2">
+                <div className="flex flex-wrap gap-1.5 text-[10.5px]">
+                  <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium">
+                    Shared Link Ingestion
+                  </span>
+                  <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium">
+                    Google Drive OAuth
+                  </span>
+                  <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium">
+                    Auto-Type Inference
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Security & Isolation Callout Bar */}
+          <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-center space-x-3.5">
+              <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center shrink-0">
+                <ShieldCheck className="w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-slate-900 dark:text-white">
+                  Zero Credential Leakage &amp; Isolated Analytical Sandboxing
+                </h4>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                  All passwords and IAM secret keys are encrypted with <strong>AES-256-GCM</strong>. Private secrets never touch AI prompts; models only receive column definitions to generate DuckDB SQL.
+                </p>
+              </div>
+            </div>
+
+            <Link
+              to="/register"
+              className="inline-flex items-center space-x-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 px-4 py-2.5 rounded-xl shadow-xs transition-colors shrink-0 self-end sm:self-auto"
+            >
+              <span>Connect Your Sources</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
           </div>
         </div>
       </section>
@@ -866,6 +1227,7 @@ export const IntroPage: React.FC = () => {
 
           <div className="flex items-center space-x-6 text-[11px] font-medium">
             <a href="#features" className="hover:text-blue-600 transition-colors">Features</a>
+            <a href="#connectors" className="hover:text-blue-600 transition-colors">Data Connectors</a>
             <a href="#workspace" className="hover:text-blue-600 transition-colors">Google Workspace MCP</a>
             <a href="#security" className="hover:text-blue-600 transition-colors">Security</a>
             <Link to="/login" className="hover:text-blue-600 transition-colors">Login</Link>
