@@ -28,6 +28,8 @@ class Workspace(TimeStampedModel):
     name = Column(String(255), nullable=False)
     slug = Column(String(255), unique=True, index=True, nullable=False)
     owner_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    external_id = Column(String(100), unique=True, index=True, nullable=True)
+    cloud_storage_config = Column(JSON, nullable=True)
     
     # Relationships
     owner = relationship("User", back_populates="workspaces_owned")

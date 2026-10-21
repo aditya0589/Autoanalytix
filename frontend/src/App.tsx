@@ -18,6 +18,7 @@ import { DataSourcesSettings } from "./pages/DataSourcesSettings";
 import { PublicDashboardViewer } from "./pages/PublicDashboardViewer";
 import { ChatsPage } from "./pages/ChatsPage";
 import { GoogleOAuthCallback } from "./pages/GoogleOAuthCallback";
+import { CloudStorageSettings } from "./pages/CloudStorageSettings";
 
 // Premium loading screen
 const LoadingScreen: React.FC = () => (
@@ -81,6 +82,7 @@ export const App: React.FC = () => {
         <Route path="/dashboards/:id/edit" element={<ProtectedRoute><DashboardEditor /></ProtectedRoute>} />
         <Route path="/settings/ai-providers" element={<ProtectedRoute><AIProvidersSettings /></ProtectedRoute>} />
         <Route path="/settings/data-sources" element={<ProtectedRoute><DataSourcesSettings /></ProtectedRoute>} />
+        <Route path="/settings/cloud-storage" element={<ProtectedRoute><CloudStorageSettings /></ProtectedRoute>} />
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/dashboard" replace />} />

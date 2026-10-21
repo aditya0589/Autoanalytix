@@ -3,12 +3,17 @@ import zipfile
 
 def pack_backend(output_zip: str = "backend_source.zip"):
     backend_dir = os.path.abspath("backend")
-    exclude_dirs = {"__pycache__", ".pytest_cache", ".git", "venv", ".venv", "storage"}
+    exclude_dirs = {"__pycache__", ".pytest_cache", ".git", "venv", ".venv"}
     
     with zipfile.ZipFile(output_zip, "w", zipfile.ZIP_DEFLATED) as zipf:
         for root, dirs, files in os.walk(backend_dir):
-            # filter dirs in place
-            dirs[:] = [d for d in dirs if d not in exclude_dirs and not d.startswith(".")]
+            # filter dirs in place - only exclude storage if it's the top-level backend/storage
+            dirs[:] = [
+                d for d in dirs
+                if d not in exclude_dirs
+                and not d.startswith(".")
+                and not (d == "storage" and os.path.abspath(root) == backend_dir)
+            ]
             for file in files:
                 lower = file.lower()
                 if (

@@ -25,14 +25,16 @@ router = APIRouter(prefix="/datasets", tags=["Datasets"])
 @router.get("/presigned-upload-url")
 def get_presigned_upload_url(
     filename: str,
+    workspace_id: Optional[str] = None,
     content_type: str = "application/octet-stream",
     current_user: ItemObject = Depends(get_current_user)
 ):
-    """Generates a presigned S3 upload URL for direct browser uploads."""
+    """Generates a presigned S3 upload URL for direct browser uploads (Platform or BYOC)."""
     file_id = str(uuid.uuid4())
     stored_filename = f"{file_id}_{filename}"
     s3_key = f"uploads/{stored_filename}"
-    return s3_storage.generate_presigned_upload_url(s3_key, content_type)
+    storage = s3_storage.for_workspace(workspace_id) if workspace_id else s3_storage
+    return storage.generate_presigned_upload_url(s3_key, content_type)
 
 @router.post("/upload", response_model=DatasetResponse)
 async def upload_dataset(
@@ -42,7 +44,8 @@ async def upload_dataset(
     file: UploadFile = File(...),
     current_user: ItemObject = Depends(get_current_user)
 ):
-    get_current_workspace(workspace_id, current_user)
+    workspace = get_current_workspace(workspace_id, current_user)
+    storage = s3_storage.for_workspace(workspace)
 
     ext = file.filename.split(".")[-1].lower() if file.filename else ""
     if ext not in ("csv", "xlsx", "xls", "parquet"):
@@ -64,11 +67,11 @@ async def upload_dataset(
     dataset_name = name or file.filename.rsplit(".", 1)[0].replace("_", " ").title()
     clean_table_name = f"dataset_{file_id.replace('-', '_')[:16]}"
 
-    # Upload raw file to S3
+    # Upload raw file to S3 (Platform or BYOC)
     try:
-        s3_storage.upload_file(save_path, f"uploads/{stored_filename}")
+        storage.upload_file(save_path, f"uploads/{stored_filename}")
     except Exception as e:
-        print(f"[!] Warning: S3 raw file upload failed: {e}")
+        print(f"[!] Warning: Storage raw file upload failed: {e}")
 
     # Parse file into Polars DataFrame
     try:
@@ -82,11 +85,11 @@ async def upload_dataset(
     parquet_path = os.path.join(settings.STORAGE_DIR, "uploads", f"{clean_table_name}.parquet")
     df.write_parquet(parquet_path)
     
-    # Upload parquet to S3 for durable persistence
+    # Upload parquet to S3 (Platform or BYOC) for durable persistence
     try:
-        s3_storage.upload_file(parquet_path, f"uploads/{clean_table_name}.parquet")
+        storage.upload_file(parquet_path, f"uploads/{clean_table_name}.parquet")
     except Exception as e:
-        print(f"[!] Warning: S3 parquet upload failed: {e}")
+        print(f"[!] Warning: Storage parquet upload failed: {e}")
 
     analytics_engine.register_dataset(clean_table_name, parquet_path, "parquet")
 
@@ -232,7 +235,8 @@ def preview_dataset(
     get_current_workspace(dataset["workspace_id"], current_user)
 
     # Ensure table is cached locally and loaded into DuckDB
-    local_path = s3_storage.ensure_local_cache(dataset.get("file_path", ""))
+    storage = s3_storage.for_workspace(dataset.get("workspace_id"))
+    local_path = storage.ensure_local_cache(dataset.get("file_path", ""))
     analytics_engine.register_dataset(dataset["duckdb_table_name"], local_path, "parquet")
 
     # Fetch rows
@@ -336,11 +340,12 @@ def delete_dataset(
         except Exception:
             pass
 
-    # Remove from S3
+    # Remove from S3 (Platform or BYOC)
     s3_key = file_path.replace("\\", "/")
     if "storage/" in s3_key:
         s3_key = s3_key.split("storage/", 1)[1]
-    s3_storage.delete_file(s3_key)
+    storage = s3_storage.for_workspace(dataset.get("workspace_id"))
+    storage.delete_file(s3_key)
 
     dynamodb_store.delete_dataset(dataset["workspace_id"], dataset_id)
     return {"message": "Dataset successfully deleted."}

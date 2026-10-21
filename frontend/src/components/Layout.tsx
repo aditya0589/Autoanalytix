@@ -20,6 +20,7 @@ import {
   Sparkles,
   Zap,
   ChevronRight,
+  Cloud,
 } from "lucide-react";
 import { useAuthStore } from "../stores/useAuthStore";
 import { useThemeStore } from "../stores/useThemeStore";
@@ -36,6 +37,7 @@ const navItems = [
   { label: "Dashboards", path: "/dashboards", icon: BarChart2, color: "purple" },
   { label: "AI Providers", path: "/settings/ai-providers", icon: KeyRound, color: "amber" },
   { label: "Data Sources", path: "/settings/data-sources", icon: Layers, color: "rose" },
+  { label: "Cloud Storage", path: "/settings/cloud-storage", icon: Cloud, color: "sky" },
 ];
 
 const colorMap: Record<string, { active: string; icon: string; dot: string }> = {
@@ -68,6 +70,11 @@ const colorMap: Record<string, { active: string; icon: string; dot: string }> = 
     active: "bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border-l-2 border-rose-500",
     icon: "text-rose-500 dark:text-rose-400",
     dot: "bg-rose-500",
+  },
+  sky: {
+    active: "bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 border-l-2 border-sky-500",
+    icon: "text-sky-500 dark:text-sky-400",
+    dot: "bg-sky-500",
   },
 };
 
@@ -230,6 +237,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                   }`}
                 >
                   {defaultAi ? "Active" : "Setup"}
+                </span>
+              )}
+              {item.label === "Cloud Storage" && (
+                <span className="ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-sky-50 dark:bg-sky-950/50 text-sky-600 dark:text-sky-400 border border-sky-200 dark:border-sky-800/40">
+                  BYOC
                 </span>
               )}
             </Link>

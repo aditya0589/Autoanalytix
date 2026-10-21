@@ -14,7 +14,8 @@ from app.api import (
     dashboards,
     public_dashboards,
     data_sources,
-    integrations_google
+    integrations_google,
+    cloud_storage
 )
 
 # Initialize database schema on startup if running local SQLite
@@ -71,6 +72,7 @@ app.include_router(dashboards.router, prefix=settings.API_V1_PREFIX)
 app.include_router(public_dashboards.router, prefix=settings.API_V1_PREFIX)
 app.include_router(data_sources.router, prefix=settings.API_V1_PREFIX)
 app.include_router(integrations_google.router, prefix=settings.API_V1_PREFIX)
+app.include_router(cloud_storage.router, prefix=settings.API_V1_PREFIX)
 
 @app.get("/health")
 @app.get("/api/health")

@@ -13,7 +13,6 @@ from app.schemas.all_schemas import (
 )
 from app.api.deps import get_current_user, get_current_workspace, ItemObject
 from app.ai.providers.factory import get_chat_model_for_config
-from app.ai.agents.analytics_graph import AnalyticsWorkflow
 from app.analytics.engine import analytics_engine
 
 router = APIRouter(prefix="/analytics", tags=["Analytics"])
@@ -61,8 +60,9 @@ def execute_analytics_query(
             detail=f"Failed to initialize AI provider '{ai_config_dict.get('provider')}': {str(e)}"
         )
 
-    # 2. Ensure DuckDB table is loaded from local or S3 cache
-    local_path = s3_storage.ensure_local_cache(dataset.get("file_path", ""))
+    # 2. Ensure DuckDB table is loaded from local or S3 cache (Platform or BYOC)
+    storage = s3_storage.for_workspace(req.workspace_id)
+    local_path = storage.ensure_local_cache(dataset.get("file_path", ""))
     analytics_engine.register_dataset(dataset["duckdb_table_name"], local_path, "parquet")
 
     # 3. Retrieve or create Conversation
@@ -101,6 +101,7 @@ def execute_analytics_query(
     ]
 
     # 6. Execute LangGraph Analytics Workflow
+    from app.ai.agents.analytics_graph import AnalyticsWorkflow
     workflow = AnalyticsWorkflow(llm=chat_model)
     app_graph = workflow.build_graph()
 

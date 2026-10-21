@@ -36,9 +36,59 @@ class WorkspaceResponse(BaseModel):
     slug: str
     owner_id: str
     role: Optional[str] = "owner"
+    external_id: Optional[str] = None
+    cloud_storage_config: Optional[Dict[str, Any]] = None
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+# --- Cloud Storage (BYOC / BYOS) Schemas ---
+class CloudStorageConfigUpdate(BaseModel):
+    provider: str = "PLATFORM_DEFAULT"  # PLATFORM_DEFAULT, AWS_S3, GCS, AZURE_BLOB
+    bucket_name: Optional[str] = None
+    region: Optional[str] = "us-east-1"
+    role_arn: Optional[str] = None
+    prefix: Optional[str] = "autoanalytix"
+    kms_key_arn: Optional[str] = None
+    skip_verification: bool = False
+
+class CloudStorageTestRequest(BaseModel):
+    provider: str = "AWS_S3"
+    bucket_name: str
+    region: str = "us-east-1"
+    role_arn: str
+    prefix: Optional[str] = "autoanalytix"
+    kms_key_arn: Optional[str] = None
+
+class CloudStorageConfigResponse(BaseModel):
+    mode: str
+    provider: str
+    external_id: str
+    bucket_name: Optional[str] = None
+    region: Optional[str] = None
+    role_arn: Optional[str] = None
+    prefix: Optional[str] = "autoanalytix"
+    kms_key_arn: Optional[str] = None
+    status: str
+    verified: bool
+    verified_at: Optional[str] = None
+    last_error: Optional[str] = None
+    platform_account_id: str
+    backend_role_arn: str
+    cloudformation_quick_link: Optional[str] = None
+
+class CloudStorageProbeResult(BaseModel):
+    healthy: bool
+    verified: bool
+    provider: str
+    bucket: str
+    region: str
+    role_arn: Optional[str] = None
+    prefix: Optional[str] = None
+    steps: Dict[str, Any]
+    latency_ms: float
+    message: str
+    error: Optional[str] = None
 
 # --- AI Provider Config Schemas ---
 class AIProviderConfigCreate(BaseModel):

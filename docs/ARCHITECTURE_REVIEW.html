@@ -1,0 +1,510 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Architecture Review: Autoanalytix</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module">
+      import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+      mermaid.initialize({
+        startOnLoad: true,
+        theme: "neutral",
+        securityLevel: "loose",
+        fontFamily: "ui-sans-serif, system-ui, sans-serif"
+      });
+    </script>
+    <style>
+      .seam { stroke-dasharray: 4 4; }
+      .leak { stroke: #dc2626; stroke-width: 2px; }
+      .deep-card { background: linear-gradient(135deg, #0f172a, #1e293b); }
+    </style>
+  </head>
+  <body class="bg-stone-50 text-slate-900 font-sans antialiased">
+    <main class="max-w-6xl mx-auto px-6 py-12 space-y-12">
+      <!-- Header -->
+      <header class="border-b border-stone-200 pb-8 flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div>
+          <span class="text-xs font-semibold tracking-wider uppercase text-slate-500">Architecture Review</span>
+          <h1 class="text-3xl font-serif font-bold text-slate-900 tracking-tight mt-1">Autoanalytix</h1>
+          <p class="text-xs text-slate-500 mt-1">October 20, 2026 • Deepening Opportunities & Seam Analysis</p>
+        </div>
+        <!-- Compact Schematic Legend -->
+        <div class="flex items-center gap-4 bg-white px-4 py-2.5 rounded-lg border border-stone-200 text-xs text-slate-600 shadow-sm">
+          <div class="flex items-center gap-1.5">
+            <span class="inline-block w-3.5 h-3.5 rounded border border-slate-700 bg-slate-100"></span>
+            <span>Module</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="inline-block w-4 h-0 border-t-2 border-dashed border-indigo-600"></span>
+            <span>Seam</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="inline-block w-3.5 h-0.5 bg-red-600"></span>
+            <span>Leakage</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="inline-block w-3.5 h-3.5 rounded bg-slate-900"></span>
+            <span>Deep Module</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- Top Recommendation Banner -->
+      <section id="top-recommendation" class="rounded-xl border-2 border-emerald-600/30 bg-emerald-50/50 p-6 shadow-sm">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
+                Top Recommendation
+              </span>
+              <span class="text-xs text-slate-500">Highest Immediate Leverage</span>
+            </div>
+            <h2 class="text-xl font-serif font-bold text-slate-900 mt-1">
+              Collapse the Dataset Ingestion Pipeline into a Deep Module
+            </h2>
+            <p class="text-sm text-slate-700 mt-1">
+              Three API controllers redundantly orchestrate temporary disk CSV serialization, Parquet writes, S3 syncs, and DuckDB table cataloging over 150 duplicate lines.
+            </p>
+          </div>
+          <a href="#candidate-1" class="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-slate-900 text-white text-xs font-semibold hover:bg-slate-800 transition-colors whitespace-nowrap">
+            View Candidate ↓
+          </a>
+        </div>
+      </section>
+
+      <!-- Candidates List -->
+      <section id="candidates" class="space-y-12">
+
+        <!-- Candidate 1 -->
+        <article id="candidate-1" class="rounded-xl border border-stone-200 bg-white p-6 md:p-8 space-y-6 shadow-sm">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-stone-100 pb-4">
+            <div>
+              <span class="text-xs font-mono text-slate-400">#1</span>
+              <h3 class="text-2xl font-serif font-bold text-slate-900">
+                Collapse the Dataset Ingestion Pipeline
+              </h3>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                Strong
+              </span>
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700">
+                in-process
+              </span>
+            </div>
+          </div>
+
+          <div class="font-mono text-xs text-slate-500 bg-stone-50 rounded p-2.5 border border-stone-200/60 overflow-x-auto">
+            backend/app/ingestion/parser.py • backend/app/analytics/profiler.py • backend/app/api/datasets.py • backend/app/api/data_sources.py • backend/app/api/integrations_google.py
+          </div>
+
+          <!-- Side-by-side Visualisation -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div class="rounded-lg border border-slate-200 bg-stone-50 p-4 space-y-2">
+              <span class="text-xs uppercase font-semibold tracking-wider text-red-700">Before: Shallow modules & scattered orchestration</span>
+              <div class="h-80 overflow-hidden flex items-center justify-center bg-white rounded border border-stone-200">
+                <pre class="mermaid">
+                  flowchart TD
+                    subgraph Controllers ["API Routes (datasets, data_sources, google)"]
+                      C1["Upload Route"]
+                      C2["DB Ingest Route"]
+                      C3["Sheet Ingest Route"]
+                    end
+                    CSV["temp_*.csv on Disk"]
+                    DP["DataParser (Shallow)"]
+                    PQ["Parquet Writer"]
+                    S3["s3_storage.upload"]
+                    ENG["analytics_engine.register"]
+                    PROF["DatasetProfiler"]
+                    DDB["dynamodb_store.create"]
+
+                    C2 -.leak.-> CSV
+                    C3 -.leak.-> CSV
+                    CSV --> DP
+                    C1 --> DP
+                    C1 -.duplicate.-> PQ
+                    C2 -.duplicate.-> PQ
+                    C3 -.duplicate.-> PQ
+                    PQ -.duplicate.-> S3
+                    PQ -.duplicate.-> ENG
+                    DP -.duplicate.-> PROF
+                    PROF -.duplicate.-> DDB
+
+                    classDef leak stroke:#dc2626,stroke-width:2px;
+                    class CSV,C1,C2,C3 leak;
+                </pre>
+              </div>
+            </div>
+
+            <div class="rounded-lg border border-slate-200 bg-stone-50 p-4 space-y-2">
+              <span class="text-xs uppercase font-semibold tracking-wider text-emerald-700">After: One Deep Ingestion Module</span>
+              <div class="h-80 overflow-hidden flex items-center justify-center bg-white rounded border border-stone-200">
+                <pre class="mermaid">
+                  flowchart TD
+                    subgraph Callers ["API Routes"]
+                      C1["Upload Route"]
+                      C2["DB Ingest Route"]
+                      C3["Sheet Ingest Route"]
+                    end
+
+                    subgraph DeepIngestion ["Deep Module: DatasetIngestion"]
+                      direction TB
+                      INT["Single Interface:\ningest_file() / ingest_records()"]
+                      subgraph Encapsulated ["Hidden Implementation"]
+                        direction LR
+                        P1["Parse / Stream"] --> P2["Parquet Storage"]
+                        P2 --> P3["S3 Durable Sync"]
+                        P2 --> P4["DuckDB Catalog"]
+                        P1 --> P5["Profiling & Schema"]
+                        P5 --> P6["DynamoDB Record"]
+                      end
+                      INT --> Encapsulated
+                    end
+
+                    C1 --> INT
+                    C2 --> INT
+                    C3 --> INT
+
+                    classDef deepModule stroke:#0f172a,stroke-width:2px;
+                    class INT,DeepIngestion deepModule;
+                </pre>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+            <div>
+              <span class="text-xs uppercase font-semibold tracking-wider text-slate-500">Problem</span>
+              <p class="text-sm text-slate-800 mt-1">
+                Three API controllers manually coordinate six shallow modules and temporary CSV disk serialization to ingest data.
+              </p>
+            </div>
+            <div>
+              <span class="text-xs uppercase font-semibold tracking-wider text-slate-500">Solution</span>
+              <p class="text-sm text-slate-800 mt-1">
+                Consolidate parsing, profiling, Parquet persistence, and engine registration behind one deep <code class="text-xs bg-slate-100 px-1 py-0.5 rounded">DatasetIngestion</code> module.
+              </p>
+            </div>
+          </div>
+
+          <div class="border-t border-stone-100 pt-4">
+            <span class="text-xs uppercase font-semibold tracking-wider text-slate-500">Wins</span>
+            <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 mt-2">
+              <li class="text-xs bg-stone-100 text-slate-800 px-3 py-1.5 rounded flex items-center gap-1.5 font-medium">
+                <span class="text-emerald-600">✓</span> Locality: ingestion bugs stay concentrated
+              </li>
+              <li class="text-xs bg-stone-100 text-slate-800 px-3 py-1.5 rounded flex items-center gap-1.5 font-medium">
+                <span class="text-emerald-600">✓</span> Three controllers delete 150 lines
+              </li>
+              <li class="text-xs bg-stone-100 text-slate-800 px-3 py-1.5 rounded flex items-center gap-1.5 font-medium">
+                <span class="text-emerald-600">✓</span> Leverage: one interface for all sources
+              </li>
+              <li class="text-xs bg-stone-100 text-slate-800 px-3 py-1.5 rounded flex items-center gap-1.5 font-medium">
+                <span class="text-emerald-600">✓</span> Eliminates disk CSV intermediate serialization
+              </li>
+            </ul>
+          </div>
+        </article>
+
+        <!-- Candidate 2 -->
+        <article id="candidate-2" class="rounded-xl border border-stone-200 bg-white p-6 md:p-8 space-y-6 shadow-sm">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-stone-100 pb-4">
+            <div>
+              <span class="text-xs font-mono text-slate-400">#2</span>
+              <h3 class="text-2xl font-serif font-bold text-slate-900">
+                Deepen DuckDB Analytics Engine with Self-Hydrating Execution
+              </h3>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                Strong
+              </span>
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700">
+                ports & adapters
+              </span>
+            </div>
+          </div>
+
+          <div class="font-mono text-xs text-slate-500 bg-stone-50 rounded p-2.5 border border-stone-200/60 overflow-x-auto">
+            backend/app/analytics/engine.py • backend/app/core/s3_storage.py • backend/app/api/datasets.py • backend/app/ai/agents/analytics_graph.py • backend/app/ai/agents/dashboard_graph.py
+          </div>
+
+          <!-- Side-by-side Visualisation -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div class="rounded-lg border border-slate-200 bg-stone-50 p-4 space-y-2">
+              <span class="text-xs uppercase font-semibold tracking-wider text-red-700">Before: Manual cache hydration leaks across callers</span>
+              <div class="h-80 overflow-hidden flex items-center justify-center bg-white rounded border border-stone-200">
+                <pre class="mermaid">
+                  sequenceDiagram
+                    autonumber
+                    actor Caller as API / AI Agent
+                    participant S3 as s3_storage
+                    participant ENG as analytics_engine
+                    participant DUCK as DuckDB Process
+
+                    Caller->>S3: ensure_local_cache(path)
+                    Caller->>ENG: register_dataset(table, path)
+                    ENG->>DUCK: CREATE TABLE AS read_parquet()
+                    Caller->>ENG: execute_query(sql, table)
+                    ENG->>DUCK: SELECT * FROM (sql)
+                    DUCK-->>ENG: raw_rows
+                    ENG-->>Caller: clean_rows
+                    Note over Caller,ENG: AI Agent forgets steps 1-2 & crashes!
+                </pre>
+              </div>
+            </div>
+
+            <div class="rounded-lg border border-slate-200 bg-stone-50 p-4 space-y-2">
+              <span class="text-xs uppercase font-semibold tracking-wider text-emerald-700">After: Single Query Interface with Self-Hydration</span>
+              <div class="h-80 overflow-hidden flex items-center justify-center bg-white rounded border border-stone-200">
+                <pre class="mermaid">
+                  sequenceDiagram
+                    autonumber
+                    actor Caller as API / AI Agent
+                    participant ENG as Deep Analytics Engine
+                    participant Cache as Storage Cache
+                    participant DUCK as DuckDB Connection
+
+                    Caller->>ENG: query(dataset_id, sql)
+                    critical Self-Hydration behind Seam
+                      ENG->>Cache: resolve_and_ensure_cached(dataset_id)
+                      ENG->>DUCK: ensure_view_mounted(table, path)
+                    end
+                    ENG->>DUCK: execute_and_sanitize(sql)
+                    DUCK-->>ENG: result_rows
+                    ENG-->>Caller: QueryResult (rows, cols, stats)
+                </pre>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+            <div>
+              <span class="text-xs uppercase font-semibold tracking-wider text-slate-500">Problem</span>
+              <p class="text-sm text-slate-800 mt-1">
+                The analytics engine requires callers to manually orchestrate S3 cache hydration and table registration before querying.
+              </p>
+            </div>
+            <div>
+              <span class="text-xs uppercase font-semibold tracking-wider text-slate-500">Solution</span>
+              <p class="text-sm text-slate-800 mt-1">
+                Deepen the engine module to resolve and hydrate datasets automatically behind a single query interface.
+              </p>
+            </div>
+          </div>
+
+          <div class="border-t border-stone-100 pt-4">
+            <span class="text-xs uppercase font-semibold tracking-wider text-slate-500">Wins</span>
+            <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 mt-2">
+              <li class="text-xs bg-stone-100 text-slate-800 px-3 py-1.5 rounded flex items-center gap-1.5 font-medium">
+                <span class="text-emerald-600">✓</span> Locality: cache synchronization stays internal
+              </li>
+              <li class="text-xs bg-stone-100 text-slate-800 px-3 py-1.5 rounded flex items-center gap-1.5 font-medium">
+                <span class="text-emerald-600">✓</span> Prevents agent cold-start crashes completely
+              </li>
+              <li class="text-xs bg-stone-100 text-slate-800 px-3 py-1.5 rounded flex items-center gap-1.5 font-medium">
+                <span class="text-emerald-600">✓</span> Leverage: one interface for all callers
+              </li>
+              <li class="text-xs bg-stone-100 text-slate-800 px-3 py-1.5 rounded flex items-center gap-1.5 font-medium">
+                <span class="text-emerald-600">✓</span> Tests hit one in-memory seam
+              </li>
+            </ul>
+          </div>
+        </article>
+
+        <!-- Candidate 3 -->
+        <article id="candidate-3" class="rounded-xl border border-stone-200 bg-white p-6 md:p-8 space-y-6 shadow-sm">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-stone-100 pb-4">
+            <div>
+              <span class="text-xs font-mono text-slate-400">#3</span>
+              <h3 class="text-2xl font-serif font-bold text-slate-900">
+                Delete Ghost SQLAlchemy Layer & Clarify Persistence Seam
+              </h3>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                Strong
+              </span>
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700">
+                in-process
+              </span>
+            </div>
+          </div>
+
+          <div class="font-mono text-xs text-slate-500 bg-stone-50 rounded p-2.5 border border-stone-200/60 overflow-x-auto">
+            backend/app/core/database.py • backend/app/models/base.py • backend/app/models/all_models.py • backend/app/main.py • backend/app/core/dynamodb.py
+          </div>
+
+          <!-- Side-by-side Visualisation -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div class="rounded-lg border border-slate-200 bg-stone-50 p-4 space-y-2">
+              <span class="text-xs uppercase font-semibold tracking-wider text-red-700">Before: 500 lines of dead ORM overhead initialized at boot</span>
+              <div class="h-80 overflow-hidden flex items-center justify-center bg-white rounded border border-stone-200">
+                <pre class="mermaid">
+                  flowchart TD
+                    Boot["FastAPI main.py Lifespan"]
+                    Boot -.boots dead connection.-> DB["app.core.database.engine"]
+                    DB -.runs DDL.-> Ghost["SQLAlchemy all_models (500 lines)"]
+                    Ghost -.0 callers.-> X["Unused SQLite DB file"]
+
+                    API["API Routes"] --> DDB["dynamodb_store (Active Store)"]
+                    DDB --> DTable["AWS DynamoDB Single-Table"]
+
+                    classDef leak stroke:#dc2626,stroke-width:2px;
+                    class DB,Ghost,X leak;
+                </pre>
+              </div>
+            </div>
+
+            <div class="rounded-lg border border-slate-200 bg-stone-50 p-4 space-y-2">
+              <span class="text-xs uppercase font-semibold tracking-wider text-emerald-700">After: Deletion test leaves one unambiguous repository seam</span>
+              <div class="h-80 overflow-hidden flex items-center justify-center bg-white rounded border border-stone-200">
+                <pre class="mermaid">
+                  flowchart TD
+                    Boot["FastAPI main.py Lifespan"] --> DDB
+                    API["API Routes"] --> Schemas["Pydantic Schemas (all_schemas.py)"]
+                    Schemas --> DDB["Deep Persistence Seam: DataStore"]
+                    DDB --> Prod["AWS DynamoDB Adapter"]
+                    DDB -.tests.-> Mock["In-Memory Store Adapter"]
+
+                    classDef deepModule stroke:#0f172a,stroke-width:2px;
+                    class DDB,Schemas deepModule;
+                </pre>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+            <div>
+              <span class="text-xs uppercase font-semibold tracking-wider text-slate-500">Problem</span>
+              <p class="text-sm text-slate-800 mt-1">
+                Five hundred lines of unused SQLAlchemy models and connection pooling boot on every startup despite migration to DynamoDB.
+              </p>
+            </div>
+            <div>
+              <span class="text-xs uppercase font-semibold tracking-wider text-slate-500">Solution</span>
+              <p class="text-sm text-slate-800 mt-1">
+                Delete the dead SQLAlchemy module tree and establish DynamoDB as the unambiguous persistence implementation.
+              </p>
+            </div>
+          </div>
+
+          <div class="border-t border-stone-100 pt-4">
+            <span class="text-xs uppercase font-semibold tracking-wider text-slate-500">Wins</span>
+            <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 mt-2">
+              <li class="text-xs bg-stone-100 text-slate-800 px-3 py-1.5 rounded flex items-center gap-1.5 font-medium">
+                <span class="text-emerald-600">✓</span> Deletion test: 500 dead lines deleted
+              </li>
+              <li class="text-xs bg-stone-100 text-slate-800 px-3 py-1.5 rounded flex items-center gap-1.5 font-medium">
+                <span class="text-emerald-600">✓</span> Startup speed: cold starts drop latency
+              </li>
+              <li class="text-xs bg-stone-100 text-slate-800 px-3 py-1.5 rounded flex items-center gap-1.5 font-medium">
+                <span class="text-emerald-600">✓</span> Seam clarity: Pydantic schemas define entities
+              </li>
+              <li class="text-xs bg-stone-100 text-slate-800 px-3 py-1.5 rounded flex items-center gap-1.5 font-medium">
+                <span class="text-emerald-600">✓</span> Locality: eliminates dual-model schema confusion
+              </li>
+            </ul>
+          </div>
+        </article>
+
+        <!-- Candidate 4 -->
+        <article id="candidate-4" class="rounded-xl border border-stone-200 bg-white p-6 md:p-8 space-y-6 shadow-sm">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-stone-100 pb-4">
+            <div>
+              <span class="text-xs font-mono text-slate-400">#4</span>
+              <h3 class="text-2xl font-serif font-bold text-slate-900">
+                Extract Explicit Backend Adapters in Frontend Client
+              </h3>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                Worth exploring
+              </span>
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700">
+                local-substitutable
+              </span>
+            </div>
+          </div>
+
+          <div class="font-mono text-xs text-slate-500 bg-stone-50 rounded p-2.5 border border-stone-200/60 overflow-x-auto">
+            frontend/src/services/api.ts • frontend/src/services/browserStore.ts • frontend/src/services/duckdbWasm.ts • frontend/src/services/browserAi.ts
+          </div>
+
+          <!-- Side-by-side Visualisation -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div class="rounded-lg border border-slate-200 bg-stone-50 p-4 space-y-2">
+              <span class="text-xs uppercase font-semibold tracking-wider text-red-700">Before: 890-line client monolith with branching fallbacks</span>
+              <div class="h-80 overflow-hidden flex items-center justify-center bg-white rounded border border-stone-200">
+                <pre class="mermaid">
+                  flowchart TD
+                    UI["React UI Pages"] --> Client["ApiClient Monolith (890 lines)"]
+                    Client -.try.-> HTTP["fetch('/api/...')"]
+                    Client -.catch fallback.-> WASM["duckdbWasm.query()"]
+                    Client -.catch fallback.-> BStore["browserStore.save()"]
+                    Client -.catch fallback.-> BAI["browserAi.chat()"]
+                    Client -.catch fallback.-> XLSX["xlsx.sheet_to_csv()"]
+
+                    classDef leak stroke:#dc2626,stroke-width:2px;
+                    class Client leak;
+                </pre>
+              </div>
+            </div>
+
+            <div class="rounded-lg border border-slate-200 bg-stone-50 p-4 space-y-2">
+              <span class="text-xs uppercase font-semibold tracking-wider text-emerald-700">After: Two real adapters behind one BackendClient seam</span>
+              <div class="h-80 overflow-hidden flex items-center justify-center bg-white rounded border border-stone-200">
+                <pre class="mermaid">
+                  flowchart TD
+                    UI["React UI Pages"] --> Seam["BackendClient Interface"]
+                    Seam -->|Network Mode| Remote["HttpBackendAdapter"]
+                    Seam -->|Demo / Offline Mode| Local["BrowserWasmBackendAdapter"]
+                    Remote --> HTTP["FastAPI REST API"]
+                    Local --> InBrowser["DuckDB-Wasm + IndexedDB"]
+
+                    classDef deepModule stroke:#0f172a,stroke-width:2px;
+                    class Seam deepModule;
+                </pre>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+            <div>
+              <span class="text-xs uppercase font-semibold tracking-wider text-slate-500">Problem</span>
+              <p class="text-sm text-slate-800 mt-1">
+                An 890-line client monolith interweaves network calls and browser-WASM fallbacks inside dozens of nested try/catches.
+              </p>
+            </div>
+            <div>
+              <span class="text-xs uppercase font-semibold tracking-wider text-slate-500">Solution</span>
+              <p class="text-sm text-slate-800 mt-1">
+                Introduce an explicit backend seam with separate HTTP and browser-WASM adapter implementations.
+              </p>
+            </div>
+          </div>
+
+          <div class="border-t border-stone-100 pt-4">
+            <span class="text-xs uppercase font-semibold tracking-wider text-slate-500">Wins</span>
+            <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 mt-2">
+              <li class="text-xs bg-stone-100 text-slate-800 px-3 py-1.5 rounded flex items-center gap-1.5 font-medium">
+                <span class="text-emerald-600">✓</span> Two real adapters justify seam
+              </li>
+              <li class="text-xs bg-stone-100 text-slate-800 px-3 py-1.5 rounded flex items-center gap-1.5 font-medium">
+                <span class="text-emerald-600">✓</span> Client sheds fallback branching
+              </li>
+              <li class="text-xs bg-stone-100 text-slate-800 px-3 py-1.5 rounded flex items-center gap-1.5 font-medium">
+                <span class="text-emerald-600">✓</span> Network logic separated from WASM
+              </li>
+              <li class="text-xs bg-stone-100 text-slate-800 px-3 py-1.5 rounded flex items-center gap-1.5 font-medium">
+                <span class="text-emerald-600">✓</span> Testable: mock adapter swaps without fetch
+              </li>
+            </ul>
+          </div>
+        </article>
+
+      </section>
+    </main>
+  </body>
+</html>

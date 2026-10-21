@@ -250,7 +250,15 @@ class DynamoDBService:
     def get_workspace_by_id(self, workspace_id: str) -> Optional[Dict[str, Any]]:
         res = self.table.get_item(Key={"PK": f"WS#{workspace_id}", "SK": "METADATA"})
         item = res.get("Item")
-        return _from_dynamo(item) if item else None
+        if not item:
+            return None
+        ws = _from_dynamo(item)
+        # Ensure workspace always has a cryptographically unique External ID for BYOC AssumeRole
+        if not ws.get("external_id"):
+            import uuid
+            ws["external_id"] = f"aa_ws_{uuid.uuid4().hex}"
+            self.table.put_item(Item=_to_dynamo(ws))
+        return ws
 
     def get_workspace_by_slug(self, slug: str) -> Optional[Dict[str, Any]]:
         res = self.table.query(
@@ -258,11 +266,21 @@ class DynamoDBService:
             KeyConditionExpression=Key("GSI1_PK").eq(f"SLUG#{slug}")
         )
         items = res.get("Items", [])
-        return _from_dynamo(items[0]) if items else None
+        if not items:
+            return None
+        ws = _from_dynamo(items[0])
+        if not ws.get("external_id"):
+            import uuid
+            ws["external_id"] = f"aa_ws_{uuid.uuid4().hex}"
+            self.table.put_item(Item=_to_dynamo(ws))
+        return ws
 
     def create_workspace(self, ws: Dict[str, Any]) -> Dict[str, Any]:
+        import uuid
+        external_id = ws.get("external_id") or f"aa_ws_{uuid.uuid4().hex}"
         item = {
             **ws,
+            "external_id": external_id,
             "PK": f"WS#{ws['id']}",
             "SK": "METADATA",
             "GSI1_PK": f"SLUG#{ws['slug']}",
@@ -270,6 +288,18 @@ class DynamoDBService:
             "entity_type": "WORKSPACE",
         }
         dynamo_item = _to_dynamo({k: v for k, v in item.items() if v is not None})
+        self.table.put_item(Item=dynamo_item)
+        return _from_dynamo(dynamo_item)
+
+    def update_workspace_storage_config(self, workspace_id: str, config: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        ws = self.get_workspace_by_id(workspace_id)
+        if not ws:
+            return None
+        from datetime import datetime, timezone
+        now = datetime.now(timezone.utc).isoformat()
+        ws["cloud_storage_config"] = config
+        ws["updated_at"] = now
+        dynamo_item = _to_dynamo({k: v for k, v in ws.items() if v is not None})
         self.table.put_item(Item=dynamo_item)
         return _from_dynamo(dynamo_item)
 

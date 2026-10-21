@@ -18,7 +18,6 @@ from app.schemas.all_schemas import (
 )
 from app.api.deps import get_current_user, get_current_workspace, ItemObject
 from app.ai.providers.factory import get_chat_model_for_config
-from app.ai.agents.dashboard_graph import DashboardGeneratorWorkflow
 from app.analytics.engine import analytics_engine
 
 router = APIRouter(prefix="/dashboards", tags=["Dashboards"])
@@ -328,14 +327,16 @@ def generate_ai_dashboard(
         except Exception:
             chat_model = None
 
-    # Ensure dataset is loaded in DuckDB
-    local_path = s3_storage.ensure_local_cache(dataset.get("file_path", ""))
+    # Ensure dataset is loaded in DuckDB (Platform or BYOC)
+    storage = s3_storage.for_workspace(dataset.get("workspace_id"))
+    local_path = storage.ensure_local_cache(dataset.get("file_path", ""))
     analytics_engine.register_dataset(dataset["duckdb_table_name"], local_path, "parquet")
 
     columns = dataset.get("columns", [])
     schema_list = [{"name": c["name"], "data_type": c.get("data_type", "categorical")} for c in columns]
 
     # Run AI Dashboard Generator
+    from app.ai.agents.dashboard_graph import DashboardGeneratorWorkflow
     workflow = DashboardGeneratorWorkflow(llm=chat_model)
     generated = workflow.generate_dashboard(
         table_name=dataset["duckdb_table_name"],

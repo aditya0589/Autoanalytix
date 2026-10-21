@@ -226,8 +226,8 @@ autoanalytix.db
 *.sqlite3
 *.duckdb
 *.parquet
-storage/
-backend/storage/
+/storage/
+/backend/storage/
 
 # Deployment & Source Archives
 backend_source.zip
