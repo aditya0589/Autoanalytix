@@ -25,6 +25,7 @@ import {
   AlertTriangle,
   Info,
 } from "lucide-react";
+import { AwsLogo, GcpLogo, AzureLogo } from "../components/icons/CloudLogos";
 
 interface StorageConfig {
   mode: string;
@@ -424,28 +425,28 @@ export const CloudStorageSettings: React.FC = () => {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-                <div className="p-3.5 rounded-xl border border-indigo-600 dark:border-indigo-500 bg-indigo-50/40 dark:bg-indigo-950/20 flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-[#FF9900]/10 flex items-center justify-center font-bold text-xs text-[#FF9900]">
-                    AWS
+                <div className="p-3.5 rounded-xl border border-indigo-600 dark:border-indigo-500 bg-indigo-50/40 dark:bg-indigo-950/20 flex items-center gap-3 shadow-xs">
+                  <div className="w-10 h-10 rounded-xl bg-white dark:bg-white/[0.06] border border-indigo-200 dark:border-indigo-800/60 flex items-center justify-center p-1.5 shadow-xs shrink-0">
+                    <AwsLogo className="w-7 h-7 text-[#232F3E] dark:text-white" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="font-semibold text-xs text-slate-900 dark:text-white">
-                      Amazon S3
+                    <div className="font-bold text-xs text-slate-900 dark:text-white flex items-center gap-1.5">
+                      AWS
                     </div>
                     <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
                       Production Ready
                     </div>
                   </div>
-                  <CheckCircle2 className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                  <CheckCircle2 className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
                 </div>
 
-                <div className="p-3.5 rounded-xl border border-dashed border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-white/[0.02] flex items-center gap-3 opacity-60">
-                  <div className="w-8 h-8 rounded-lg bg-[#4285F4]/10 flex items-center justify-center font-bold text-xs text-[#4285F4]">
-                    GCP
+                <div className="p-3.5 rounded-xl border border-dashed border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-white/[0.02] flex items-center gap-3 opacity-75">
+                  <div className="w-10 h-10 rounded-xl bg-white dark:bg-white/[0.06] border border-slate-200 dark:border-white/[0.08] flex items-center justify-center p-1.5 shadow-xs shrink-0">
+                    <GcpLogo className="w-6 h-6" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="font-semibold text-xs text-slate-800 dark:text-slate-300">
-                      Cloud Storage
+                    <div className="font-bold text-xs text-slate-800 dark:text-slate-300">
+                      GCP
                     </div>
                     <div className="text-[10px] text-slate-400 font-medium">
                       Phase 2 (Roadmap)
@@ -453,13 +454,13 @@ export const CloudStorageSettings: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="p-3.5 rounded-xl border border-dashed border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-white/[0.02] flex items-center gap-3 opacity-60">
-                  <div className="w-8 h-8 rounded-lg bg-[#0089D6]/10 flex items-center justify-center font-bold text-xs text-[#0089D6]">
-                    AZ
+                <div className="p-3.5 rounded-xl border border-dashed border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-white/[0.02] flex items-center gap-3 opacity-75">
+                  <div className="w-10 h-10 rounded-xl bg-white dark:bg-white/[0.06] border border-slate-200 dark:border-white/[0.08] flex items-center justify-center p-1.5 shadow-xs shrink-0">
+                    <AzureLogo className="w-6 h-6" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="font-semibold text-xs text-slate-800 dark:text-slate-300">
-                      Azure Blob
+                    <div className="font-bold text-xs text-slate-800 dark:text-slate-300">
+                      Azure
                     </div>
                     <div className="text-[10px] text-slate-400 font-medium">
                       Phase 3 (Roadmap)

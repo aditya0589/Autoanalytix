@@ -4,6 +4,7 @@ import {
   Sparkles,
   BarChart3,
   ShieldCheck,
+  Shield,
   Zap,
   ArrowRight,
   Database,
@@ -29,7 +30,8 @@ import {
   Play,
   ArrowUpRight,
   Code2,
-  FileCheck
+  FileCheck,
+  FileCode,
 } from "lucide-react";
 import { useThemeStore } from "../stores/useThemeStore";
 import {
@@ -41,6 +43,7 @@ import {
   SQLiteLogo,
   GoogleSheetsLogo,
 } from "../components/icons/DatabaseLogos";
+import { AwsLogo, GcpLogo, AzureLogo } from "../components/icons/CloudLogos";
 
 export const IntroPage: React.FC = () => {
   const { isDark, toggleTheme } = useThemeStore();
@@ -73,25 +76,25 @@ export const IntroPage: React.FC = () => {
             </div>
           </div>
 
-          <nav className="hidden md:flex items-center space-x-8 text-xs font-semibold text-slate-600 dark:text-slate-300">
+          <nav className="hidden lg:flex items-center space-x-6 text-xs font-semibold text-slate-600 dark:text-slate-300">
             <a href="#features" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
               Capabilities
             </a>
-            <a href="#connectors" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center gap-1.5">
+            <a href="#connectors" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
               Connectors
-              <span className="text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.2 rounded-md bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-                Live
+            </a>
+            <a href="#byoc" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center gap-1.5">
+              BYOC Storage
+              <span className="text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.2 rounded-md bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                New
               </span>
             </a>
-            <a href="#workspace" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center gap-1">
-              Google Workspace & MCP
+            <a href="#workspace" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center gap-1.5">
+              Workspace MCP
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
             </a>
-            <a href="#how-it-works" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-              How It Works
-            </a>
             <a href="#security" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-              Security & BYOK
+              Security
             </a>
             <a href="#faq" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
               FAQ
@@ -133,14 +136,14 @@ export const IntroPage: React.FC = () => {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center text-center">
           {/* Badge */}
-          <div className="inline-flex items-center space-x-2.5 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/80 dark:to-indigo-950/80 border border-blue-200/80 dark:border-blue-800/80 text-blue-700 dark:text-blue-300 px-4 py-1.5 rounded-full text-xs font-semibold shadow-xs mb-8">
+          <div className="inline-flex items-center space-x-2.5 bg-gradient-to-r from-emerald-50 via-blue-50 to-indigo-50 dark:from-emerald-950/60 dark:via-blue-950/60 dark:to-indigo-950/60 border border-emerald-200/80 dark:border-emerald-800/80 text-emerald-800 dark:text-emerald-300 px-4 py-1.5 rounded-full text-xs font-semibold shadow-xs mb-8">
             <span className="flex h-2 w-2 relative">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
             </span>
-            <span className="font-bold">Next-Gen Analytics Engine</span>
-            <span className="text-blue-400 dark:text-blue-500">•</span>
-            <span>Google Workspace MCP + In-Process DuckDB</span>
+            <span className="font-bold text-slate-900 dark:text-white">New: Zero-Data-at-Rest BYOC Storage</span>
+            <span className="text-slate-400 dark:text-slate-600">•</span>
+            <span>AWS S3 Live + Google Workspace MCP</span>
           </div>
 
           {/* Headline */}
@@ -177,11 +180,23 @@ export const IntroPage: React.FC = () => {
           {/* Ecosystem / Integrations Bar */}
           <div className="w-full max-w-5xl pt-4 pb-12 border-t border-slate-200/80 dark:border-slate-800/80">
             <p className="text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-6">
-              Connects seamlessly across your data &amp; intelligence stack
+              Connects seamlessly across your data &amp; multi-cloud storage stack
             </p>
             <div className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-3.5 text-xs font-semibold text-slate-700 dark:text-slate-200">
-              <span className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs hover:border-[#E05243]/40 transition-all">
-                <S3Logo className="w-4 h-4" /> Amazon S3
+              <span className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 border border-indigo-500/40 shadow-xs hover:border-indigo-500 transition-all">
+                <AwsLogo className="w-4 h-4 text-slate-900 dark:text-white" />
+                <span>AWS</span>
+                <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                  BYOC Live
+                </span>
+              </span>
+              <span className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs hover:border-[#4285F4]/40 transition-all opacity-85">
+                <GcpLogo className="w-4 h-4" />
+                <span>GCP</span>
+              </span>
+              <span className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs hover:border-[#0078D4]/40 transition-all opacity-85">
+                <AzureLogo className="w-4 h-4" />
+                <span>Azure</span>
               </span>
               <span className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs hover:border-[#FF3621]/40 transition-all">
                 <DatabricksLogo className="w-4 h-4" /> Databricks
@@ -190,7 +205,7 @@ export const IntroPage: React.FC = () => {
                 <SnowflakeLogo className="w-4 h-4" /> Snowflake
               </span>
               <span className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs hover:border-[#4386fa]/40 transition-all">
-                <BigQueryLogo className="w-4 h-4" /> Google BigQuery
+                <BigQueryLogo className="w-4 h-4" /> BigQuery
               </span>
               <span className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs hover:border-[#336791]/40 transition-all">
                 <PostgresLogo className="w-4 h-4" /> PostgreSQL
@@ -198,11 +213,8 @@ export const IntroPage: React.FC = () => {
               <span className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs hover:border-[#0F9D58]/40 transition-all">
                 <GoogleSheetsLogo className="w-4 h-4" /> Google Sheets
               </span>
-              <span className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs hover:border-[#0f80cc]/40 transition-all">
-                <SQLiteLogo className="w-4 h-4" /> SQLite
-              </span>
               <span className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs hover:border-amber-400/40 transition-all">
-                <Database className="w-4 h-4 text-amber-500" /> DuckDB Engine
+                <Database className="w-4 h-4 text-amber-500" /> DuckDB
               </span>
             </div>
           </div>
@@ -943,6 +955,224 @@ export const IntroPage: React.FC = () => {
         </div>
       </section>
 
+      {/* Deep-Dive: Bring Your Own Cloud (BYOC) Section */}
+      <section id="byoc" className="py-20 border-t border-slate-200 dark:border-slate-800 bg-slate-100/50 dark:bg-slate-900/40 relative overflow-hidden">
+        {/* Glow ambient */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-7xl h-96 bg-gradient-to-r from-emerald-500/5 via-indigo-500/5 to-blue-500/5 blur-3xl pointer-events-none -z-10" />
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+          {/* Header */}
+          <div className="text-center max-w-3xl mx-auto space-y-4">
+            <div className="inline-flex items-center space-x-2 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 px-3.5 py-1.5 rounded-full text-xs font-bold tracking-wide">
+              <Shield className="w-3.5 h-3.5" />
+              <span>NEW ENTERPRISE FEATURE</span>
+              <span>•</span>
+              <span>ZERO-DATA-AT-REST ARCHITECTURE</span>
+            </div>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 dark:text-white tracking-tight">
+              Bring Your Own Cloud (BYOC)
+            </h2>
+            <p className="text-base text-slate-600 dark:text-slate-300 leading-relaxed max-w-2xl mx-auto">
+              Retain 100% data sovereignty. Store your datasets, Parquet analytical partitions, and caches in your own AWS S3 bucket. Autoanalytix never stores customer data at rest.
+            </p>
+          </div>
+
+          {/* 3 Cloud Provider Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
+            {/* AWS Card */}
+            <div className="p-7 rounded-3xl bg-white dark:bg-slate-900 border border-indigo-500/50 dark:border-indigo-500/40 ring-1 ring-indigo-500/20 shadow-lg shadow-indigo-500/5 flex flex-col justify-between space-y-6 relative group transition-all">
+              <div className="space-y-5">
+                <div className="flex items-center justify-between">
+                  <div className="w-12 h-12 rounded-2xl bg-white dark:bg-white/[0.06] border border-indigo-200 dark:border-indigo-800/60 flex items-center justify-center p-2 shadow-xs">
+                    <AwsLogo className="w-8 h-8 text-[#232F3E] dark:text-white" />
+                  </div>
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[11px] font-bold">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    Production Ready
+                  </span>
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    AWS
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/50">
+                      S3 Storage
+                    </span>
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed">
+                    Store 100% of your data inside your own AWS S3 bucket. Scoped cross-account IAM role assumption via STS with unique External ID protection.
+                  </p>
+                </div>
+
+                <div className="space-y-2.5 pt-2 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-300">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                    <span>STS AssumeRole (Zero static AWS keys)</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                    <span>Workspace External ID Confused Deputy Guard</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                    <span>1-Click AWS CloudFormation Quick Launch</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                    <span>Customer-Managed KMS CMK encryption</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5" /> 4-Step Probe Verified
+                </span>
+                <Link
+                  to="/settings/cloud-storage"
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
+                >
+                  Configure AWS <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+            </div>
+
+            {/* GCP Card */}
+            <div className="p-7 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between space-y-6 relative group hover:border-slate-300 dark:hover:border-slate-700 transition-all">
+              <div className="space-y-5">
+                <div className="flex items-center justify-between">
+                  <div className="w-12 h-12 rounded-2xl bg-white dark:bg-white/[0.06] border border-slate-200 dark:border-white/[0.08] flex items-center justify-center p-2 shadow-xs">
+                    <GcpLogo className="w-8 h-8" />
+                  </div>
+                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-slate-100 dark:bg-white/[0.06] text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-white/[0.08] text-[11px] font-medium">
+                    Phase 2 Roadmap
+                  </span>
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    GCP
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500">
+                      Cloud Storage
+                    </span>
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed">
+                    Google Cloud Storage bucket integration with Workload Identity Federation and BigQuery storage tiering.
+                  </p>
+                </div>
+
+                <div className="space-y-2.5 pt-2 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-300">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-blue-500 shrink-0" />
+                    <span>Workload Identity Federation (Keyless)</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-blue-500 shrink-0" />
+                    <span>Customer-Managed Encryption Keys (CMEK)</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-blue-500 shrink-0" />
+                    <span>Direct BigQuery Lakehouse Parquet sharing</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-blue-500 shrink-0" />
+                    <span>Multi-Region Google Cloud Storage</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500">
+                <span>Google Cloud SDK</span>
+                <span className="font-medium">Target: Q4 2026</span>
+              </div>
+            </div>
+
+            {/* Azure Card */}
+            <div className="p-7 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between space-y-6 relative group hover:border-slate-300 dark:hover:border-slate-700 transition-all">
+              <div className="space-y-5">
+                <div className="flex items-center justify-between">
+                  <div className="w-12 h-12 rounded-2xl bg-white dark:bg-white/[0.06] border border-slate-200 dark:border-white/[0.08] flex items-center justify-center p-2 shadow-xs">
+                    <AzureLogo className="w-8 h-8" />
+                  </div>
+                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-slate-100 dark:bg-white/[0.06] text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-white/[0.08] text-[11px] font-medium">
+                    Phase 3 Roadmap
+                  </span>
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    Azure
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500">
+                      Blob Storage
+                    </span>
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed">
+                    Azure Blob Container integration powered by Microsoft Entra ID Managed Identities and Azure Key Vault.
+                  </p>
+                </div>
+
+                <div className="space-y-2.5 pt-2 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-300">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-sky-500 shrink-0" />
+                    <span>Microsoft Entra ID Managed Identities</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-sky-500 shrink-0" />
+                    <span>Azure Key Vault Customer-Managed Keys</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-sky-500 shrink-0" />
+                    <span>Azure Data Lake Storage Gen2 Native</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-sky-500 shrink-0" />
+                    <span>Granular Shared Access Signatures (SAS)</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500">
+                <span>Microsoft Entra ID</span>
+                <span className="font-medium">Target: Q1 2027</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Architecture Banner */}
+          <div className="p-8 rounded-3xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white border border-indigo-900/40 shadow-xl flex flex-col lg:flex-row items-center justify-between gap-8">
+            <div className="space-y-3 max-w-2xl">
+              <div className="inline-flex items-center gap-2 text-xs font-bold text-indigo-400 uppercase tracking-wider">
+                <Lock className="w-4 h-4 text-indigo-400" />
+                <span>Enterprise Privacy Guarantee</span>
+              </div>
+              <h4 className="text-2xl font-bold tracking-tight">
+                Zero Data At Rest on Autoanalytix Infrastructure
+              </h4>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                When BYOC mode is enabled, your data never lands in our multi-tenant databases or shared S3 buckets. Ingestion pipelines stream directly into your bucket, DuckDB instances cache temporary parquet partitions scoped to execution life cycles, and customer access can be revoked instantly from your AWS IAM console at any second.
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0 w-full lg:w-auto">
+              <Link
+                to="/register"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white font-bold text-xs px-6 py-3.5 rounded-xl shadow-lg shadow-indigo-500/25 transition-all hover:scale-[1.02]"
+              >
+                <span>Deploy Free BYOC Workspace</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+              <Link
+                to="/settings/cloud-storage"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/15 border border-white/20 text-white font-semibold text-xs px-5 py-3.5 rounded-xl transition-colors"
+              >
+                <FileCode className="w-4 h-4 text-indigo-300" />
+                <span>View IAM Template</span>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Deep-Dive: Google Workspace & MCP Section */}
       <section id="workspace" className="py-20 border-t border-slate-200 dark:border-slate-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -1149,6 +1379,10 @@ export const IntroPage: React.FC = () => {
               {
                 q: "What AI providers can I use with Bring Your Own Key (BYOK)?",
                 a: "You can use Google Gemini (Gemini 2.5 Flash / Pro, 1.5 Pro), OpenAI (GPT-4o, GPT-4o-mini), Anthropic Claude (Claude 3.5 Sonnet), Groq (Llama 3.3 70B), or OpenRouter. You pay zero inference markup to us—tokens are billed directly to your own provider account."
+              },
+              {
+                q: "What is Bring Your Own Cloud (BYOC) storage and how does it protect my company data?",
+                a: "BYOC allows your organization to store 100% of uploaded datasets, parquet analytics caches, and schemas inside your own AWS S3 bucket (with GCP Cloud Storage and Azure Blob Storage on roadmap). Autoanalytix connects using cross-account IAM role assumption (sts:AssumeRole) scoped to your unique workspace ExternalId, meaning we never store static AWS access keys, and you retain complete data sovereignty with zero data retained at rest on our servers."
               },
               {
                 q: "Can I share dashboards with teammates or clients who don't have an account?",
