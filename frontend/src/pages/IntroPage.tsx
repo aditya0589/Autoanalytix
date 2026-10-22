@@ -143,7 +143,7 @@ export const IntroPage: React.FC = () => {
             </span>
             <span className="font-bold text-slate-900 dark:text-white">New: Zero-Data-at-Rest BYOC Storage</span>
             <span className="text-slate-400 dark:text-slate-600">•</span>
-            <span>AWS S3 Live + Google Workspace MCP</span>
+            <span>AWS S3, GCP &amp; Azure BYOC Live + Google Workspace MCP</span>
           </div>
 
           {/* Headline */}
@@ -190,13 +190,19 @@ export const IntroPage: React.FC = () => {
                   BYOC Live
                 </span>
               </span>
-              <span className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs hover:border-[#4285F4]/40 transition-all opacity-85">
+              <span className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 border border-indigo-500/40 shadow-xs hover:border-indigo-500 transition-all">
                 <GcpLogo className="w-4 h-4" />
                 <span>GCP</span>
+                <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                  BYOC Live
+                </span>
               </span>
-              <span className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs hover:border-[#0078D4]/40 transition-all opacity-85">
+              <span className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 border border-indigo-500/40 shadow-xs hover:border-indigo-500 transition-all">
                 <AzureLogo className="w-4 h-4" />
                 <span>Azure</span>
+                <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                  BYOC Live
+                </span>
               </span>
               <span className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs hover:border-[#FF3621]/40 transition-all">
                 <DatabricksLogo className="w-4 h-4" /> Databricks
@@ -973,7 +979,7 @@ export const IntroPage: React.FC = () => {
               Bring Your Own Cloud (BYOC)
             </h2>
             <p className="text-base text-slate-600 dark:text-slate-300 leading-relaxed max-w-2xl mx-auto">
-              Retain 100% data sovereignty. Store your datasets, Parquet analytical partitions, and caches in your own AWS S3 bucket. Autoanalytix never stores customer data at rest.
+              Retain 100% data sovereignty. Store your datasets, Parquet analytical partitions, and caches in your own AWS S3, Google Cloud Storage, or Azure Blob bucket. Autoanalytix never stores customer data at rest.
             </p>
           </div>
 
@@ -1038,102 +1044,118 @@ export const IntroPage: React.FC = () => {
             </div>
 
             {/* GCP Card */}
-            <div className="p-7 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between space-y-6 relative group hover:border-slate-300 dark:hover:border-slate-700 transition-all">
+            <div className="p-7 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-emerald-500/50 dark:hover:border-emerald-500/40 shadow-md flex flex-col justify-between space-y-6 relative group transition-all">
               <div className="space-y-5">
                 <div className="flex items-center justify-between">
                   <div className="w-12 h-12 rounded-2xl bg-white dark:bg-white/[0.06] border border-slate-200 dark:border-white/[0.08] flex items-center justify-center p-2 shadow-xs">
                     <GcpLogo className="w-8 h-8" />
                   </div>
-                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-slate-100 dark:bg-white/[0.06] text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-white/[0.08] text-[11px] font-medium">
-                    Phase 2 Roadmap
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[11px] font-bold">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    Production Ready
                   </span>
                 </div>
 
                 <div>
                   <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                    GCP
-                    <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500">
-                      Cloud Storage
+                    Google Cloud
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50">
+                      GCS Storage
                     </span>
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed">
-                    Google Cloud Storage bucket integration with Workload Identity Federation and BigQuery storage tiering.
+                    Store 100% of your data inside your own Google Cloud Storage bucket. Scoped Service Account delegation with 1-click gcloud &amp; Terraform automation.
                   </p>
                 </div>
 
                 <div className="space-y-2.5 pt-2 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-300">
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-blue-500 shrink-0" />
-                    <span>Workload Identity Federation (Keyless)</span>
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                    <span>Scoped Service Account Object Admin</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-blue-500 shrink-0" />
-                    <span>Customer-Managed Encryption Keys (CMEK)</span>
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                    <span>Workspace External ID Tenant Isolation</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-blue-500 shrink-0" />
-                    <span>Direct BigQuery Lakehouse Parquet sharing</span>
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                    <span>1-Click gcloud CLI &amp; Terraform Setup Scripts</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-blue-500 shrink-0" />
-                    <span>Multi-Region Google Cloud Storage</span>
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                    <span>Multi-Region Google Cloud Storage Residency</span>
                   </div>
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500">
-                <span>Google Cloud SDK</span>
-                <span className="font-medium">Target: Q4 2026</span>
+              <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5" /> 4-Step Probe Verified
+                </span>
+                <Link
+                  to="/settings/cloud-storage"
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
+                >
+                  Configure GCP <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
               </div>
             </div>
 
             {/* Azure Card */}
-            <div className="p-7 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between space-y-6 relative group hover:border-slate-300 dark:hover:border-slate-700 transition-all">
+            <div className="p-7 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-sky-500/50 dark:hover:border-sky-500/40 shadow-md flex flex-col justify-between space-y-6 relative group transition-all">
               <div className="space-y-5">
                 <div className="flex items-center justify-between">
                   <div className="w-12 h-12 rounded-2xl bg-white dark:bg-white/[0.06] border border-slate-200 dark:border-white/[0.08] flex items-center justify-center p-2 shadow-xs">
                     <AzureLogo className="w-8 h-8" />
                   </div>
-                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-slate-100 dark:bg-white/[0.06] text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-white/[0.08] text-[11px] font-medium">
-                    Phase 3 Roadmap
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[11px] font-bold">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    Production Ready
                   </span>
                 </div>
 
                 <div>
                   <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                    Azure
-                    <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500">
+                    Microsoft Azure
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 border border-sky-200 dark:border-sky-800/50">
                       Blob Storage
                     </span>
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed">
-                    Azure Blob Container integration powered by Microsoft Entra ID Managed Identities and Azure Key Vault.
+                    Azure Blob Container integration with zero master secrets. Granular 1-year SAS token delegation (racwdl) and 1-click Azure CLI generation.
                   </p>
                 </div>
 
                 <div className="space-y-2.5 pt-2 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-300">
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-sky-500 shrink-0" />
-                    <span>Microsoft Entra ID Managed Identities</span>
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                    <span>Zero Master Key / Container-Scoped SAS</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-sky-500 shrink-0" />
-                    <span>Azure Key Vault Customer-Managed Keys</span>
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                    <span>Workspace External ID Tenant Isolation</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-sky-500 shrink-0" />
-                    <span>Azure Data Lake Storage Gen2 Native</span>
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                    <span>1-Click Azure CLI Container Setup Command</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-sky-500 shrink-0" />
-                    <span>Granular Shared Access Signatures (SAS)</span>
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                    <span>Azure Data Lake Gen2 &amp; Blob Hot/Cold Tiering</span>
                   </div>
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500">
-                <span>Microsoft Entra ID</span>
-                <span className="font-medium">Target: Q1 2027</span>
+              <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5" /> 4-Step Probe Verified
+                </span>
+                <Link
+                  to="/settings/cloud-storage"
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
+                >
+                  Configure Azure <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
               </div>
             </div>
           </div>

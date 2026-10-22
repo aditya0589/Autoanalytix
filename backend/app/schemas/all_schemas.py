@@ -44,21 +44,51 @@ class WorkspaceResponse(BaseModel):
 
 # --- Cloud Storage (BYOC / BYOS) Schemas ---
 class CloudStorageConfigUpdate(BaseModel):
-    provider: str = "PLATFORM_DEFAULT"  # PLATFORM_DEFAULT, AWS_S3, GCS, AZURE_BLOB
+    provider: str = "PLATFORM_DEFAULT"  # PLATFORM_DEFAULT, AWS_S3, GCP_GCS, AZURE_BLOB
+    # AWS fields
     bucket_name: Optional[str] = None
     region: Optional[str] = "us-east-1"
     role_arn: Optional[str] = None
     prefix: Optional[str] = "autoanalytix"
     kms_key_arn: Optional[str] = None
+    # GCP fields
+    gcp_project_id: Optional[str] = None
+    gcp_bucket_name: Optional[str] = None
+    gcp_credentials_json: Optional[str] = None
+    gcp_location: Optional[str] = "us-central1"
+    # Azure fields
+    azure_account_name: Optional[str] = None
+    azure_container_name: Optional[str] = None
+    azure_sas_token: Optional[str] = None
+    azure_sas_url: Optional[str] = None
+    azure_connection_string: Optional[str] = None
+    azure_tenant_id: Optional[str] = None
+    azure_client_id: Optional[str] = None
+    azure_client_secret: Optional[str] = None
     skip_verification: bool = False
 
 class CloudStorageTestRequest(BaseModel):
-    provider: str = "AWS_S3"
-    bucket_name: str
-    region: str = "us-east-1"
-    role_arn: str
+    provider: str = "AWS_S3"  # AWS_S3, GCP_GCS, AZURE_BLOB
+    # AWS fields
+    bucket_name: Optional[str] = None
+    region: Optional[str] = "us-east-1"
+    role_arn: Optional[str] = None
     prefix: Optional[str] = "autoanalytix"
     kms_key_arn: Optional[str] = None
+    # GCP fields
+    gcp_project_id: Optional[str] = None
+    gcp_bucket_name: Optional[str] = None
+    gcp_credentials_json: Optional[str] = None
+    gcp_location: Optional[str] = "us-central1"
+    # Azure fields
+    azure_account_name: Optional[str] = None
+    azure_container_name: Optional[str] = None
+    azure_sas_token: Optional[str] = None
+    azure_sas_url: Optional[str] = None
+    azure_connection_string: Optional[str] = None
+    azure_tenant_id: Optional[str] = None
+    azure_client_id: Optional[str] = None
+    azure_client_secret: Optional[str] = None
 
 class CloudStorageConfigResponse(BaseModel):
     mode: str
@@ -76,6 +106,18 @@ class CloudStorageConfigResponse(BaseModel):
     platform_account_id: str
     backend_role_arn: str
     cloudformation_quick_link: Optional[str] = None
+    # GCP fields
+    gcp_project_id: Optional[str] = None
+    gcp_bucket_name: Optional[str] = None
+    gcp_location: Optional[str] = None
+    has_gcp_credentials: bool = False
+    # Azure fields
+    azure_account_name: Optional[str] = None
+    azure_container_name: Optional[str] = None
+    azure_sas_token_masked: Optional[str] = None
+    azure_connection_string_masked: Optional[str] = None
+    azure_auth_type: Optional[str] = None
+
 
 class CloudStorageProbeResult(BaseModel):
     healthy: bool

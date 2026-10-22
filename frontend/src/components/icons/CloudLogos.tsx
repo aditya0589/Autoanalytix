@@ -37,11 +37,11 @@ export const AwsLogo: React.FC<LogoProps> = ({ className = "w-6 h-6", size }) =>
 
 /**
  * Official Google Cloud Platform (GCP) Logo
- * Authentic 4-color Google Cloud vector mark
+ * Authentic 4-color Google Cloud vector mark with non-clipping viewBox
  */
 export const GcpLogo: React.FC<LogoProps> = ({ className = "w-5 h-5", size }) => (
   <svg
-    viewBox="0 0 256 220"
+    viewBox="-4 -16 272 226"
     width={size}
     height={size}
     className={`${className} shrink-0`}
@@ -72,76 +72,78 @@ export const GcpLogo: React.FC<LogoProps> = ({ className = "w-5 h-5", size }) =>
 
 /**
  * Official Microsoft Azure Logo
- * Official Microsoft Azure Fluent 'A' symbol
+ * Official Microsoft Azure Fluent 'A' symbol with dynamic ID scoping
  */
-export const AzureLogo: React.FC<LogoProps> = ({ className = "w-5 h-5", size }) => (
-  <svg
-    viewBox="0 0 96 96"
-    width={size}
-    height={size}
-    className={`${className} shrink-0`}
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <defs>
-      <linearGradient
-        id="azure-fluent-grad1"
-        x1="-1032.172"
-        x2="-1059.213"
-        y1="145.312"
-        y2="65.426"
-        gradientTransform="matrix(1 0 0 -1 1075 158)"
-        gradientUnits="userSpaceOnUse"
-      >
-        <stop offset="0" stopColor="#114A8B" />
-        <stop offset="1" stopColor="#0669BC" />
-      </linearGradient>
-      <linearGradient
-        id="azure-fluent-grad2"
-        x1="-1023.725"
-        x2="-1029.98"
-        y1="108.083"
-        y2="105.968"
-        gradientTransform="matrix(1 0 0 -1 1075 158)"
-        gradientUnits="userSpaceOnUse"
-      >
-        <stop offset="0" stopOpacity=".3" />
-        <stop offset=".071" stopOpacity=".2" />
-        <stop offset=".321" stopOpacity=".1" />
-        <stop offset=".623" stopOpacity=".05" />
-        <stop offset="1" stopOpacity="0" />
-      </linearGradient>
-      <linearGradient
-        id="azure-fluent-grad3"
-        x1="-1027.165"
-        x2="-997.482"
-        y1="147.642"
-        y2="68.561"
-        gradientTransform="matrix(1 0 0 -1 1075 158)"
-        gradientUnits="userSpaceOnUse"
-      >
-        <stop offset="0" stopColor="#3CCBF4" />
-        <stop offset="1" stopColor="#2892DF" />
-      </linearGradient>
-    </defs>
-    {/* Darker left facet */}
-    <path
-      fill="url(#azure-fluent-grad1)"
-      d="M33.338 6.544h26.038l-27.03 80.087a4.152 4.152 0 0 1-3.933 2.824H8.149a4.145 4.145 0 0 1-3.928-5.47L29.404 9.368a4.152 4.152 0 0 1 3.934-2.825z"
-    />
-    {/* Center fold in #0078D4 */}
-    <path
-      fill="#0078D4"
-      d="M71.175 60.261h-41.29a1.911 1.911 0 0 0-1.305 3.309l26.532 24.764a4.171 4.171 0 0 0 2.846 1.121h23.38z"
-    />
-    {/* Fold shadow overlay */}
-    <path
-      fill="url(#azure-fluent-grad2)"
-      d="M33.338 6.544a4.118 4.118 0 0 0-3.943 2.879L4.252 83.917a4.14 4.14 0 0 0 3.908 5.538h20.787a4.443 4.443 0 0 0 3.41-2.9l5.014-14.777 17.91 16.705a4.237 4.237 0 0 0 2.666.972H81.24L71.024 60.261l-29.781.007L59.47 6.544z"
-    />
-    {/* Lighter cyan right facet */}
-    <path
-      fill="url(#azure-fluent-grad3)"
-      d="M66.595 9.364a4.145 4.145 0 0 0-3.928-2.82H33.648a4.146 4.146 0 0 1 3.928 2.82l25.184 74.62a4.146 4.146 0 0 1-3.928 5.472h29.02a4.146 4.146 0 0 0 3.927-5.472z"
-    />
-  </svg>
-);
+export const AzureLogo: React.FC<LogoProps> = ({ className = "w-5 h-5", size }) => {
+  const rawId = React.useId();
+  const id = rawId.replace(/[^a-zA-Z0-9_-]/g, "");
+
+  return (
+    <svg
+      viewBox="0 0 96 96"
+      width={size}
+      height={size}
+      className={`${className} shrink-0`}
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <defs>
+        <linearGradient
+          id={`${id}-grad1`}
+          x1="42.8"
+          y1="12.7"
+          x2="15.8"
+          y2="92.6"
+          gradientUnits="userSpaceOnUse"
+        >
+          <stop offset="0%" stopColor="#114A8B" />
+          <stop offset="100%" stopColor="#0669BC" />
+        </linearGradient>
+        <linearGradient
+          id={`${id}-grad2`}
+          x1="51.3"
+          y1="49.9"
+          x2="45.0"
+          y2="52.0"
+          gradientUnits="userSpaceOnUse"
+        >
+          <stop offset="0%" stopOpacity="0.3" />
+          <stop offset="7%" stopOpacity="0.2" />
+          <stop offset="32%" stopOpacity="0.1" />
+          <stop offset="62%" stopOpacity="0.05" />
+          <stop offset="100%" stopOpacity="0" />
+        </linearGradient>
+        <linearGradient
+          id={`${id}-grad3`}
+          x1="47.8"
+          y1="10.4"
+          x2="77.5"
+          y2="89.4"
+          gradientUnits="userSpaceOnUse"
+        >
+          <stop offset="0%" stopColor="#3CCBF4" />
+          <stop offset="100%" stopColor="#2892DF" />
+        </linearGradient>
+      </defs>
+      {/* Darker left facet */}
+      <path
+        fill={`url(#${id}-grad1)`}
+        d="M33.34 6.54h26.04l-27.03 80.1a4.15 4.15 0 0 1-3.94 2.81H8.15a4.14 4.14 0 0 1-3.93-5.47L29.4 9.38a4.15 4.15 0 0 1 3.94-2.83z"
+      />
+      {/* Center fold in #0078D4 */}
+      <path
+        fill="#0078D4"
+        d="M71.17 60.26H29.88a1.91 1.91 0 0 0-1.3 3.31l26.53 24.76a4.17 4.17 0 0 0 2.85 1.13h23.38z"
+      />
+      {/* Fold shadow overlay */}
+      <path
+        fill={`url(#${id}-grad2)`}
+        d="M33.34 6.54a4.12 4.12 0 0 0-3.95 2.88L4.25 83.92a4.14 4.14 0 0 0 3.91 5.54h20.79a4.44 4.44 0 0 0 3.4-2.9l5.02-14.78 17.91 16.7a4.24 4.24 0 0 0 2.67.97h23.29L71.02 60.26H41.24L59.47 6.55z"
+      />
+      {/* Lighter cyan right facet */}
+      <path
+        fill={`url(#${id}-grad3)`}
+        d="M66.6 9.36a4.14 4.14 0 0 0-3.93-2.82H33.65a4.15 4.15 0 0 1 3.93 2.82l25.18 74.62a4.15 4.15 0 0 1-3.93 5.48h29.02a4.15 4.15 0 0 0 3.93-5.48z"
+      />
+    </svg>
+  );
+};

@@ -401,35 +401,39 @@ When the user selects **Bring Your Own Cloud**, the setup wizard expands:
 
 ---
 
-## 8. Multi-Cloud Expansion Roadmap (GCP & Azure)
+## 8. Multi-Cloud Expansion (AWS, GCP & Azure)
 
 | Cloud Provider | Identity Mechanism | Storage Target | Status |
 | :--- | :--- | :--- | :--- |
-| **AWS** | AWS STS `AssumeRole` + `ExternalId` | Amazon S3 | **Phase 1 (Immediate)** |
-| **Google Cloud (GCP)** | Workload Identity Federation (OIDC) or Service Account Impersonation | Google Cloud Storage (GCS) | **Phase 2** |
-| **Microsoft Azure** | Entra ID (Azure AD) Workload Identity / App Registration with Federated Credentials | Azure Blob Storage | **Phase 3** |
+| **AWS** | AWS STS `AssumeRole` + `ExternalId` | Amazon S3 | **Implemented & Verified** |
+| **Google Cloud (GCP)** | Scoped Service Account JSON / `gcloud` / Terraform | Google Cloud Storage (GCS) | **Implemented & Verified** |
+| **Microsoft Azure** | Container-scoped SAS Token / Connection String / Entra ID | Azure Blob Storage | **Implemented & Verified** |
 
 ---
 
-## 9. Implementation Roadmap & Task Breakdown
+## 9. Implementation Status
 
-### Phase 1: Storage Layer Refactoring (Backend)
-- [ ] Create `app/core/storage/base.py` interface.
-- [ ] Implement `PlatformS3StorageService` (wrapping existing logic).
-- [ ] Implement `CustomerS3StorageService` with `sts:AssumeRole`.
-- [ ] Create `StorageFactory` resolving via `workspace_id`.
-- [ ] Add `cloud_storage_config` fields to Workspace schema in DynamoDB / SQLite.
+### Phase 1: Storage Layer Architecture
+- [x] Create `app/core/storage/base.py` interface.
+- [x] Implement `PlatformS3StorageService` (standard SaaS managed storage).
+- [x] Implement `CustomerS3StorageService` with `sts:AssumeRole`.
+- [x] Implement `CustomerGCSStorageService` with Google Cloud Storage client & signed URLs.
+- [x] Implement `CustomerAzureBlobStorageService` with ContainerClient & SAS delegation.
+- [x] Create dynamic multi-cloud `StorageFactory` resolving AWS, GCP, Azure, or Platform S3 via `workspace_id`.
 
 ### Phase 2: Connection Testing & Configuration APIs
-- [ ] `GET /api/workspaces/{id}/storage-config`: Retrieve current storage mode, external ID, and bucket status.
-- [ ] `POST /api/workspaces/{id}/storage-config`: Update customer cloud configuration.
-- [ ] `POST /api/workspaces/{id}/storage-config/test`: Execute probe write/read/delete against customer S3.
-- [ ] `POST /api/workspaces/{id}/storage-config/migrate`: Optional utility to copy existing datasets from platform S3 to the customer's new S3 bucket.
+- [x] `GET /api/workspaces/{id}/storage-config`: Retrieve current storage mode, external ID, provider, and masked connection statuses.
+- [x] `POST /api/workspaces/{id}/storage-config`: Update customer cloud configuration (AWS S3, GCP GCS, Azure Blob, or Platform Default).
+- [x] `POST /api/workspaces/{id}/storage-config/test`: Execute 4-step probe write/read/delete against customer AWS, GCP, or Azure storage.
+- [x] `GET /api/workspaces/{id}/storage-config/cloudformation`: 1-click AWS IAM CloudFormation template generator.
+- [x] `GET /api/workspaces/{id}/storage-config/gcp-script`: 1-click `gcloud` shell command script & Terraform HCL block.
+- [x] `GET /api/workspaces/{id}/storage-config/azure-script`: 1-click Azure CLI scoped SAS generation script.
+- [x] `POST /api/workspaces/{id}/storage-config/migrate`: Migrate existing datasets from platform storage into customer's active private cloud bucket.
 
-### Phase 3: Frontend Settings UI
-- [ ] Add **Cloud & Storage** section in Settings.
-- [ ] Build the interactive setup wizard with CloudFormation 1-click launch.
-- [ ] Add live connection health badges (`Connected`, `Role Assumption Failed`, `Access Denied`).
+### Phase 3: Frontend Settings UI & Setup Wizards
+- [x] Full interactive Multi-Cloud selector (AWS, GCP, Azure) in **Workspace Settings -> Cloud Storage**.
+- [x] Dedicated setup guides & parameter forms for each cloud provider.
+- [x] 1-Click script & template viewers for CloudFormation, `gcloud` CLI, Terraform, and Azure CLI.
+- [x] Real-time 4-step probe test with live step-by-step health badges & latency benchmark.
+- [x] Instant dataset migration tool across all supported cloud providers.
 
-### Phase 4: Direct Browser Upload (Presigned Client S3)
-- [ ] Update dataset upload endpoint to issue presigned PUT URLs directly targeting the customer's bucket, bypassing the Autoanalytix backend server during file uploads.

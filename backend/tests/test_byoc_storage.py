@@ -12,6 +12,8 @@ from app.core.dynamodb import dynamodb_store
 from app.core.storage.factory import get_storage_service
 from app.core.storage.platform_s3 import PlatformS3StorageService
 from app.core.storage.customer_s3 import CustomerS3StorageService
+from app.core.storage.customer_gcs import CustomerGCSStorageService
+from app.core.storage.customer_azure import CustomerAzureBlobStorageService
 from app.core.s3_storage import s3_storage
 
 client = TestClient(app)
@@ -100,17 +102,93 @@ def test_byoc_storage_lifecycle():
     assert storage_byoc.prefix == "custom_analytics"
 
     # 7. Presigned upload URL generation routes to customer S3 bucket
-    # Since 111122223333 is a mock account, attempting to assume role triggers real AWS STS authorization check
     try:
         presigned_res = client.get(
             f"/api/datasets/presigned-upload-url?filename=sales.csv&workspace_id={workspace_id}",
             headers=headers
         )
     except RuntimeError as e:
-        # Confirms CustomerS3StorageService invoked real AWS STS assume_role with customer RoleArn
         assert "sts:AssumeRole" in str(e) or "AccessDenied" in str(e)
 
-    # 8. Revert back to PLATFORM_DEFAULT
+    # 8. Update workspace to BYOC (GCP GCS)
+    gcp_update_res = client.post(
+        f"/api/workspaces/{workspace_id}/storage-config",
+        headers=headers,
+        json={
+            "provider": "GCP_GCS",
+            "gcp_bucket_name": "acme-corp-gcs-vault",
+            "gcp_project_id": "acme-bi-prod",
+            "gcp_location": "us-central1",
+            "prefix": "gcp_analytics",
+            "skip_verification": True
+        }
+    )
+    assert gcp_update_res.status_code == 200, gcp_update_res.text
+    gcp_cfg = gcp_update_res.json()
+    assert gcp_cfg["provider"] == "GCP_GCS"
+    assert gcp_cfg["mode"] == "BYOS_GCP_GCS"
+    assert gcp_cfg["bucket_name"] == "acme-corp-gcs-vault"
+    assert gcp_cfg["gcp_project_id"] == "acme-bi-prod"
+    assert gcp_cfg["gcp_location"] == "us-central1"
+
+    # 9. Verify dynamic storage factory resolves to CustomerGCSStorageService
+    storage_gcs = s3_storage.for_workspace(workspace_id)
+    assert isinstance(storage_gcs, CustomerGCSStorageService)
+    assert storage_gcs.bucket_name == "acme-corp-gcs-vault"
+    assert storage_gcs.project_id == "acme-bi-prod"
+    assert storage_gcs.prefix == "gcp_analytics"
+
+    # 10. Verify GCP setup script generation
+    gcp_script_res = client.get(
+        f"/api/workspaces/{workspace_id}/storage-config/gcp-script?bucket=acme-corp-gcs-vault&project_id=acme-bi-prod",
+        headers=headers
+    )
+    assert gcp_script_res.status_code == 200
+    gcp_script_data = gcp_script_res.json()
+    assert "gcloud_bash_script" in gcp_script_data
+    assert "terraform_configuration" in gcp_script_data
+    assert "acme-corp-gcs-vault" in gcp_script_data["gcloud_bash_script"]
+
+    # 11. Update workspace to BYOC (Azure Blob Storage)
+    azure_update_res = client.post(
+        f"/api/workspaces/{workspace_id}/storage-config",
+        headers=headers,
+        json={
+            "provider": "AZURE_BLOB",
+            "azure_account_name": "acmestorageaccount",
+            "azure_container_name": "analytics-container",
+            "azure_sas_token": "?sp=racwdl&st=2026-01-01&sig=mocktesttoken",
+            "region": "eastus",
+            "prefix": "azure_data",
+            "skip_verification": True
+        }
+    )
+    assert azure_update_res.status_code == 200, azure_update_res.text
+    azure_cfg = azure_update_res.json()
+    assert azure_cfg["provider"] == "AZURE_BLOB"
+    assert azure_cfg["mode"] == "BYOS_AZURE_BLOB"
+    assert azure_cfg["azure_account_name"] == "acmestorageaccount"
+    assert azure_cfg["azure_container_name"] == "analytics-container"
+    assert azure_cfg["azure_auth_type"] == "sas_token"
+
+    # 12. Verify dynamic storage factory resolves to CustomerAzureBlobStorageService
+    storage_azure = s3_storage.for_workspace(workspace_id)
+    assert isinstance(storage_azure, CustomerAzureBlobStorageService)
+    assert storage_azure.container_name == "analytics-container"
+    assert storage_azure.account_name == "acmestorageaccount"
+    assert storage_azure.prefix == "azure_data"
+
+    # 13. Verify Azure setup script generation
+    azure_script_res = client.get(
+        f"/api/workspaces/{workspace_id}/storage-config/azure-script?account_name=acmestorageaccount&container_name=analytics-container",
+        headers=headers
+    )
+    assert azure_script_res.status_code == 200
+    azure_script_data = azure_script_res.json()
+    assert "azure_cli_script" in azure_script_data
+    assert "analytics-container" in azure_script_data["azure_cli_script"]
+
+    # 14. Revert back to PLATFORM_DEFAULT
     revert_res = client.post(
         f"/api/workspaces/{workspace_id}/storage-config",
         headers=headers,
@@ -121,11 +199,12 @@ def test_byoc_storage_lifecycle():
     assert revert_data["provider"] == "PLATFORM_DEFAULT"
     assert revert_data["mode"] == "PLATFORM_DEFAULT"
 
-    # 9. Storage factory reverts to PlatformS3
+    # 15. Storage factory reverts to PlatformS3
     storage_reverted = s3_storage.for_workspace(workspace_id)
     assert isinstance(storage_reverted, PlatformS3StorageService)
 
-    print("\n[OK] All BYOC storage lifecycle tests passed successfully!")
+    print("\n[OK] All Multi-Cloud BYOC storage lifecycle tests (AWS, GCP, Azure) passed successfully!")
 
 if __name__ == "__main__":
     test_byoc_storage_lifecycle()
+
