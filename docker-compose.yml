@@ -8,7 +8,7 @@ services:
     environment:
       POSTGRES_DB: autoanalytix
       POSTGRES_USER: autoanalytix
-      POSTGRES_PASSWORD: autoanalytix_secret_password
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-autoanalytix_local_dev_password}
     ports:
       - "5432:5432"
     volumes:
@@ -28,10 +28,10 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - APP_ENV=production
-      - DATABASE_URL=postgresql://autoanalytix:autoanalytix_secret_password@postgres:5432/autoanalytix
-      - APP_SECRET_KEY=change-this-in-production-jwt-key
-      - CREDENTIAL_ENCRYPTION_KEY=<BASE64_PLACEHOLDER_KEY>
+      - APP_ENV=${APP_ENV:-development}
+      - DATABASE_URL=postgresql://autoanalytix:${POSTGRES_PASSWORD:-autoanalytix_local_dev_password}@postgres:5432/autoanalytix
+      - APP_SECRET_KEY=${APP_SECRET_KEY:-dev-insecure-secret-key-change-in-prod}
+      - CREDENTIAL_ENCRYPTION_KEY=${CREDENTIAL_ENCRYPTION_KEY:-}
       - CORS_ORIGINS=["http://localhost:5173","http://localhost:3000","http://127.0.0.1:5173"]
     depends_on:
       postgres:

@@ -888,6 +888,8 @@ class ApiClient {
   // --- Cloud Storage (BYOC) ---
   cloudStorage = {
     getConfig: async (workspaceId: string) => {
+      const defaultPlatformAccountId = (import.meta as any).env?.VITE_AWS_PLATFORM_ACCOUNT_ID || "123456789012";
+      const defaultBackendRoleArn = (import.meta as any).env?.VITE_AWS_BACKEND_ROLE_ARN || `arn:aws:iam://${defaultPlatformAccountId}:role/autoanalytix-lambda-role`;
       try {
         return await this.request<any>(`/workspaces/${workspaceId}/storage-config`);
       } catch (err: any) {
@@ -902,9 +904,9 @@ class ApiClient {
           external_id: extId,
           status: "active",
           verified: true,
-          platform_account_id: "123456789012",
-          backend_role_arn: "arn:aws:iam::123456789012:role/autoanalytix-lambda-role",
-          cloudformation_quick_link: `https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/quickcreate?stackName=Autoanalytix-BYOC-${extId.slice(-8)}&param_ExternalId=${extId}&param_AutoanalytixBackendRoleArn=arn:aws:iam::123456789012:role/autoanalytix-lambda-role`,
+          platform_account_id: defaultPlatformAccountId,
+          backend_role_arn: defaultBackendRoleArn,
+          cloudformation_quick_link: `https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/quickcreate?stackName=Autoanalytix-BYOC-${extId.slice(-8)}&param_ExternalId=${extId}&param_AutoanalytixBackendRoleArn=${defaultBackendRoleArn}`,
         };
       }
     },
@@ -938,9 +940,9 @@ class ApiClient {
           azure_auth_type: data.azure_sas_token ? "sas_token" : (data.azure_connection_string ? "connection_string" : "service_principal"),
           status: "active",
           verified: true,
-          platform_account_id: "123456789012",
-          backend_role_arn: "arn:aws:iam::123456789012:role/autoanalytix-lambda-role",
-          cloudformation_quick_link: `https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/quickcreate?stackName=Autoanalytix-BYOC-${extId.slice(-8)}&param_ExternalId=${extId}&param_AutoanalytixBackendRoleArn=arn:aws:iam::123456789012:role/autoanalytix-lambda-role`,
+          platform_account_id: (import.meta as any).env?.VITE_AWS_PLATFORM_ACCOUNT_ID || "123456789012",
+          backend_role_arn: (import.meta as any).env?.VITE_AWS_BACKEND_ROLE_ARN || "arn:aws:iam::123456789012:role/autoanalytix-lambda-role",
+          cloudformation_quick_link: `https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/quickcreate?stackName=Autoanalytix-BYOC-${extId.slice(-8)}&param_ExternalId=${extId}&param_AutoanalytixBackendRoleArn=${(import.meta as any).env?.VITE_AWS_BACKEND_ROLE_ARN || "arn:aws:iam::123456789012:role/autoanalytix-lambda-role"}`,
         };
         localStorage.setItem(`autoanalytix_storage_cfg_${workspaceId}`, JSON.stringify(fallback));
         return fallback;
@@ -1020,7 +1022,7 @@ class ApiClient {
           Description: `Autoanalytix Bring Your Own Cloud (BYOC) Cross-Account IAM Role for Workspace ExternalId: ${extId}`,
           Parameters: {
             BucketName: { Type: "String", Default: bucket || "" },
-            AutoanalytixBackendRoleArn: { Type: "String", Default: "arn:aws:iam::123456789012:role/autoanalytix-lambda-role" },
+            AutoanalytixBackendRoleArn: { Type: "String", Default: (import.meta as any).env?.VITE_AWS_BACKEND_ROLE_ARN || "arn:aws:iam::123456789012:role/autoanalytix-lambda-role" },
             ExternalId: { Type: "String", Default: extId },
             ObjectPrefix: { Type: "String", Default: prefix || "autoanalytix" },
           },

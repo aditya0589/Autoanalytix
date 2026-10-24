@@ -77,11 +77,17 @@ class S3DataConnector(BaseDataConnector):
         raw_path = config.get("s3_path") or config.get("path") or config.get("bucket", "")
         bucket, key_prefix = self.parse_s3_path(raw_path)
 
-        # Build boto3 client kwargs
-        client_kwargs: Dict[str, Any] = {"region_name": region}
-        if aws_access_key and aws_secret_key:
-            client_kwargs["aws_access_key_id"] = aws_access_key
-            client_kwargs["aws_secret_access_key"] = aws_secret_key
+        if not aws_access_key or not aws_secret_key:
+            raise ValueError(
+                "Explicit AWS Access Key ID and Secret Access Key are required to connect to external S3 data sources."
+            )
+
+        # Build boto3 client kwargs strictly with customer-supplied credentials
+        client_kwargs: Dict[str, Any] = {
+            "region_name": region,
+            "aws_access_key_id": aws_access_key,
+            "aws_secret_access_key": aws_secret_key,
+        }
 
         client = boto3.client("s3", **client_kwargs)
         return client, bucket, key_prefix, region

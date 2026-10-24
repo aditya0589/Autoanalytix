@@ -41,7 +41,7 @@ class Settings(BaseSettings):
     MAX_UPLOAD_SIZE_BYTES: int = 50 * 1024 * 1024  # 50 MB
     AWS_REGION: str = Field(default=os.environ.get("AWS_REGION", "us-east-1"))
     DYNAMODB_TABLE_NAME: str = Field(default=os.environ.get("DYNAMODB_TABLE_NAME", "autoanalytix_data"))
-    S3_STORAGE_BUCKET: str = Field(default=os.environ.get("S3_STORAGE_BUCKET", "autoanalytix-storage-prod"))
+    S3_STORAGE_BUCKET: str = Field(default=os.environ.get("S3_STORAGE_BUCKET", "autoanalytix-storage"))
     USE_DYNAMODB: bool = Field(default=True)
     
     # DuckDB limits
@@ -55,9 +55,9 @@ class Settings(BaseSettings):
             origin.strip()
             for origin in os.environ.get(
                 "CORS_ORIGINS",
-                "*,http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://localhost:4173,http://127.0.0.1:4173"
+                "http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://localhost:4173,http://127.0.0.1:4173,https://autoanalytix.vercel.app"
             ).split(",")
-            if origin.strip()
+            if origin.strip() and origin.strip() != "*"
         ]
     )
 

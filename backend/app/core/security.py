@@ -59,11 +59,6 @@ def encrypt_credential(plaintext_secret: str) -> str:
     payload = nonce + ciphertext
     return base64.b64encode(payload).decode("utf-8")
 
-LEGACY_KEYS = [
-    b"autoanalytix-dev-placeholder-key",
-    base64.urlsafe_b64decode("<BASE64_PLACEHOLDER_KEY>")
-]
-
 def decrypt_credential(encrypted_secret: str) -> str:
     """Decrypts an AES-GCM encrypted API key. Returns plaintext."""
     if not encrypted_secret:
@@ -75,25 +70,13 @@ def decrypt_credential(encrypted_secret: str) -> str:
     except Exception as e:
         raise ValueError(f"Invalid base64 payload: {str(e)}")
 
-    # 1. Try current active AES key
     current_key = _get_aes_key()
     try:
         aesgcm = AESGCM(current_key)
         decrypted = aesgcm.decrypt(nonce, ciphertext, None)
         return decrypted.decode("utf-8")
-    except Exception:
-        pass
-
-    # 2. Try legacy fallback keys for backwards compatibility across key rotations
-    for leg_key in LEGACY_KEYS:
-        try:
-            aesgcm = AESGCM(leg_key)
-            decrypted = aesgcm.decrypt(nonce, ciphertext, None)
-            return decrypted.decode("utf-8")
-        except Exception:
-            continue
-
-    raise ValueError("Failed to decrypt credential with current or legacy keys.")
+    except Exception as e:
+        raise ValueError(f"Failed to decrypt credential with active key: {str(e)}")
 
 def mask_api_key(plaintext_or_key: str) -> str:
     """Masks an API key for safe display in UI e.g. sk-proj...7x9F or AIza...9B2x"""

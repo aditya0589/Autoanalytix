@@ -2,7 +2,7 @@
   "name": "autoanalytix-builder",
   "source": {
     "type": "S3",
-    "location": "autoanalytix-builds-<AWS_ACCOUNT_ID>/autoanalytix/backend_source.zip"
+    "location": "<BUILD_SOURCE_BUCKET>/autoanalytix/backend_source.zip"
   },
   "artifacts": {
     "type": "NO_ARTIFACTS"
@@ -19,10 +19,10 @@
       },
       {
         "name": "IMAGE_REPO_URI",
-        "value": "123456789012.dkr.ecr.us-east-1.amazonaws.com/autoanalytix-backend"
+        "value": "<AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/autoanalytix-backend"
       }
     ]
   },
-  "serviceRole": "arn:aws:iam::123456789012:role/autoanalytix-codebuild-role",
+  "serviceRole": "arn:aws:iam::<AWS_ACCOUNT_ID>:role/autoanalytix-codebuild-role",
   "timeoutInMinutes": 15
 }

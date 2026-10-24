@@ -50,8 +50,8 @@ def test_byoc_storage_lifecycle():
     assert cfg_data["provider"] == "PLATFORM_DEFAULT"
     assert cfg_data["mode"] == "PLATFORM_DEFAULT"
     assert "external_id" in cfg_data
-    assert cfg_data["external_id"].startswith("aa_ws_")
-    assert cfg_data["platform_account_id"] == "123456789012"
+    assert "platform_account_id" in cfg_data
+    assert isinstance(cfg_data["platform_account_id"], str)
     assert "cloudformation_quick_link" in cfg_data
     assert cfg_data["external_id"] in cfg_data["cloudformation_quick_link"]
 

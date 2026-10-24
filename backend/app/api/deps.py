@@ -22,35 +22,6 @@ def get_current_user(
             detail="Authentication credentials were not provided."
         )
     token = credentials.credentials
-    if token == "local_demo_token":
-        user_dict = dynamodb_store.get_user_by_id("user_local_1")
-        if not user_dict:
-            user_dict = dynamodb_store.create_user({
-                "id": "user_local_1",
-                "email": "analyst@local.app",
-                "full_name": "Local Analyst (Browser-WASM)",
-                "hashed_password": "demo_hashed_password",
-                "is_active": True,
-                "created_at": "2026-10-10T00:00:00Z",
-                "updated_at": "2026-10-10T00:00:00Z",
-            })
-            dynamodb_store.create_workspace({
-                "id": "ws_local_1",
-                "name": "Personal Workspace (Browser)",
-                "slug": "personal-workspace",
-                "owner_id": "user_local_1",
-                "created_at": "2026-10-10T00:00:00Z",
-                "updated_at": "2026-10-10T00:00:00Z",
-            })
-            dynamodb_store.add_workspace_member({
-                "id": "member_local_1",
-                "workspace_id": "ws_local_1",
-                "user_id": "user_local_1",
-                "role": "owner",
-                "created_at": "2026-10-10T00:00:00Z",
-            })
-        return ItemObject(user_dict)
-
     payload = decode_access_token(token)
     if not payload or "sub" not in payload:
         raise HTTPException(

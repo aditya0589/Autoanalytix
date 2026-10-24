@@ -14,6 +14,17 @@ def get_platform_storage() -> PlatformS3StorageService:
         _default_platform_storage = PlatformS3StorageService()
     return _default_platform_storage
 
+def _maybe_decrypt(val: Optional[str]) -> Optional[str]:
+    if not val or not isinstance(val, str):
+        return val
+    if val.startswith("ENC:"):
+        try:
+            from app.core.security import decrypt_credential
+            return decrypt_credential(val[4:])
+        except Exception:
+            return val
+    return val
+
 def get_storage_service(workspace_or_id: Optional[Union[Dict[str, Any], str]] = None) -> BaseStorageService:
     """
     Dynamically resolves the storage service (Platform S3 vs Customer BYOC S3 / GCS / Azure Blob)
@@ -67,7 +78,8 @@ def get_storage_service(workspace_or_id: Optional[Union[Dict[str, Any], str]] = 
     elif provider in ("GCP_GCS", "GCS") and status in ("active", "configured"):
         bucket_name = config.get("bucket_name") or config.get("gcp_bucket_name")
         project_id = config.get("project_id") or config.get("gcp_project_id")
-        credentials_json = config.get("credentials_json") or config.get("gcp_credentials_json")
+        raw_creds = config.get("credentials_json") or config.get("gcp_credentials_json")
+        credentials_json = _maybe_decrypt(raw_creds)
 
         if bucket_name:
             return CustomerGCSStorageService(
@@ -85,12 +97,12 @@ def get_storage_service(workspace_or_id: Optional[Union[Dict[str, Any], str]] = 
     elif provider in ("AZURE_BLOB", "AZURE") and status in ("active", "configured"):
         container_name = config.get("container_name") or config.get("azure_container_name") or config.get("bucket_name")
         account_name = config.get("account_name") or config.get("azure_account_name")
-        sas_token = config.get("sas_token") or config.get("azure_sas_token")
+        sas_token = _maybe_decrypt(config.get("sas_token") or config.get("azure_sas_token"))
         sas_url = config.get("sas_url") or config.get("azure_sas_url")
-        connection_string = config.get("connection_string") or config.get("azure_connection_string")
+        connection_string = _maybe_decrypt(config.get("connection_string") or config.get("azure_connection_string"))
         tenant_id = config.get("tenant_id") or config.get("azure_tenant_id")
         client_id = config.get("client_id") or config.get("azure_client_id")
-        client_secret = config.get("client_secret") or config.get("azure_client_secret")
+        client_secret = _maybe_decrypt(config.get("client_secret") or config.get("azure_client_secret"))
 
         if container_name and (sas_token or sas_url or connection_string or (tenant_id and client_id and client_secret)):
             return CustomerAzureBlobStorageService(

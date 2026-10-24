@@ -40,7 +40,7 @@ flowchart TD
         CustomerKMS -->|Encrypts Objects at Rest| CustomerBucket
     end
 
-    subgraph Autoanalytix_Backend ["Autoanalytix SaaS Backend (AWS Account 123456789012)"]
+    subgraph Autoanalytix_Backend ["Autoanalytix SaaS Backend (AWS Account <PLATFORM_ACCOUNT_ID>)"]
         API["FastAPI Backend / Lambda\n(autoanalytix-backend)"]
         StorageFactory["Dynamic Storage Factory\n(Resolves Workspace Storage Mode)"]
         STSService["AWS STS Client\n(sts:AssumeRole)"]
@@ -128,7 +128,7 @@ The customer deploys an IAM Role named `AutoanalytixStorageAccessRole` in their 
     {
       "Effect": "Allow",
       "Principal": {
-        "AWS": "arn:aws:iam::123456789012:role/autoanalytix-backend-role"
+        "AWS": "arn:aws:iam::<PLATFORM_ACCOUNT_ID>:role/autoanalytix-backend-role"
       },
       "Action": "sts:AssumeRole",
       "Condition": {

@@ -1,10 +1,27 @@
 param(
     [string]$Region = "us-east-1",
-    [string]$S3Bucket = "autoanalytix-builds-<AWS_ACCOUNT_ID>",
+    [string]$AccountId = "",
+    [string]$S3Bucket = "",
     [string]$CodeBuildProject = "autoanalytix-builder",
     [string]$FunctionName = "autoanalytix-backend",
-    [string]$ImageUri = "123456789012.dkr.ecr.us-east-1.amazonaws.com/autoanalytix-backend:latest"
+    [string]$ImageUri = ""
 )
+
+if (-not $AccountId) {
+    $AccountId = (aws sts get-caller-identity --query Account --output text 2>$null)
+    if (-not $AccountId -or $AccountId -match "None|error") {
+        Write-Error "Could not retrieve AWS Account ID. Please configure AWS CLI credentials or pass -AccountId."
+        exit 1
+    }
+}
+
+if (-not $S3Bucket) {
+    $S3Bucket = "autoanalytix-builds-$AccountId"
+}
+
+if (-not $ImageUri) {
+    $ImageUri = "$AccountId.dkr.ecr.$Region.amazonaws.com/autoanalytix-backend:latest"
+}
 
 Write-Host "[1/5] Packing backend source..."
 & .\venv\Scripts\python.exe scripts/pack_backend.py

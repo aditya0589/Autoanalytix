@@ -50,13 +50,16 @@ cors_origins = [
 ]
 if hasattr(settings, "CORS_ORIGINS") and settings.CORS_ORIGINS:
     for origin in settings.CORS_ORIGINS:
-        if origin and origin not in cors_origins:
+        if origin and origin != "*" and origin not in cors_origins:
             cors_origins.append(origin)
+
+# Ensure no wildcard is present when allow_credentials=True
+cors_origins = [o for o in cors_origins if o != "*"]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=cors_origins,
-    allow_origin_regex=r"https?://(localhost|127\.0\.0\.1)(:\d+)?|https://.*\.vercel\.app",
+    allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$|^https://(autoanalytix|www\.autoanalytix|autoanalytix-[a-zA-Z0-9_-]+)\.vercel\.app$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

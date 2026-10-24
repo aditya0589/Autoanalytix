@@ -21,12 +21,41 @@ from app.core.storage.factory import get_storage_service, get_platform_storage
 
 router = APIRouter(prefix="/workspaces/{workspace_id}/storage-config", tags=["Cloud Storage BYOC"])
 
-DEFAULT_PLATFORM_ACCOUNT_ID = "123456789012"
+DEFAULT_PLATFORM_ACCOUNT_ID = getattr(
+    settings,
+    "AWS_ACCOUNT_ID",
+    os.environ.get("AWS_ACCOUNT_ID", "")
+)
 DEFAULT_BACKEND_ROLE_ARN = getattr(
     settings,
     "AUTOANALYTIX_BACKEND_ROLE_ARN",
-    f"arn:aws:iam::{DEFAULT_PLATFORM_ACCOUNT_ID}:role/autoanalytix-lambda-role"
+    os.environ.get(
+        "AUTOANALYTIX_BACKEND_ROLE_ARN",
+        f"arn:aws:iam::{DEFAULT_PLATFORM_ACCOUNT_ID}:role/autoanalytix-lambda-role" if DEFAULT_PLATFORM_ACCOUNT_ID else ""
+    )
 )
+
+def _encrypt_secret(val: Optional[str]) -> Optional[str]:
+    """Encrypts a sensitive BYOC cloud secret at rest with AES-GCM."""
+    if not val or not isinstance(val, str) or val.startswith("ENC:"):
+        return val
+    try:
+        from app.core.security import encrypt_credential
+        return f"ENC:{encrypt_credential(val)}"
+    except Exception:
+        return val
+
+def _decrypt_secret(val: Optional[str]) -> Optional[str]:
+    """Decrypts a sensitive BYOC cloud secret in-memory for driver connection testing."""
+    if not val or not isinstance(val, str):
+        return val
+    if val.startswith("ENC:"):
+        try:
+            from app.core.security import decrypt_credential
+            return decrypt_credential(val[4:])
+        except Exception:
+            return val
+    return val
 
 def generate_cloudformation_template(external_id: str, default_bucket: str = "", default_prefix: str = "autoanalytix") -> Dict[str, Any]:
     """Generates the AWS CloudFormation template for 1-click customer IAM role provisioning."""
@@ -177,8 +206,8 @@ def get_storage_config(
     )
 
     # Azure masked values
-    azure_sas = cfg.get("azure_sas_token") or cfg.get("sas_token")
-    azure_conn = cfg.get("azure_connection_string") or cfg.get("connection_string")
+    azure_sas = _decrypt_secret(cfg.get("azure_sas_token") or cfg.get("sas_token"))
+    azure_conn = _decrypt_secret(cfg.get("azure_connection_string") or cfg.get("connection_string"))
     azure_sas_masked = (f"***{azure_sas[-6:]}") if azure_sas and len(azure_sas) > 6 else (("***") if azure_sas else None)
     azure_conn_masked = (f"***{azure_conn[-8:]}") if azure_conn and len(azure_conn) > 8 else (("***") if azure_conn else None)
 
@@ -256,7 +285,8 @@ def test_storage_connection(
         if not bucket_name:
             raise HTTPException(status_code=400, detail="gcp_bucket_name is required for GCP GCS testing.")
         
-        creds = test_in.gcp_credentials_json or cfg.get("gcp_credentials_json") or cfg.get("credentials_json")
+        raw_creds = test_in.gcp_credentials_json or cfg.get("gcp_credentials_json") or cfg.get("credentials_json")
+        creds = _decrypt_secret(raw_creds)
         project_id = test_in.gcp_project_id or cfg.get("gcp_project_id") or cfg.get("project_id")
 
         customer_service = CustomerGCSStorageService(
@@ -276,12 +306,12 @@ def test_storage_connection(
             raise HTTPException(status_code=400, detail="azure_container_name is required for Azure Blob testing.")
 
         account_name = test_in.azure_account_name or cfg.get("azure_account_name")
-        sas_token = test_in.azure_sas_token or cfg.get("azure_sas_token")
+        sas_token = test_in.azure_sas_token or _decrypt_secret(cfg.get("azure_sas_token"))
         sas_url = test_in.azure_sas_url or cfg.get("azure_sas_url")
-        connection_string = test_in.azure_connection_string or cfg.get("azure_connection_string")
+        connection_string = test_in.azure_connection_string or _decrypt_secret(cfg.get("azure_connection_string"))
         tenant_id = test_in.azure_tenant_id or cfg.get("azure_tenant_id")
         client_id = test_in.azure_client_id or cfg.get("azure_client_id")
-        client_secret = test_in.azure_client_secret or cfg.get("azure_client_secret")
+        client_secret = test_in.azure_client_secret or _decrypt_secret(cfg.get("azure_client_secret"))
 
         customer_service = CustomerAzureBlobStorageService(
             container_name=container_name,
@@ -392,7 +422,8 @@ def update_storage_config(
             )
 
         # Retain existing credentials if user didn't re-upload
-        creds_json = update_in.gcp_credentials_json or existing_cfg.get("gcp_credentials_json") or existing_cfg.get("credentials_json")
+        raw_creds = update_in.gcp_credentials_json or existing_cfg.get("gcp_credentials_json") or existing_cfg.get("credentials_json")
+        creds_json = _decrypt_secret(raw_creds)
         project_id = (update_in.gcp_project_id or existing_cfg.get("gcp_project_id") or "").strip() or None
         location = (update_in.gcp_location or update_in.region or "us-central1").strip()
 
@@ -420,7 +451,7 @@ def update_storage_config(
             "bucket_name": bucket_name,
             "gcp_bucket_name": bucket_name,
             "gcp_project_id": project_id,
-            "gcp_credentials_json": creds_json,
+            "gcp_credentials_json": _encrypt_secret(creds_json),
             "gcp_location": location,
             "region": location,
             "prefix": (update_in.prefix or "autoanalytix").strip("/"),
@@ -443,12 +474,12 @@ def update_storage_config(
             )
 
         account_name = (update_in.azure_account_name or existing_cfg.get("azure_account_name") or "").strip() or None
-        sas_token = update_in.azure_sas_token or existing_cfg.get("azure_sas_token")
+        sas_token = update_in.azure_sas_token or _decrypt_secret(existing_cfg.get("azure_sas_token"))
         sas_url = update_in.azure_sas_url or existing_cfg.get("azure_sas_url")
-        connection_string = update_in.azure_connection_string or existing_cfg.get("azure_connection_string")
+        connection_string = update_in.azure_connection_string or _decrypt_secret(existing_cfg.get("azure_connection_string"))
         tenant_id = update_in.azure_tenant_id or existing_cfg.get("azure_tenant_id")
         client_id = update_in.azure_client_id or existing_cfg.get("azure_client_id")
-        client_secret = update_in.azure_client_secret or existing_cfg.get("azure_client_secret")
+        client_secret = update_in.azure_client_secret or _decrypt_secret(existing_cfg.get("azure_client_secret"))
 
         verified = True if update_in.skip_verification else False
         last_error = None
@@ -480,12 +511,12 @@ def update_storage_config(
             "container_name": container_name,
             "azure_container_name": container_name,
             "azure_account_name": account_name,
-            "azure_sas_token": sas_token,
+            "azure_sas_token": _encrypt_secret(sas_token),
             "azure_sas_url": sas_url,
-            "azure_connection_string": connection_string,
+            "azure_connection_string": _encrypt_secret(connection_string),
             "azure_tenant_id": tenant_id,
             "azure_client_id": client_id,
-            "azure_client_secret": client_secret,
+            "azure_client_secret": _encrypt_secret(client_secret),
             "region": (update_in.region or "eastus").strip(),
             "prefix": (update_in.prefix or "autoanalytix").strip("/"),
             "status": "active" if verified else "unverified",
